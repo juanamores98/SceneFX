@@ -9,19 +9,22 @@ using SceneFX.Core;
 namespace SceneFX.UI
 {
     /// <summary>
-    /// Native in-game panel (ColossalFramework UI) built with the game's own
-    /// UIHelper widgets: style switching, LUT picking, live grading and the
-    /// world controls. Toggled with F10.
+    /// Native in-game panel (ColossalFramework UI) with tabbed pages so every
+    /// control stays inside the window: Style, LUT, Grade and World.
+    /// Toggled with F10 or the Unified UI tray button.
     /// </summary>
     internal sealed class NativePanel
     {
+        private static readonly string[] Tabs = { "Style", "LUT", "Grade", "World" };
+
         private UIPanel _root;
-        private UIHelperBase _styleGroup;
+        private readonly UIPanel[] _pages = new UIPanel[Tabs.Length];
+        private readonly UIButton[] _tabButtons = new UIButton[Tabs.Length];
+        private int _activeTab = -1;
+
         private UIDropDown _styleDropDown;
         private UIDropDown _lutDropDown;
         private UITextField _nameField;
-        private UISlider _timeSlider;
-        private UICheckBox _lockBox;
         private bool _building;
         private bool _suppressEvents;
 
@@ -82,7 +85,7 @@ namespace SceneFX.UI
                 var view = UIView.GetAView();
                 _root = view.AddUIComponent(typeof(UIPanel)) as UIPanel;
                 _root.backgroundSprite = "MenuPanel";
-                _root.size = new Vector2(400f, 620f);
+                _root.size = new Vector2(400f, 640f);
                 _root.relativePosition = new Vector3(760f, 100f);
                 _root.opacity = 0.95f;
 
@@ -93,7 +96,7 @@ namespace SceneFX.UI
                 var title = _root.AddUIComponent<UILabel>();
                 title.text = "SceneFX";
                 title.textScale = 1.2f;
-                title.relativePosition = new Vector3(12f, 10f);
+                title.relativePosition = new Vector3(12f, 8f);
 
                 var close = _root.AddUIComponent<UIButton>();
                 close.text = "X";
@@ -103,127 +106,35 @@ namespace SceneFX.UI
                 close.hoveredBgSprite = "ButtonMenuHovered";
                 close.eventClicked += (c, p) => Hide();
 
-                var content = _root.AddUIComponent<UIPanel>();
-                content.backgroundSprite = null;
-                content.size = new Vector2(392f, 570f);
-                content.relativePosition = new Vector3(4f, 44f);
-                content.autoLayout = true;
-                content.autoLayoutDirection = LayoutDirection.Vertical;
-                content.autoLayoutPadding = new RectOffset(4, 4, 4, 4);
+                // Tab buttons.
+                float x = 8f;
+                for (int i = 0; i < Tabs.Length; i++)
+                {
+                    int index = i;
+                    var tab = _root.AddUIComponent<UIButton>();
+                    tab.text = Tabs[i];
+                    tab.size = new Vector2(93f, 26f);
+                    tab.relativePosition = new Vector3(x, 38f);
+                    tab.normalBgSprite = "ButtonMenu";
+                    tab.hoveredBgSprite = "ButtonMenuHovered";
+                    tab.focusedBgSprite = "ButtonMenuFocused";
+                    tab.textColor = new Color32(255, 255, 255, 255);
+                    tab.eventClicked += (c, p) => SelectTab(index);
+                    _tabButtons[i] = tab;
+                    x += 96f;
+                }
 
-                var helper = new UIHelper(content);
+                // One page per tab; only the active one is visible.
+                _pages[0] = NewPage();
+                BuildStylePage(_pages[0]);
+                _pages[1] = NewPage();
+                BuildLutPage(_pages[1]);
+                _pages[2] = NewPage();
+                BuildGradePage(_pages[2]);
+                _pages[3] = NewPage();
+                BuildWorldPage(_pages[3]);
 
-                // ---- Style group ----
-                _styleGroup = helper.AddGroup("Style");
-                string[] styleNames = ListStyleNames();
-                _styleDropDown = (UIDropDown)_styleGroup.AddDropdown("Style", styleNames, 0, sel =>
-                {
-                    if (_suppressEvents)
-                    {
-                        return;
-                    }
-
-                    ApplyStyleByName(styleNames[sel]);
-                });
-
-                _nameField = (UITextField)_styleGroup.AddTextfield("Style name", "My scene", sel => { });
-                _styleGroup.AddButton("Save current look as style", () =>
-                {
-                    var copy = SceneRuntime.Current.Clone();
-                    copy.Name = StyleStore.SafeName(_nameField.text);
-                    StyleStore.SaveStyle(copy);
-                    RefreshStyleDropdown();
-                });
-                _styleGroup.AddButton("Restore game look", () =>
-                {
-                    SceneRuntime.RestoreGame();
-                    WorldController.Restore();
-                });
-
-                // ---- LUT group ----
-                var lutGroup = helper.AddGroup("Color grading LUT");
-                string[] lutNames = ListLutNames();
-                _lutDropDown = (UIDropDown)lutGroup.AddDropdown("LUT", lutNames, 0, sel =>
-                {
-                    if (_suppressEvents)
-                    {
-                        return;
-                    }
-
-                    SceneRuntime.Current.Lut = lutNames[sel];
-                    SceneRuntime.ApplyCurrent();
-                });
-                lutGroup.AddCheckbox("Sky tonemapping", SceneRuntime.Current.SkyTonemap, sel =>
-                {
-                    SceneRuntime.Current.SkyTonemap = sel;
-                    SceneRuntime.ApplyCurrent();
-                });
-
-                // ---- Grade group ----
-                var grade = helper.AddGroup("Live grade");
-                grade.AddSlider("Gamma", 1.2f, 3f, 0.05f, SceneRuntime.Current.Gamma, v =>
-                {
-                    SceneRuntime.Current.Gamma = v;
-                    SceneRuntime.ApplyCurrent();
-                });
-                grade.AddSlider("Brightness", -1f, 1f, 0.05f, SceneRuntime.Current.Brightness, v =>
-                {
-                    SceneRuntime.Current.Brightness = v;
-                    SceneRuntime.ApplyCurrent();
-                });
-                grade.AddSlider("Contrast", -1f, 1f, 0.05f, SceneRuntime.Current.Contrast, v =>
-                {
-                    SceneRuntime.Current.Contrast = v;
-                    SceneRuntime.ApplyCurrent();
-                });
-                grade.AddSlider("Sun gain", 0f, 3f, 0.05f, SceneRuntime.Current.SunIntensity, v =>
-                {
-                    SceneRuntime.Current.SunIntensity = v;
-                    SceneRuntime.ApplyCurrent();
-                });
-                grade.AddSlider("Exposure", 0.5f, 1.5f, 0.02f, SceneRuntime.Current.Exposure, v =>
-                {
-                    SceneRuntime.Current.Exposure = v;
-                    SceneRuntime.ApplyCurrent();
-                });
-                grade.AddSlider("Warmth", -1f, 1f, 0.05f, SceneRuntime.Current.Warmth, v =>
-                {
-                    SceneRuntime.Current.Warmth = v;
-                    SceneRuntime.ApplyCurrent();
-                });
-
-                // ---- World group ----
-                var world = helper.AddGroup("World");
-                _lockBox = (UICheckBox)world.AddCheckbox("Lock time of day", WorldController.TimeLocked, sel =>
-                {
-                    WorldController.TimeLocked = sel;
-                });
-
-                _timeSlider = (UISlider)world.AddSlider("Time of day", 0f, 24f, 0.25f, WorldController.TimeOfDayHours, v =>
-                {
-                    WorldController.ApplyTime(v);
-                });
-
-                world.AddSlider("Latitude", -90f, 90f, 0.5f, WorldLat(), v =>
-                {
-                    WorldController.ApplyPosition(v, WorldLon());
-                });
-                world.AddSlider("Longitude", -180f, 180f, 0.5f, WorldLon(), v =>
-                {
-                    WorldController.ApplyPosition(WorldLat(), v);
-                });
-                world.AddSlider("Rain", 0f, 1f, 0.02f, WorldRain(), v =>
-                {
-                    WorldController.ApplyWeather(v, WorldFog(), WorldCloud());
-                });
-                world.AddSlider("Fog", 0f, 1f, 0.02f, WorldFog(), v =>
-                {
-                    WorldController.ApplyWeather(WorldRain(), v, WorldCloud());
-                });
-                world.AddSlider("Cloud", 0f, 1f, 0.02f, WorldCloud(), v =>
-                {
-                    WorldController.ApplyWeather(WorldRain(), WorldFog(), v);
-                });
+                SelectTab(0);
             }
             catch (Exception e)
             {
@@ -238,6 +149,164 @@ namespace SceneFX.UI
             {
                 _building = false;
             }
+        }
+
+        private UIPanel NewPage()
+        {
+            var page = _root.AddUIComponent<UIPanel>();
+            page.backgroundSprite = null;
+            page.size = new Vector2(392f, 556f);
+            page.relativePosition = new Vector3(4f, 74f);
+            page.isVisible = false;
+            return page;
+        }
+
+        private void SelectTab(int index)
+        {
+            _activeTab = index;
+            for (int i = 0; i < _pages.Length; i++)
+            {
+                if (_pages[i] != null)
+                {
+                    _pages[i].isVisible = i == index;
+                }
+            }
+
+            for (int i = 0; i < _tabButtons.Length; i++)
+            {
+                if (_tabButtons[i] != null)
+                {
+                    _tabButtons[i].normalBgSprite = i == index ? "ButtonMenuFocused" : "ButtonMenu";
+                }
+            }
+        }
+
+        private void BuildStylePage(UIPanel page)
+        {
+            var helper = new UIHelper(page);
+
+            var group = helper.AddGroup("Style");
+            string[] styleNames = ListStyleNames();
+            _styleDropDown = (UIDropDown)group.AddDropdown("Style", styleNames, 0, sel =>
+            {
+                if (_suppressEvents)
+                {
+                    return;
+                }
+
+                ApplyStyleByName(styleNames[sel]);
+            });
+
+            _nameField = (UITextField)group.AddTextfield("Style name", "My scene", sel => { });
+            group.AddButton("Save current look as style", () =>
+            {
+                var copy = SceneRuntime.Current.Clone();
+                copy.Name = StyleStore.SafeName(_nameField.text);
+                StyleStore.SaveStyle(copy);
+                RefreshStyleDropdown();
+            });
+            group.AddButton("Restore game look", () =>
+            {
+                SceneRuntime.RestoreGame();
+                WorldController.Restore();
+            });
+        }
+
+        private void BuildLutPage(UIPanel page)
+        {
+            var helper = new UIHelper(page);
+
+            var group = helper.AddGroup("Color grading LUT");
+            string[] lutNames = ListLutNames();
+            _lutDropDown = (UIDropDown)group.AddDropdown("LUT", lutNames, 0, sel =>
+            {
+                if (_suppressEvents)
+                {
+                    return;
+                }
+
+                SceneRuntime.Current.Lut = lutNames[sel].Replace("  (compat)", string.Empty);
+                SceneRuntime.ApplyCurrent();
+            });
+            group.AddCheckbox("Sky tonemapping", SceneRuntime.Current.SkyTonemap, sel =>
+            {
+                SceneRuntime.Current.SkyTonemap = sel;
+                SceneRuntime.ApplyCurrent();
+            });
+        }
+
+        private void BuildGradePage(UIPanel page)
+        {
+            var helper = new UIHelper(page);
+
+            var group = helper.AddGroup("Live grade");
+            group.AddSlider("Gamma", 1.2f, 3f, 0.05f, SceneRuntime.Current.Gamma, v =>
+            {
+                SceneRuntime.Current.Gamma = v;
+                SceneRuntime.ApplyCurrent();
+            });
+            group.AddSlider("Brightness", -1f, 1f, 0.05f, SceneRuntime.Current.Brightness, v =>
+            {
+                SceneRuntime.Current.Brightness = v;
+                SceneRuntime.ApplyCurrent();
+            });
+            group.AddSlider("Contrast", -1f, 1f, 0.05f, SceneRuntime.Current.Contrast, v =>
+            {
+                SceneRuntime.Current.Contrast = v;
+                SceneRuntime.ApplyCurrent();
+            });
+            group.AddSlider("Sun gain", 0f, 3f, 0.05f, SceneRuntime.Current.SunIntensity, v =>
+            {
+                SceneRuntime.Current.SunIntensity = v;
+                SceneRuntime.ApplyCurrent();
+            });
+            group.AddSlider("Exposure", 0.5f, 1.5f, 0.02f, SceneRuntime.Current.Exposure, v =>
+            {
+                SceneRuntime.Current.Exposure = v;
+                SceneRuntime.ApplyCurrent();
+            });
+            group.AddSlider("Warmth", -1f, 1f, 0.05f, SceneRuntime.Current.Warmth, v =>
+            {
+                SceneRuntime.Current.Warmth = v;
+                SceneRuntime.ApplyCurrent();
+            });
+        }
+
+        private void BuildWorldPage(UIPanel page)
+        {
+            var helper = new UIHelper(page);
+
+            var group = helper.AddGroup("World");
+            group.AddCheckbox("Lock time of day", WorldController.TimeLocked, sel =>
+            {
+                WorldController.TimeLocked = sel;
+            });
+
+            group.AddSlider("Time of day", 0f, 24f, 0.25f, WorldController.TimeOfDayHours, v =>
+            {
+                WorldController.ApplyTime(v);
+            });
+
+            group.AddSlider("Latitude", -90f, 90f, 0.5f, WorldLat(), v =>
+            {
+                WorldController.ApplyPosition(v, WorldLon());
+            });
+            group.AddSlider("Longitude", -180f, 180f, 0.5f, WorldLon(), v =>
+            {
+                WorldController.ApplyPosition(WorldLat(), v);
+            });
+            group.AddSlider("Rain", 0f, 1f, 0.02f, WorldRain(), v =>
+            {
+                WorldController.ApplyWeather(v, WorldFog(), WorldCloud());
+            });
+            group.AddSlider("Fog", 0f, 1f, 0.02f, WorldFog(), v =>
+            {
+                WorldController.ApplyWeather(WorldRain(), v, WorldCloud());
+            });
+            group.AddSlider("Cloud", 0f, 1f, 0.02f, WorldCloud(), v =>
+            {
+                WorldController.ApplyWeather(WorldRain(), WorldFog(), v);
+            });
         }
 
         private static float WorldLat()
@@ -372,7 +441,22 @@ namespace SceneFX.UI
                 _suppressEvents = true;
                 try
                 {
-                    _lutDropDown.items = ListLutNames();
+                    string[] names = ListLutNames();
+                    _lutDropDown.items = names;
+
+                    // Mirror the current style's selection when it is listed.
+                    string current = SceneRuntime.Current.Lut;
+                    if (!string.IsNullOrEmpty(current))
+                    {
+                        for (int i = 0; i < names.Length; i++)
+                        {
+                            if (names[i] == current || names[i].EndsWith("." + current, StringComparison.Ordinal))
+                            {
+                                _lutDropDown.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
                 }
                 finally
                 {
