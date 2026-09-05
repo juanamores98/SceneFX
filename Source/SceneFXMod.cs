@@ -26,9 +26,9 @@ namespace SceneFX
 
         public void OnEnabled()
         {
-            DestroyHosts();
-            _host = new GameObject(HostObjectName);
-            _host.AddComponent<PanelEngine>();
+            // Covers enabling the mod while a map is already running; the
+            // gameplay scene replaces menu-time hosts anyway.
+            CreateHost();
         }
 
         public void OnDisabled()
@@ -59,9 +59,16 @@ namespace SceneFX
             group.AddButton("Restore game look", () => SceneRuntime.RestoreGame());
         }
 
+        /// <summary>
+        /// Scene hosts created while the main menu is up die when the gameplay
+        /// scene loads, so the host is (re)created here for every map.
+        /// </summary>
         public override void OnLevelLoaded(LoadMode mode)
         {
             base.OnLevelLoaded(mode);
+
+            CreateHost();
+
             UI.UuiButton.Register(
                 "SceneFX",
                 "Visual styles, LUTs and world controls (F10)",
@@ -75,6 +82,14 @@ namespace SceneFX
             UI.UuiButton.Unregister();
             WorldController.Restore();
             SceneRuntime.RestoreGame();
+            DestroyHosts();
+        }
+
+        private void CreateHost()
+        {
+            DestroyHosts();
+            _host = new GameObject(HostObjectName);
+            _host.AddComponent<PanelEngine>();
         }
 
         private static void DestroyHosts()

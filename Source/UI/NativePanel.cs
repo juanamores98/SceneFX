@@ -83,7 +83,7 @@ namespace SceneFX.UI
                 _root = view.AddUIComponent(typeof(UIPanel)) as UIPanel;
                 _root.backgroundSprite = "MenuPanel";
                 _root.size = new Vector2(400f, 620f);
-                _root.relativePosition = new Vector3(120f, 100f);
+                _root.relativePosition = new Vector3(760f, 100f);
                 _root.opacity = 0.95f;
 
                 var drag = _root.AddUIComponent<UIDragHandle>();

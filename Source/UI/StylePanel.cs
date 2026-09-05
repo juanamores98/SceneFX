@@ -14,7 +14,7 @@ namespace SceneFX.UI
 
         private readonly Action _onChanged;
 
-        private Rect _rect = new Rect(160f, 150f, 480f, 430f);
+        private Rect _rect = new Rect(200f, 500f, 480f, 430f);
         private int _tab;
         private Vector2 _scroll;
         private string _newStyleName = "My scene";
