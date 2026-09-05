@@ -1,0 +1,104 @@
+using System;
+using System.Xml.Serialization;
+using UnityEngine;
+
+namespace SceneFX.Core
+{
+    /// <summary>
+    /// Process-wide style state: the look being edited/applied and the
+    /// apply-on-load behavior.
+    /// </summary>
+    public static class SceneRuntime
+    {
+        private static StyleData _current = new StyleData();
+
+        internal static StyleData Current
+        {
+            get { return _current; }
+        }
+
+        internal static bool ApplyOnLoad = true;
+
+        internal static void LoadPersisted()
+        {
+            var state = StyleStore.LoadState();
+            if (state != null)
+            {
+                _current = state;
+            }
+
+            OptionsDocument options = OptionsStore.Load();
+            if (options != null)
+            {
+                ApplyOnLoad = options.ApplyOnLoad;
+            }
+        }
+
+        internal static void ApplyCurrent()
+        {
+            StyleEngine.Apply(_current);
+            StyleStore.SaveState(_current);
+        }
+
+        internal static void RestoreGame()
+        {
+            StyleEngine.RestoreGame();
+        }
+
+        internal static void SaveOptions()
+        {
+            OptionsStore.Save(new OptionsDocument { ApplyOnLoad = ApplyOnLoad });
+        }
+    }
+
+    [XmlRoot(ElementName = "sceneFxOptions", Namespace = "", IsNullable = false)]
+    public class OptionsDocument
+    {
+        [XmlAttribute("schema")]
+        public int Schema = 2;
+
+        [XmlElement("applyOnLoad")]
+        public bool ApplyOnLoad = true;
+    }
+
+    internal static class OptionsStore
+    {
+        private const string FileName = "SceneFXOptions.xml";
+
+        internal static OptionsDocument Load()
+        {
+            try
+            {
+                if (!System.IO.File.Exists(FileName))
+                {
+                    return null;
+                }
+
+                using (var reader = new System.IO.StreamReader(FileName))
+                {
+                    return new XmlSerializer(typeof(OptionsDocument)).Deserialize(reader) as OptionsDocument;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                return null;
+            }
+        }
+
+        internal static void Save(OptionsDocument document)
+        {
+            try
+            {
+                using (var writer = new System.IO.StreamWriter(FileName))
+                {
+                    new XmlSerializer(typeof(OptionsDocument)).Serialize(writer, document);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
+    }
+}
