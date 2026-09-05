@@ -9,6 +9,7 @@ namespace SceneFX.Core
     /// A visual style: a named, complete look combining the color grading LUT,
     /// the filmic tone curve, scene fog and sun exposure. Schema owned by v2.
     /// </summary>
+    [XmlRoot(ElementName = "sceneStyle", Namespace = "", IsNullable = false)]
     public class StyleData
     {
         [XmlAttribute("name")]
@@ -96,7 +97,7 @@ namespace SceneFX.Core
                 return "style";
             }
 
-            string clean = name.Trim();
+            string clean = name.Trim().Replace(' ', '-');
             foreach (char c in Path.GetInvalidFileNameChars())
             {
                 clean = clean.Replace(c, '_');

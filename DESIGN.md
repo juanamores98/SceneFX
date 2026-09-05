@@ -31,6 +31,22 @@ guardarse, aplicarse y compartirse como archivo.
    solar, exposición y parámetros de tono); "Restore game look" revierte a él.
 3. Al descargar el mapa se restaura el look del juego.
 
+## Estilos incluidos (built-ins)
+
+13 documentos en `BuiltIns\`, extraídos a la carpeta de estilos en el primer
+arranque:
+
+- `Vanilla` — todo neutro, sin LUT, niebla 0 = valores del juego.
+- `Optimized` — look cálido crepuscular de contraste alto sobre la tabla
+  `1539181199.Relight2Average`, exposición 1.1, niebla 0.00006 / 2852.
+- 11 variantes `Optimized <LUT>` — idénticas al Optimized pero apuntando a
+  cada tabla de Relight (`1209581656.*`, 7 tablas) y Relight2
+  (`1539181199.*`, 4 tablas restantes).
+
+Las tablas `.crp` **no se empaquetan**: los estilos las referencian por nombre
+(el selector acepta coincidencia exacta, sufijo `id.nombre` o contiene). Sin
+los packs suscritos, el estilo aplica igualmente el resto de parámetros.
+
 ## Selección de LUT
 
 Se usa el gestor de corrección de color del juego: se enumeran los perfiles

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<sceneStyle RelightFilm="Optimized RelightFilm">
+  <lut>1209581656.RelightFilm</lut>
+  <gamma>3.15</gamma>
+  <brightness>-0.4</brightness>
+  <contrast>-0.7</contrast>
+  <sunIntensity>1</sunIntensity>
+  <exposure>1.1</exposure>
+  <warmth>0.4</warmth>
+  <fogDensity>0.00006</fogDensity>
+  <fogStart>2852</fogStart>
+  <skyTonemap>true</skyTonemap>
+</sceneStyle>

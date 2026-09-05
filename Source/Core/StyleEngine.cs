@@ -1,3 +1,4 @@
+﻿using System;
 using System.Reflection;
 using UnityEngine;
 
@@ -32,7 +33,7 @@ namespace SceneFX.Core
                 return;
             }
 
-            var dayNight = Object.FindObjectOfType<DayNightProperties>();
+            var dayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
             if (dayNight != null)
             {
                 dayNight.m_SunIntensity = _vanillaSun;
@@ -57,7 +58,7 @@ namespace SceneFX.Core
                 return;
             }
 
-            var dayNight = Object.FindObjectOfType<DayNightProperties>();
+            var dayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
             if (dayNight != null)
             {
                 _vanillaSun = dayNight.m_SunIntensity;
@@ -110,13 +111,28 @@ namespace SceneFX.Core
                 return;
             }
 
-            for (int i = 0; i < manager.items.Length; i++)
+            // Exact name, then suffix (workshop-id.name), then loose contains.
+            int found = -1;
+            for (int i = 0; i < manager.items.Length && found < 0; i++)
             {
                 if (manager.items[i] == name)
                 {
-                    manager.currentSelection = i;
-                    return;
+                    found = i;
                 }
+            }
+
+            for (int i = 0; i < manager.items.Length && found < 0; i++)
+            {
+                string item = manager.items[i];
+                if (item != null && (item.EndsWith("." + name, StringComparison.Ordinal) || item.Contains(name)))
+                {
+                    found = i;
+                }
+            }
+
+            if (found >= 0)
+            {
+                manager.currentSelection = found;
             }
         }
 
@@ -149,7 +165,7 @@ namespace SceneFX.Core
         {
             TakeSnapshot();
 
-            var dayNight = Object.FindObjectOfType<DayNightProperties>();
+            var dayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
             if (dayNight == null)
             {
                 return;
@@ -166,7 +182,7 @@ namespace SceneFX.Core
         /// </summary>
         private static void ApplyWarmth(float warmth)
         {
-            var dayNight = Object.FindObjectOfType<DayNightProperties>();
+            var dayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
             if (dayNight == null || dayNight.m_LightColor == null)
             {
                 return;
@@ -195,7 +211,7 @@ namespace SceneFX.Core
 
         private static void ApplyFog(StyleData style)
         {
-            var fog = Object.FindObjectOfType<FogProperties>();
+            var fog = UnityEngine.Object.FindObjectOfType<FogProperties>();
             if (fog == null)
             {
                 return;

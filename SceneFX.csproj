@@ -20,6 +20,10 @@
         <Reference Include="UnityEngine" />
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Include="BuiltIns\*.scene.xml" />
+    </ItemGroup>
+
     <Target Name="DeployToModDirectory" AfterTargets="Build">
         <PropertyGroup>
             <DeployDir>$(LOCALAPPDATA)/Colossal Order/Cities_Skylines/Addons/Mods/SceneFX/</DeployDir>

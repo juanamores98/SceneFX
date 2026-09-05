@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sceneStyle name="Vanilla">
+  <lut></lut>
+  <gamma>2.2</gamma>
+  <brightness>0</brightness>
+  <contrast>0</contrast>
+  <sunIntensity>1</sunIntensity>
+  <exposure>1</exposure>
+  <warmth>0</warmth>
+  <fogDensity>0</fogDensity>
+  <fogStart>0</fogStart>
+  <skyTonemap>true</skyTonemap>
+</sceneStyle>

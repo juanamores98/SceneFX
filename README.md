@@ -8,6 +8,12 @@ propios looks. Desarrollo original de **juanamores98**.
 
 - **Biblioteca de estilos**: guarda cualquier combinación como un estilo con
   nombre (`*.scene.xml`) y aplícalo con un clic desde el panel (F10).
+- **Estilos incluidos**: `Vanilla` (neutro), `Optimized` (look cálido
+  crepuscular sobre la tabla Relight2Average) y 11 variantes `Optimized <LUT>`
+  — una por cada tabla de Relight (7) y Relight2 (5, incluida Average via
+  Optimized). Los estilos **referencian** las tablas por nombre; si tienes
+  suscritos los packs de LUTs se aplican, si no, el resto del estilo funciona
+  igual. Se extraen a la carpeta de estilos en el primer arranque.
 - **Selector de LUTs**: detecta todos los perfiles de corrección de color
   instalados (los del juego y los que añadan otros mods) y cambia entre ellos
   al instante.
