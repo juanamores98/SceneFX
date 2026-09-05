@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Language UniqueName="de" ReadableName="Deutsch">
+  <Translations>
+    <Translation ID="SCX_TAB_STYLE" String="Stil" />
+    <Translation ID="SCX_TAB_LUT" String="LUT" />
+    <Translation ID="SCX_TAB_GRADE" String="Ton" />
+    <Translation ID="SCX_TAB_WORLD" String="Welt" />
+    <Translation ID="SCX_GROUP_STYLE" String="Stil" />
+    <Translation ID="SCX_GROUP_LUT" String="Farbtabelle (LUT)" />
+    <Translation ID="SCX_GROUP_GRADE" String="Live-Anpassung" />
+    <Translation ID="SCX_GROUP_WORLD" String="Welt" />
+    <Translation ID="SCX_STYLE" String="Stil" />
+    <Translation ID="SCX_STYLE_NAME" String="Stilname" />
+    <Translation ID="SCX_SAVE_STYLE" String="Aktuellen Look als Stil speichern" />
+    <Translation ID="SCX_RESTORE_GAME" String="Spiel-Look wiederherstellen" />
+    <Translation ID="SCX_LUT" String="LUT" />
+    <Translation ID="SCX_LUT_KEEP" String="(aktuell behalten)" />
+    <Translation ID="SCX_SKY_TONEMAP" String="Himmel-Tonemapping" />
+    <Translation ID="SCX_GAMMA" String="Gamma" />
+    <Translation ID="SCX_BRIGHTNESS" String="Helligkeit" />
+    <Translation ID="SCX_CONTRAST" String="Kontrast" />
+    <Translation ID="SCX_SUN_GAIN" String="Sonnenverstärkung" />
+    <Translation ID="SCX_EXPOSURE" String="Belichtung" />
+    <Translation ID="SCX_WARMTH" String="Wärme" />
+    <Translation ID="SCX_LOCK_TIME" String="Tageszeit fixieren" />
+    <Translation ID="SCX_TIME_OF_DAY" String="Tageszeit" />
+    <Translation ID="SCX_LATITUDE" String="Breitengrad" />
+    <Translation ID="SCX_LONGITUDE" String="Längengrad" />
+    <Translation ID="SCX_RAIN" String="Regen" />
+    <Translation ID="SCX_FOG" String="Nebel" />
+    <Translation ID="SCX_CLOUD" String="Wolken" />
+  </Translations>
+</Language>

@@ -5,17 +5,25 @@ using UnityEngine;
 using ColossalFramework.UI;
 using ICities;
 using SceneFX.Core;
+using SceneFX.Locale;
 
 namespace SceneFX.UI
 {
     /// <summary>
     /// Native in-game panel (ColossalFramework UI) with tabbed pages so every
     /// control stays inside the window: Style, LUT, Grade and World.
-    /// Toggled with F10 or the Unified UI tray button.
+    /// Toggled with F10 or the Unified UI tray button. Localized via the
+    /// Locale folder (English fallback).
     /// </summary>
     internal sealed class NativePanel
     {
-        private static readonly string[] Tabs = { "Style", "LUT", "Grade", "World" };
+        private static readonly string[] Tabs =
+        {
+            Translator.Get("SCX_TAB_STYLE"),
+            Translator.Get("SCX_TAB_LUT"),
+            Translator.Get("SCX_TAB_GRADE"),
+            Translator.Get("SCX_TAB_WORLD"),
+        };
 
         private UIPanel _root;
         private readonly UIPanel[] _pages = new UIPanel[Tabs.Length];
@@ -185,9 +193,9 @@ namespace SceneFX.UI
         {
             var helper = new UIHelper(page);
 
-            var group = helper.AddGroup("Style");
+            var group = helper.AddGroup(Translator.Get("SCX_GROUP_STYLE"));
             string[] styleNames = ListStyleNames();
-            _styleDropDown = (UIDropDown)group.AddDropdown("Style", styleNames, 0, sel =>
+            _styleDropDown = (UIDropDown)group.AddDropdown(Translator.Get("SCX_STYLE"), styleNames, 0, sel =>
             {
                 if (_suppressEvents)
                 {
@@ -197,15 +205,15 @@ namespace SceneFX.UI
                 ApplyStyleByName(styleNames[sel]);
             });
 
-            _nameField = (UITextField)group.AddTextfield("Style name", "My scene", sel => { });
-            group.AddButton("Save current look as style", () =>
+            _nameField = (UITextField)group.AddTextfield(Translator.Get("SCX_STYLE_NAME"), "My scene", sel => { });
+            group.AddButton(Translator.Get("SCX_SAVE_STYLE"), () =>
             {
                 var copy = SceneRuntime.Current.Clone();
                 copy.Name = StyleStore.SafeName(_nameField.text);
                 StyleStore.SaveStyle(copy);
                 RefreshStyleDropdown();
             });
-            group.AddButton("Restore game look", () =>
+            group.AddButton(Translator.Get("SCX_RESTORE_GAME"), () =>
             {
                 SceneRuntime.RestoreGame();
                 WorldController.Restore();
@@ -216,9 +224,9 @@ namespace SceneFX.UI
         {
             var helper = new UIHelper(page);
 
-            var group = helper.AddGroup("Color grading LUT");
+            var group = helper.AddGroup(Translator.Get("SCX_GROUP_LUT"));
             string[] lutNames = ListLutNames();
-            _lutDropDown = (UIDropDown)group.AddDropdown("LUT", lutNames, 0, sel =>
+            _lutDropDown = (UIDropDown)group.AddDropdown(Translator.Get("SCX_LUT"), lutNames, 0, sel =>
             {
                 if (_suppressEvents)
                 {
@@ -228,7 +236,7 @@ namespace SceneFX.UI
                 SceneRuntime.Current.Lut = lutNames[sel].Replace("  (compat)", string.Empty);
                 SceneRuntime.ApplyCurrent();
             });
-            group.AddCheckbox("Sky tonemapping", SceneRuntime.Current.SkyTonemap, sel =>
+            group.AddCheckbox(Translator.Get("SCX_SKY_TONEMAP"), SceneRuntime.Current.SkyTonemap, sel =>
             {
                 SceneRuntime.Current.SkyTonemap = sel;
                 SceneRuntime.ApplyCurrent();
@@ -239,33 +247,33 @@ namespace SceneFX.UI
         {
             var helper = new UIHelper(page);
 
-            var group = helper.AddGroup("Live grade");
-            group.AddSlider("Gamma", 1.2f, 3f, 0.05f, SceneRuntime.Current.Gamma, v =>
+            var group = helper.AddGroup(Translator.Get("SCX_GROUP_GRADE"));
+            group.AddSlider(Translator.Get("SCX_GAMMA"), 1.2f, 3f, 0.05f, SceneRuntime.Current.Gamma, v =>
             {
                 SceneRuntime.Current.Gamma = v;
                 SceneRuntime.ApplyCurrent();
             });
-            group.AddSlider("Brightness", -1f, 1f, 0.05f, SceneRuntime.Current.Brightness, v =>
+            group.AddSlider(Translator.Get("SCX_BRIGHTNESS"), -1f, 1f, 0.05f, SceneRuntime.Current.Brightness, v =>
             {
                 SceneRuntime.Current.Brightness = v;
                 SceneRuntime.ApplyCurrent();
             });
-            group.AddSlider("Contrast", -1f, 1f, 0.05f, SceneRuntime.Current.Contrast, v =>
+            group.AddSlider(Translator.Get("SCX_CONTRAST"), -1f, 1f, 0.05f, SceneRuntime.Current.Contrast, v =>
             {
                 SceneRuntime.Current.Contrast = v;
                 SceneRuntime.ApplyCurrent();
             });
-            group.AddSlider("Sun gain", 0f, 3f, 0.05f, SceneRuntime.Current.SunIntensity, v =>
+            group.AddSlider(Translator.Get("SCX_SUN_GAIN"), 0f, 3f, 0.05f, SceneRuntime.Current.SunIntensity, v =>
             {
                 SceneRuntime.Current.SunIntensity = v;
                 SceneRuntime.ApplyCurrent();
             });
-            group.AddSlider("Exposure", 0.5f, 1.5f, 0.02f, SceneRuntime.Current.Exposure, v =>
+            group.AddSlider(Translator.Get("SCX_EXPOSURE"), 0.5f, 1.5f, 0.02f, SceneRuntime.Current.Exposure, v =>
             {
                 SceneRuntime.Current.Exposure = v;
                 SceneRuntime.ApplyCurrent();
             });
-            group.AddSlider("Warmth", -1f, 1f, 0.05f, SceneRuntime.Current.Warmth, v =>
+            group.AddSlider(Translator.Get("SCX_WARMTH"), -1f, 1f, 0.05f, SceneRuntime.Current.Warmth, v =>
             {
                 SceneRuntime.Current.Warmth = v;
                 SceneRuntime.ApplyCurrent();
@@ -276,34 +284,34 @@ namespace SceneFX.UI
         {
             var helper = new UIHelper(page);
 
-            var group = helper.AddGroup("World");
-            group.AddCheckbox("Lock time of day", WorldController.TimeLocked, sel =>
+            var group = helper.AddGroup(Translator.Get("SCX_GROUP_WORLD"));
+            group.AddCheckbox(Translator.Get("SCX_LOCK_TIME"), WorldController.TimeLocked, sel =>
             {
                 WorldController.TimeLocked = sel;
             });
 
-            group.AddSlider("Time of day", 0f, 24f, 0.25f, WorldController.TimeOfDayHours, v =>
+            group.AddSlider(Translator.Get("SCX_TIME_OF_DAY"), 0f, 24f, 0.25f, WorldController.TimeOfDayHours, v =>
             {
                 WorldController.ApplyTime(v);
             });
 
-            group.AddSlider("Latitude", -90f, 90f, 0.5f, WorldLat(), v =>
+            group.AddSlider(Translator.Get("SCX_LATITUDE"), -90f, 90f, 0.5f, WorldLat(), v =>
             {
                 WorldController.ApplyPosition(v, WorldLon());
             });
-            group.AddSlider("Longitude", -180f, 180f, 0.5f, WorldLon(), v =>
+            group.AddSlider(Translator.Get("SCX_LONGITUDE"), -180f, 180f, 0.5f, WorldLon(), v =>
             {
                 WorldController.ApplyPosition(WorldLat(), v);
             });
-            group.AddSlider("Rain", 0f, 1f, 0.02f, WorldRain(), v =>
+            group.AddSlider(Translator.Get("SCX_RAIN"), 0f, 1f, 0.02f, WorldRain(), v =>
             {
                 WorldController.ApplyWeather(v, WorldFog(), WorldCloud());
             });
-            group.AddSlider("Fog", 0f, 1f, 0.02f, WorldFog(), v =>
+            group.AddSlider(Translator.Get("SCX_FOG"), 0f, 1f, 0.02f, WorldFog(), v =>
             {
                 WorldController.ApplyWeather(WorldRain(), v, WorldCloud());
             });
-            group.AddSlider("Cloud", 0f, 1f, 0.02f, WorldCloud(), v =>
+            group.AddSlider(Translator.Get("SCX_CLOUD"), 0f, 1f, 0.02f, WorldCloud(), v =>
             {
                 WorldController.ApplyWeather(WorldRain(), WorldFog(), v);
             });
@@ -388,7 +396,7 @@ namespace SceneFX.UI
 
         private static string[] ListLutNames()
         {
-            var names = new List<string> { "(keep current)" };
+            var names = new List<string> { Translator.Get("SCX_LUT_KEEP") };
             foreach (string name in StyleEngine.ListLuts())
             {
                 names.Add(name);

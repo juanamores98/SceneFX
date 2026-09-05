@@ -30,6 +30,10 @@
         </PropertyGroup>
         <MakeDir Directories="$(DeployDir)" />
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(DeployDir)" />
+        <ItemGroup>
+            <LocaleFiles Include="Locale\*.xml" />
+        </ItemGroup>
+        <Copy SourceFiles="@(LocaleFiles)" DestinationFolder="$(DeployDir)Locale/" SkipUnchangedFiles="true" />
         <Message Importance="high" Text="Deployed to $(DeployDir)" />
     </Target>
 
