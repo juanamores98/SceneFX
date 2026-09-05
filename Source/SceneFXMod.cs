@@ -59,9 +59,20 @@ namespace SceneFX
             group.AddButton("Restore game look", () => SceneRuntime.RestoreGame());
         }
 
+        public override void OnLevelLoaded(LoadMode mode)
+        {
+            base.OnLevelLoaded(mode);
+            UI.UuiButton.Register(
+                "SceneFX",
+                "Visual styles, LUTs and world controls (F10)",
+                UI.TrayIcon.Make(),
+                show => PanelEngine.OpenFromTray());
+        }
+
         public override void OnLevelUnloading()
         {
             base.OnLevelUnloading();
+            UI.UuiButton.Unregister();
             WorldController.Restore();
             SceneRuntime.RestoreGame();
         }

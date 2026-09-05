@@ -30,6 +30,20 @@ namespace SceneFX.UI
             get { return _root != null && _root.isVisible; }
         }
 
+        internal void Show()
+        {
+            if (_root == null)
+            {
+                Build();
+            }
+
+            if (_root != null)
+            {
+                _root.isVisible = true;
+                RefreshDropdowns();
+            }
+        }
+
         internal void Toggle()
         {
             if (_root == null)

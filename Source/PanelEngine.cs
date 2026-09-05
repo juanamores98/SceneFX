@@ -13,14 +13,36 @@ namespace SceneFX
     public class PanelEngine : MonoBehaviour
     {
         private static bool _legacyOpen;
+        private static NativePanel _native;
 
         private StylePanel _panel;
-        private NativePanel _native;
         private int _windowId;
 
         internal static void CloseLegacy()
         {
             _legacyOpen = false;
+        }
+
+        /// <summary>
+        /// Opens the native panel from the Unified UI tray button (or any
+        /// external caller).
+        /// </summary>
+        internal static void OpenFromTray()
+        {
+            try
+            {
+                if (_native == null)
+                {
+                    _native = new NativePanel();
+                }
+
+                _native.Show();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                _legacyOpen = true;
+            }
         }
 
         private void Start()
@@ -67,7 +89,7 @@ namespace SceneFX
 
                 _native.Toggle();
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogException(e);
                 _legacyOpen = true; // fall back to the IMGUI window
