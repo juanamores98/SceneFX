@@ -133,6 +133,15 @@ namespace SceneFX.Core
             if (found >= 0)
             {
                 manager.currentSelection = found;
+                return;
+            }
+
+            // Compatibility mode: tables installed by the user on this
+            // machine, read at runtime. Nothing is shipped with the mod.
+            Texture3D custom;
+            if (LutCompat.TryGet(name, out custom))
+            {
+                manager.SetLUT(custom);
             }
         }
 

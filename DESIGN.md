@@ -47,6 +47,23 @@ Las tablas `.crp` **no se empaquetan**: los estilos las referencian por nombre
 (el selector acepta coincidencia exacta, sufijo `id.nombre` o contiene). Sin
 los packs suscritos, el estilo aplica igualmente el resto de parámetros.
 
+## Modo compatible (lectura en runtime)
+
+`Core/LutCompat` escanea, una sola vez bajo demanda, las carpetas de tablas que
+el usuario ya tenga en su máquina:
+
+1. `Luts\` junto al DLL del mod (archivos que el usuario ponga ahí).
+2. `Addons\Mods\*\Luts\` de otros mods instalados localmente.
+
+Cada `.crp` se abre con el `Package` del juego y su textura 3D se instancia en
+memoria; `ColorCorrectionManager.SetLUT` la aplica por la vía pública del
+juego. Claves registradas: nombre de archivo y nombre interno del asset, con
+coincidencia por sufijo (`1539181199.Relight2Average` ↔ `Relight2Average`).
+
+**Límites de licencia**: el mod no empaqueta, copia ni modifica ninguna tabla
+de terceros; solo las lee si el usuario ya las posee (interoperabilidad). El
+código del mod sigue siendo MIT-0.
+
 ## Selección de LUT
 
 Se usa el gestor de corrección de color del juego: se enumeran los perfiles

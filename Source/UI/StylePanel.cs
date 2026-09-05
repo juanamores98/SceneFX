@@ -147,11 +147,36 @@ namespace SceneFX.UI
             }
         }
 
+        private void MergeLutList()
+        {
+            var gameLuts = StyleEngine.ListLuts();
+            var compat = LutCompat.Names();
+            _luts = new string[gameLuts.Length + compat.Count];
+            gameLuts.CopyTo(_luts, 0);
+            int i = gameLuts.Length;
+            foreach (string name in compat)
+            {
+                _luts[i++] = name + "  (compat)";
+            }
+        }
+
         private void DrawLutTab()
         {
             if (GUI.Button(new Rect(8f, 56f, 110f, 24f), "Scan LUTs"))
             {
-                _luts = StyleEngine.ListLuts();
+                LutCompat.ScanFolders();
+                MergeLutList();
+            }
+
+            if (GUI.Button(new Rect(124f, 56f, 130f, 24f), "Scan folders"))
+            {
+                LutCompat.ScanFolders();
+                MergeLutList();
+            }
+
+            if (_luts.Length == 0)
+            {
+                MergeLutList();
             }
 
             float listHeight = 260f;
@@ -164,7 +189,7 @@ namespace SceneFX.UI
                 GUI.Label(new Rect(4f, y + 3f, 270f, 24f), lut);
                 if (GUI.Button(new Rect(280f, y, 90f, 24f), "Use"))
                 {
-                    SceneRuntime.Current.Lut = lut;
+                    SceneRuntime.Current.Lut = lut.Replace("  (compat)", string.Empty);
                     SceneRuntime.ApplyCurrent();
                     _onChanged();
                 }

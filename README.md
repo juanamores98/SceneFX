@@ -17,6 +17,11 @@ propios looks. Desarrollo original de **juanamores98**.
 - **Selector de LUTs**: detecta todos los perfiles de corrección de color
   instalados (los del juego y los que añadan otros mods) y cambia entre ellos
   al instante.
+- **Modo compatible**: lee tablas LUT en formato `.crp` que el usuario ya tenga
+  en su máquina (subscripciones del Workshop o sueltas en una carpeta `Luts`
+  junto al DLL, o en las carpetas `Luts` de otros mods instalados). El mod
+  **no incluye, copia ni redistribuye ninguna tabla** — solo las carga en
+  memoria si existen; sin ellas, el resto del estilo se aplica igualmente.
 - **Ajuste en vivo por estilo**: gamma, brillo, contraste, ganancia solar,
   exposición, calidez, densidad/distancia de niebla y sky tonemapping.
 - **Restaurar el look del juego**: deshace todo con un botón (snapshot de los
