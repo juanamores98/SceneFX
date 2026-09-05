@@ -16,6 +16,7 @@ namespace SceneFX.Core
         public string Name = "Default";
 
         [XmlElement("lut")] public string Lut = "";              // empty = leave current
+        [XmlElement("nativeLut")] public string NativeLut = "";  // fallback: procedurally generated table owned by the mod
         [XmlElement("gamma")] public float Gamma = 2.2f;          // 1.2..3.0
         [XmlElement("brightness")] public float Brightness = 0f;  // -1..1
         [XmlElement("contrast")] public float Contrast = 0f;      // -1..1

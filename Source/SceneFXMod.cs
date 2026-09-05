@@ -62,6 +62,7 @@ namespace SceneFX
         public override void OnLevelUnloading()
         {
             base.OnLevelUnloading();
+            WorldController.Restore();
             SceneRuntime.RestoreGame();
         }
 

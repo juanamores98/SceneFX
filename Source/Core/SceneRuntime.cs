@@ -11,6 +11,7 @@ namespace SceneFX.Core
     public static class SceneRuntime
     {
         private static StyleData _current = new StyleData();
+        private static float _lastStateSave = -10f;
 
         internal static StyleData Current
         {
@@ -34,10 +35,18 @@ namespace SceneFX.Core
             }
         }
 
+        /// <summary>
+        /// Applies the current style live; the state document is persisted at
+        /// most once per second so slider drags stay cheap.
+        /// </summary>
         internal static void ApplyCurrent()
         {
             StyleEngine.Apply(_current);
-            StyleStore.SaveState(_current);
+            if (Time.realtimeSinceStartup - _lastStateSave > 1f)
+            {
+                _lastStateSave = Time.realtimeSinceStartup;
+                StyleStore.SaveState(_current);
+            }
         }
 
         internal static void RestoreGame()

@@ -7,18 +7,20 @@ using SceneFX.UI;
 namespace SceneFX
 {
     /// <summary>
-    /// Scene host: hotkey (F10) and the style panel lifecycle.
+    /// Scene host: native panel (F10), legacy IMGUI window (F11) and the
+    /// world tick.
     /// </summary>
     public class PanelEngine : MonoBehaviour
     {
-        private static bool _open;
+        private static bool _legacyOpen;
 
         private StylePanel _panel;
+        private NativePanel _native;
         private int _windowId;
 
-        internal static void Close()
+        internal static void CloseLegacy()
         {
-            _open = false;
+            _legacyOpen = false;
         }
 
         private void Start()
@@ -34,6 +36,52 @@ namespace SceneFX
             }
         }
 
+        private static void OnSceneChanged()
+        {
+            SceneRuntime.SaveOptions();
+        }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.F10))
+            {
+                ToggleNative();
+            }
+
+            if (Input.GetKeyDown(KeyCode.F11))
+            {
+                _legacyOpen = !_legacyOpen;
+            }
+
+            WorldController.Tick();
+        }
+
+        private void ToggleNative()
+        {
+            try
+            {
+                if (_native == null)
+                {
+                    _native = new NativePanel();
+                }
+
+                _native.Toggle();
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogException(e);
+                _legacyOpen = true; // fall back to the IMGUI window
+            }
+        }
+
+        private void OnGUI()
+        {
+            if (_legacyOpen)
+            {
+                _panel.Draw(_windowId);
+            }
+        }
+
         /// <summary>
         /// Writes the styles shipped with the mod into the styles folder the
         /// first time (or if the user deleted them).
@@ -44,6 +92,11 @@ namespace SceneFX
             {
                 "Vanilla",
                 "Optimized",
+                "Optimized Nocturne",
+                "Optimized Sepia",
+                "Optimized Cine",
+                "Optimized Frost",
+                "Optimized Ember",
                 "Optimized Relight2Alpine",
                 "Optimized Relight2Lush",
                 "Optimized Relight2Natural",
@@ -86,27 +139,6 @@ namespace SceneFX
                 {
                     Debug.LogException(e);
                 }
-            }
-        }
-
-        private static void OnSceneChanged()
-        {
-            SceneRuntime.SaveOptions();
-        }
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.F10))
-            {
-                _open = !_open;
-            }
-        }
-
-        private void OnGUI()
-        {
-            if (_open)
-            {
-                _panel.Draw(_windowId);
             }
         }
     }

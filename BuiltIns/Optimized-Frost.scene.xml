@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
-<sceneStyle name="Optimized">
-  <lut>1539181199.Relight2Average</lut>
-  <nativeLut>ordinary</nativeLut>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<sceneStyle Frost="Optimized Frost">
+  <lut></lut>
+  <nativeLut>frost</nativeLut>
   <gamma>3.15</gamma>
   <brightness>-0.4</brightness>
   <contrast>-0.7</contrast>

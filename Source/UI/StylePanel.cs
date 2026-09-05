@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using UnityEngine;
 using SceneFX.Core;
@@ -42,7 +42,7 @@ namespace SceneFX.UI
             GUI.DragWindow(new Rect(0f, 0f, 440f, 22f));
             if (GUI.Button(new Rect(_rect.width - 26f, 4f, 22f, 18f), "x"))
             {
-                PanelEngine.Close();
+                PanelEngine.CloseLegacy();
             }
 
             _tab = GUI.Toolbar(new Rect(8f, 26f, _rect.width - 16f, 24f), _tab, Tabs);
