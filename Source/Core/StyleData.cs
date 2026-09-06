@@ -26,6 +26,7 @@ namespace SceneFX.Core
         [XmlElement("fogDensity")] public float FogDensity = 0f;  // 0..0.005, 0 = keep game value
         [XmlElement("fogStart")] public float FogStart = 0f;      // 0..10000, 0 = keep game value
         [XmlElement("skyTonemap")] public bool SkyTonemap = true;
+        [XmlElement("skyMood")] public int SkyMood = 0; // 0 = keep game sky, 1..N = procedural palette
 
         internal StyleData Clone()
         {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -20,6 +20,8 @@ namespace SceneFX.Core
 
         internal static bool ApplyOnLoad = true;
 
+        internal static bool Borderless;
+
         internal static void LoadPersisted()
         {
             var state = StyleStore.LoadState();
@@ -32,6 +34,7 @@ namespace SceneFX.Core
             if (options != null)
             {
                 ApplyOnLoad = options.ApplyOnLoad;
+                Borderless = options.Borderless;
             }
         }
 
@@ -56,7 +59,7 @@ namespace SceneFX.Core
 
         internal static void SaveOptions()
         {
-            OptionsStore.Save(new OptionsDocument { ApplyOnLoad = ApplyOnLoad });
+            OptionsStore.Save(new OptionsDocument { ApplyOnLoad = ApplyOnLoad, Borderless = Borderless });
         }
     }
 
@@ -68,6 +71,9 @@ namespace SceneFX.Core
 
         [XmlElement("applyOnLoad")]
         public bool ApplyOnLoad = true;
+
+        [XmlElement("borderless")]
+        public bool Borderless;
     }
 
     internal static class OptionsStore

@@ -1,33 +1,33 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Language UniqueName="ru" ReadableName="Русский">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Language UniqueName="ru" ReadableName="Ð ÑƒÑÑÐºÐ¸Ð¹">
   <Translations>
-    <Translation ID="SCX_TAB_STYLE" String="Стиль" />
+    <Translation ID="SCX_TAB_STYLE" String="Ð¡Ñ‚Ð¸Ð»ÑŒ" />
     <Translation ID="SCX_TAB_LUT" String="LUT" />
-    <Translation ID="SCX_TAB_GRADE" String="Тон" />
-    <Translation ID="SCX_TAB_WORLD" String="Мир" />
-    <Translation ID="SCX_GROUP_STYLE" String="Стиль" />
-    <Translation ID="SCX_GROUP_LUT" String="Таблица цвета (LUT)" />
-    <Translation ID="SCX_GROUP_GRADE" String="Живая настройка" />
-    <Translation ID="SCX_GROUP_WORLD" String="Мир" />
-    <Translation ID="SCX_STYLE" String="Стиль" />
-    <Translation ID="SCX_STYLE_NAME" String="Название стиля" />
-    <Translation ID="SCX_SAVE_STYLE" String="Сохранить текущий вид как стиль" />
-    <Translation ID="SCX_RESTORE_GAME" String="Вернуть вид игры" />
+    <Translation ID="SCX_TAB_GRADE" String="Ð¢Ð¾Ð½" />
+    <Translation ID="SCX_TAB_WORLD" String="ÐœÐ¸Ñ€" />
+    <Translation ID="SCX_GROUP_STYLE" String="Ð¡Ñ‚Ð¸Ð»ÑŒ" />
+    <Translation ID="SCX_GROUP_LUT" String="Ð¢Ð°Ð±Ð»Ð¸Ñ†Ð° Ñ†Ð²ÐµÑ‚Ð° (LUT)" />
+    <Translation ID="SCX_GROUP_GRADE" String="Ð–Ð¸Ð²Ð°Ñ Ð½Ð°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ°" />
+    <Translation ID="SCX_GROUP_WORLD" String="ÐœÐ¸Ñ€" />
+    <Translation ID="SCX_STYLE" String="Ð¡Ñ‚Ð¸Ð»ÑŒ" />
+    <Translation ID="SCX_STYLE_NAME" String="ÐÐ°Ð·Ð²Ð°Ð½Ð¸Ðµ ÑÑ‚Ð¸Ð»Ñ" />
+    <Translation ID="SCX_SAVE_STYLE" String="Ð¡Ð¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ Ñ‚ÐµÐºÑƒÑ‰Ð¸Ð¹ Ð²Ð¸Ð´ ÐºÐ°Ðº ÑÑ‚Ð¸Ð»ÑŒ" />
+    <Translation ID="SCX_RESTORE_GAME" String="Ð’ÐµÑ€Ð½ÑƒÑ‚ÑŒ Ð²Ð¸Ð´ Ð¸Ð³Ñ€Ñ‹" />
     <Translation ID="SCX_LUT" String="LUT" />
-    <Translation ID="SCX_LUT_KEEP" String="(оставить текущий)" />
-    <Translation ID="SCX_SKY_TONEMAP" String="Тонемаппинг неба" />
-    <Translation ID="SCX_GAMMA" String="Гамма" />
-    <Translation ID="SCX_BRIGHTNESS" String="Яркость" />
-    <Translation ID="SCX_CONTRAST" String="Контраст" />
-    <Translation ID="SCX_SUN_GAIN" String="Яркость солнца" />
-    <Translation ID="SCX_EXPOSURE" String="Экспозиция" />
-    <Translation ID="SCX_WARMTH" String="Тепло" />
-    <Translation ID="SCX_LOCK_TIME" String="Фиксировать время суток" />
-    <Translation ID="SCX_TIME_OF_DAY" String="Время суток" />
-    <Translation ID="SCX_LATITUDE" String="Широта" />
-    <Translation ID="SCX_LONGITUDE" String="Долгота" />
-    <Translation ID="SCX_RAIN" String="Дождь" />
-    <Translation ID="SCX_FOG" String="Туман" />
-    <Translation ID="SCX_CLOUD" String="Облака" />
+    <Translation ID="SCX_LUT_KEEP" String="(Ð¾ÑÑ‚Ð°Ð²Ð¸Ñ‚ÑŒ Ñ‚ÐµÐºÑƒÑ‰Ð¸Ð¹)" />
+    <Translation ID="SCX_SKY_TONEMAP" String="Ð¢Ð¾Ð½ÐµÐ¼Ð°Ð¿Ð¿Ð¸Ð½Ð³ Ð½ÐµÐ±Ð°" />
+    <Translation ID="SCX_GAMMA" String="Ð“Ð°Ð¼Ð¼Ð°" />
+    <Translation ID="SCX_BRIGHTNESS" String="Ð¯Ñ€ÐºÐ¾ÑÑ‚ÑŒ" />
+    <Translation ID="SCX_CONTRAST" String="ÐšÐ¾Ð½Ñ‚Ñ€Ð°ÑÑ‚" />
+    <Translation ID="SCX_SUN_GAIN" String="Ð¯Ñ€ÐºÐ¾ÑÑ‚ÑŒ ÑÐ¾Ð»Ð½Ñ†Ð°" />
+    <Translation ID="SCX_EXPOSURE" String="Ð­ÐºÑÐ¿Ð¾Ð·Ð¸Ñ†Ð¸Ñ" />
+    <Translation ID="SCX_WARMTH" String="Ð¢ÐµÐ¿Ð»Ð¾" />
+    <Translation ID="SCX_LOCK_TIME" String="Ð¤Ð¸ÐºÑÐ¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ Ð²Ñ€ÐµÐ¼Ñ ÑÑƒÑ‚Ð¾Ðº" />
+    <Translation ID="SCX_TIME_OF_DAY" String="Ð’Ñ€ÐµÐ¼Ñ ÑÑƒÑ‚Ð¾Ðº" />
+    <Translation ID="SCX_LATITUDE" String="Ð¨Ð¸Ñ€Ð¾Ñ‚Ð°" />
+    <Translation ID="SCX_LONGITUDE" String="Ð”Ð¾Ð»Ð³Ð¾Ñ‚Ð°" />
+    <Translation ID="SCX_RAIN" String="Ð”Ð¾Ð¶Ð´ÑŒ" />
+    <Translation ID="SCX_FOG" String="Ð¢ÑƒÐ¼Ð°Ð½" />
+    <Translation ID="SCX_CLOUD" String="ÐžÐ±Ð»Ð°ÐºÐ°" />
   </Translations>
 </Language>

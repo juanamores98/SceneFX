@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Language UniqueName="es" ReadableName="Español">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Language UniqueName="es" ReadableName="EspaÃ±ol">
   <Translations>
     <Translation ID="SCX_TAB_STYLE" String="Estilo" />
     <Translation ID="SCX_TAB_LUT" String="LUT" />
@@ -20,10 +20,10 @@
     <Translation ID="SCX_BRIGHTNESS" String="Brillo" />
     <Translation ID="SCX_CONTRAST" String="Contraste" />
     <Translation ID="SCX_SUN_GAIN" String="Ganancia solar" />
-    <Translation ID="SCX_EXPOSURE" String="Exposición" />
-    <Translation ID="SCX_WARMTH" String="Cálidos" />
-    <Translation ID="SCX_LOCK_TIME" String="Fijar la hora del día" />
-    <Translation ID="SCX_TIME_OF_DAY" String="Hora del día" />
+    <Translation ID="SCX_EXPOSURE" String="ExposiciÃ³n" />
+    <Translation ID="SCX_WARMTH" String="CÃ¡lidos" />
+    <Translation ID="SCX_LOCK_TIME" String="Fijar la hora del dÃ­a" />
+    <Translation ID="SCX_TIME_OF_DAY" String="Hora del dÃ­a" />
     <Translation ID="SCX_LATITUDE" String="Latitud" />
     <Translation ID="SCX_LONGITUDE" String="Longitud" />
     <Translation ID="SCX_RAIN" String="Lluvia" />

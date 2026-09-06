@@ -1,13 +1,13 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Language UniqueName="fr" ReadableName="Français">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Language UniqueName="fr" ReadableName="FranÃ§ais">
   <Translations>
     <Translation ID="SCX_TAB_STYLE" String="Style" />
     <Translation ID="SCX_TAB_LUT" String="LUT" />
-    <Translation ID="SCX_TAB_GRADE" String="Étalonnage" />
+    <Translation ID="SCX_TAB_GRADE" String="Ã‰talonnage" />
     <Translation ID="SCX_TAB_WORLD" String="Monde" />
     <Translation ID="SCX_GROUP_STYLE" String="Style" />
-    <Translation ID="SCX_GROUP_LUT" String="Table de colorimétrie (LUT)" />
-    <Translation ID="SCX_GROUP_GRADE" String="Réglage en direct" />
+    <Translation ID="SCX_GROUP_LUT" String="Table de colorimÃ©trie (LUT)" />
+    <Translation ID="SCX_GROUP_GRADE" String="RÃ©glage en direct" />
     <Translation ID="SCX_GROUP_WORLD" String="Monde" />
     <Translation ID="SCX_STYLE" String="Style" />
     <Translation ID="SCX_STYLE_NAME" String="Nom du style" />
@@ -17,13 +17,13 @@
     <Translation ID="SCX_LUT_KEEP" String="(conserver l'actuel)" />
     <Translation ID="SCX_SKY_TONEMAP" String="Tonemapping du ciel" />
     <Translation ID="SCX_GAMMA" String="Gamma" />
-    <Translation ID="SCX_BRIGHTNESS" String="Luminosité" />
+    <Translation ID="SCX_BRIGHTNESS" String="LuminositÃ©" />
     <Translation ID="SCX_CONTRAST" String="Contraste" />
     <Translation ID="SCX_SUN_GAIN" String="Gain solaire" />
     <Translation ID="SCX_EXPOSURE" String="Exposition" />
     <Translation ID="SCX_WARMTH" String="Chaleur" />
-    <Translation ID="SCX_LOCK_TIME" String="Fixer l'heure de la journée" />
-    <Translation ID="SCX_TIME_OF_DAY" String="Heure de la journée" />
+    <Translation ID="SCX_LOCK_TIME" String="Fixer l'heure de la journÃ©e" />
+    <Translation ID="SCX_TIME_OF_DAY" String="Heure de la journÃ©e" />
     <Translation ID="SCX_LATITUDE" String="Latitude" />
     <Translation ID="SCX_LONGITUDE" String="Longitude" />
     <Translation ID="SCX_RAIN" String="Pluie" />

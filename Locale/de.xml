@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Language UniqueName="de" ReadableName="Deutsch">
   <Translations>
     <Translation ID="SCX_TAB_STYLE" String="Stil" />
@@ -19,13 +19,13 @@
     <Translation ID="SCX_GAMMA" String="Gamma" />
     <Translation ID="SCX_BRIGHTNESS" String="Helligkeit" />
     <Translation ID="SCX_CONTRAST" String="Kontrast" />
-    <Translation ID="SCX_SUN_GAIN" String="Sonnenverstärkung" />
+    <Translation ID="SCX_SUN_GAIN" String="SonnenverstÃ¤rkung" />
     <Translation ID="SCX_EXPOSURE" String="Belichtung" />
-    <Translation ID="SCX_WARMTH" String="Wärme" />
+    <Translation ID="SCX_WARMTH" String="WÃ¤rme" />
     <Translation ID="SCX_LOCK_TIME" String="Tageszeit fixieren" />
     <Translation ID="SCX_TIME_OF_DAY" String="Tageszeit" />
     <Translation ID="SCX_LATITUDE" String="Breitengrad" />
-    <Translation ID="SCX_LONGITUDE" String="Längengrad" />
+    <Translation ID="SCX_LONGITUDE" String="LÃ¤ngengrad" />
     <Translation ID="SCX_RAIN" String="Regen" />
     <Translation ID="SCX_FOG" String="Nebel" />
     <Translation ID="SCX_CLOUD" String="Wolken" />

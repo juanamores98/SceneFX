@@ -46,6 +46,20 @@ namespace SceneFX
                 SceneRuntime.SaveOptions();
             });
 
+            group.AddCheckbox("Borderless windowed mode", SceneRuntime.Borderless, sel =>
+            {
+                SceneRuntime.Borderless = sel;
+                SceneRuntime.SaveOptions();
+                if (sel)
+                {
+                    Core.BorderlessMode.Apply();
+                }
+                else
+                {
+                    Core.BorderlessMode.Restore();
+                }
+            });
+
             group.AddButton("Open styles folder", () =>
             {
                 if (!System.IO.Directory.Exists(StyleStore.StylesFolder))
@@ -81,6 +95,7 @@ namespace SceneFX
             base.OnLevelUnloading();
             UI.UuiButton.Unregister();
             WorldController.Restore();
+            SkyMood.Restore();
             SceneRuntime.RestoreGame();
             DestroyHosts();
         }

@@ -24,6 +24,7 @@ namespace SceneFX.Core
             ApplySun(style);
             ApplyWarmth(style.Warmth);
             ApplyFog(style);
+            SkyMood.Apply(style.SkyMood);
         }
 
         internal static void RestoreGame()

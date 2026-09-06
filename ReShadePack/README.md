@@ -17,6 +17,8 @@ qUINT ni ningún shader de terceros.
 | Archivo | Qué hace |
 |---|---|
 | `Shaders/SceneFX/SceneFXFilmic.fx` | Gradado full-screen: calidez (ganancia opuesta R/B), saturación alrededor de luma, contraste en S con hombro suave por encima de 0.8 y recorte de brillo. Parámetros expuestos al menú de ReShade. |
+| `Shaders/SceneFX/SceneFXGlow.fx` | Glow ambiente en una pasada: 12 muestras con peso por brillo añadidas sobre la imagen. Alternativa propia a AmbientLight. |
+| `Shaders/SceneFX/SceneFXDepthAO.fx` | Oclusión ambiental por profundidad (halo AO sobre `GetLinearizedDepth`, 8 muestras). Alternativa propia a MXAO/qUINT. |
 | `Presets/03-SceneFX-Optimizado.ini` | Preset propio con los valores recomendados de la suite. |
 
 ## Instalación (con el paquete NoWorkshopMods ya instalado)

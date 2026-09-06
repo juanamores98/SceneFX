@@ -315,6 +315,18 @@ namespace SceneFX.UI
             {
                 WorldController.ApplyWeather(WorldRain(), WorldFog(), v);
             });
+
+            string[] skyNames = new string[Core.SkyMood.Names.Count];
+            for (int i = 0; i < Core.SkyMood.Names.Count; i++)
+            {
+                skyNames[i] = Core.SkyMood.Names[i];
+            }
+
+            group.AddDropdown(Translator.Get("SCX_SKY"), skyNames, Mathf.Clamp(SceneRuntime.Current.SkyMood, 0, skyNames.Length - 1), sel =>
+            {
+                SceneRuntime.Current.SkyMood = sel;
+                SceneRuntime.ApplyCurrent();
+            });
         }
 
         private static float WorldLat()
