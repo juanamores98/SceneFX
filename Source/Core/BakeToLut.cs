@@ -51,6 +51,8 @@ namespace SceneFX.Core
 
             var tex3D = new Texture3D(Size, Size, Size, TextureFormat.RGBA32, false);
             tex3D.name = "SceneFX.Baked." + name;
+            tex3D.wrapMode = TextureWrapMode.Clamp;
+            tex3D.filterMode = FilterMode.Bilinear;
 
             var pixels3D = new Color[Size * Size * Size];
             var pixels2D = new Color[Size * Size * Size]; // for 1024x32 strip
@@ -125,6 +127,8 @@ namespace SceneFX.Core
                 }
 
                 var tex2D = new Texture2D(Size * Size, Size, TextureFormat.RGB24, false);
+                tex2D.wrapMode = TextureWrapMode.Clamp;
+                tex2D.filterMode = FilterMode.Bilinear;
                 tex2D.SetPixels(pixels2D);
                 tex2D.Apply();
 

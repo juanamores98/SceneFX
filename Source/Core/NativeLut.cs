@@ -146,6 +146,8 @@ namespace SceneFX.Core
         {
             var texture = new Texture3D(Size, Size, Size, TextureFormat.RGBA32, false);
             texture.name = "SceneFX." + Name;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
 
             var pixels = new Color[Size * Size * Size];
             int index = 0;

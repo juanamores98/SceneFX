@@ -10,12 +10,20 @@ namespace SceneFX.Core
     /// </summary>
     internal static class StyleEngine
     {
-        private static bool _snapshotTaken;
+        private static bool _sunCaptured;
+        private static bool _toneCaptured;
         private static float _vanillaSun = 1f;
         private static float _vanillaExposure = 1f;
         private static float _vanillaGamma = 2.2f;
         private static float _vanillaBoost = 1f;
         private static float _vanillaLuminance = 0.1f;
+        private static float _filmicA;
+        private static float _filmicB;
+        private static float _filmicC;
+        private static float _filmicD;
+        private static float _filmicE = 0.01f;
+        private static float _filmicF = 0.24f;
+        private static float _filmicW = 11f;
 
         private static Gradient _originalLight;
         private static Gradient _originalSky;
@@ -32,7 +40,8 @@ namespace SceneFX.Core
             _cachedToneMapping = null;
             _cachedDayNight = null;
             _cachedFogProperties = null;
-            _snapshotTaken = false;
+            _sunCaptured = false;
+            _toneCaptured = false;
             _gradientsCaptured = false;
             _originalLight = null;
             _originalSky = null;
@@ -83,13 +92,13 @@ namespace SceneFX.Core
 
         internal static void RestoreGame()
         {
-            if (!_snapshotTaken)
+            if (!_sunCaptured && !_toneCaptured)
             {
                 return;
             }
 
             var dayNight = GetDayNight();
-            if (dayNight != null)
+            if (dayNight != null && _sunCaptured)
             {
                 dayNight.m_SunIntensity = _vanillaSun;
                 dayNight.m_Exposure = _vanillaExposure;
@@ -118,11 +127,18 @@ namespace SceneFX.Core
             }
 
             var tone = FindToneMapping();
-            if (tone != null)
+            if (tone != null && _toneCaptured)
             {
                 tone.m_ToneMappingGamma = _vanillaGamma;
                 tone.m_ToneMappingBoostFactor = _vanillaBoost;
                 tone.m_Luminance = _vanillaLuminance;
+                tone.m_ToneMappingParamsFilmic.A = _filmicA;
+                tone.m_ToneMappingParamsFilmic.B = _filmicB;
+                tone.m_ToneMappingParamsFilmic.C = _filmicC;
+                tone.m_ToneMappingParamsFilmic.D = _filmicD;
+                tone.m_ToneMappingParamsFilmic.E = _filmicE;
+                tone.m_ToneMappingParamsFilmic.F = _filmicF;
+                tone.m_ToneMappingParamsFilmic.W = _filmicW;
             }
         }
 
@@ -149,27 +165,29 @@ namespace SceneFX.Core
 
         private static void TakeSnapshot()
         {
-            if (_snapshotTaken)
-            {
-                return;
-            }
-
             var dayNight = GetDayNight();
-            if (dayNight != null)
+            if (dayNight != null && !_sunCaptured)
             {
                 _vanillaSun = dayNight.m_SunIntensity;
                 _vanillaExposure = dayNight.m_Exposure;
+                _sunCaptured = true;
             }
 
             var tone = FindToneMapping();
-            if (tone != null)
+            if (tone != null && !_toneCaptured)
             {
                 _vanillaGamma = tone.m_ToneMappingGamma;
                 _vanillaBoost = tone.m_ToneMappingBoostFactor;
                 _vanillaLuminance = tone.m_Luminance;
+                _filmicA = tone.m_ToneMappingParamsFilmic.A;
+                _filmicB = tone.m_ToneMappingParamsFilmic.B;
+                _filmicC = tone.m_ToneMappingParamsFilmic.C;
+                _filmicD = tone.m_ToneMappingParamsFilmic.D;
+                _filmicE = tone.m_ToneMappingParamsFilmic.E;
+                _filmicF = tone.m_ToneMappingParamsFilmic.F;
+                _filmicW = tone.m_ToneMappingParamsFilmic.W;
+                _toneCaptured = true;
             }
-
-            _snapshotTaken = true;
         }
 
         internal static ColossalFramework.ToneMapping FindToneMapping()
@@ -313,8 +331,9 @@ namespace SceneFX.Core
         }
 
         /// <summary>
-        /// Warmth is applied as a light regrade of the sun gradient at three
-        /// key times; ambient light is left untouched.
+        /// Warmth is applied as a light regrade of the captured sun gradient
+        /// at its own key times, so the curve shape is preserved and the
+        /// operation stays idempotent. Ambient light is left untouched.
         /// </summary>
         private static void ApplyWarmth(float warmth)
         {
@@ -326,24 +345,31 @@ namespace SceneFX.Core
 
             CaptureGradients(dayNight);
 
-            float[] times = { 0f, 0.5f, 1f };
-            var keys = new GradientColorKey[times.Length];
-            for (int i = 0; i < times.Length; i++)
+            if (!_gradientsCaptured || _originalLight == null)
             {
-                Color c = dayNight.m_LightColor.Evaluate(times[i]);
+                return;
+            }
+
+            if (Mathf.Approximately(warmth, 0f))
+            {
+                dayNight.m_LightColor = _originalLight;
+                return;
+            }
+
+            var sourceKeys = _originalLight.colorKeys;
+            var keys = new GradientColorKey[sourceKeys.Length];
+            for (int i = 0; i < sourceKeys.Length; i++)
+            {
+                Color c = sourceKeys[i].color;
                 c.r = Mathf.Clamp01(c.r * (1f + 0.15f * warmth));
                 c.b = Mathf.Clamp01(c.b * (1f - 0.15f * warmth));
-                keys[i] = new GradientColorKey(c, times[i]);
+                keys[i] = new GradientColorKey(c, sourceKeys[i].time);
             }
 
             dayNight.m_LightColor = new Gradient
             {
                 colorKeys = keys,
-                alphaKeys = new[]
-                {
-                    new GradientAlphaKey(1f, 0f),
-                    new GradientAlphaKey(1f, 1f),
-                },
+                alphaKeys = _originalLight.alphaKeys,
             };
         }
 

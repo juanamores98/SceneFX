@@ -7,7 +7,7 @@
     /// <summary>
     /// Registers the mod's button in the Unified UI tray when that mod is
     /// installed, through its public helper discovered by reflection. The
-    /// tray is optional: the mod keeps its own hotkey (F12) as fallback.
+    /// tray is optional: the mod keeps its own hotkeys (F10 native, F11 IMGUI) as fallback.
     /// </summary>
     internal static class UuiButton
     {
