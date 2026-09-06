@@ -29,5 +29,6 @@
     <Translation ID="SCX_RAIN" String="Rain" />
     <Translation ID="SCX_FOG" String="Fog" />
     <Translation ID="SCX_CLOUD" String="Cloud" />
+      <Translation ID="SCX_VANILLA" String="Vanilla mode (suspend SceneFX)" />
   </Translations>
 </Language>

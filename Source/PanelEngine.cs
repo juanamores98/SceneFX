@@ -52,7 +52,7 @@ namespace SceneFX
             SceneRuntime.LoadPersisted();
             _panel = new StylePanel(OnSceneChanged);
 
-            if (SceneRuntime.ApplyOnLoad)
+            if (SceneRuntime.ApplyOnLoad && !SceneRuntime.VanillaMode)
             {
                 SceneRuntime.ApplyCurrent();
             }

@@ -22,6 +22,8 @@ namespace SceneFX.Core
 
         internal static bool Borderless;
 
+        internal static bool VanillaMode; // suspend everything, game untouched
+
         internal static void LoadPersisted()
         {
             var state = StyleStore.LoadState();
@@ -35,6 +37,7 @@ namespace SceneFX.Core
             {
                 ApplyOnLoad = options.ApplyOnLoad;
                 Borderless = options.Borderless;
+                VanillaMode = options.VanillaMode;
             }
         }
 
@@ -44,6 +47,12 @@ namespace SceneFX.Core
         /// </summary>
         internal static void ApplyCurrent()
         {
+            if (VanillaMode)
+            {
+                // Suspended: apply nothing, keep the game untouched.
+                return;
+            }
+
             StyleEngine.Apply(_current);
             if (Time.realtimeSinceStartup - _lastStateSave > 1f)
             {
@@ -59,7 +68,7 @@ namespace SceneFX.Core
 
         internal static void SaveOptions()
         {
-            OptionsStore.Save(new OptionsDocument { ApplyOnLoad = ApplyOnLoad, Borderless = Borderless });
+            OptionsStore.Save(new OptionsDocument { ApplyOnLoad = ApplyOnLoad, Borderless = Borderless, VanillaMode = VanillaMode });
         }
     }
 
@@ -74,6 +83,9 @@ namespace SceneFX.Core
 
         [XmlElement("borderless")]
         public bool Borderless;
+
+        [XmlElement("vanillaMode")]
+        public bool VanillaMode;
     }
 
     internal static class OptionsStore

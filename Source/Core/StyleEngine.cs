@@ -17,6 +17,12 @@ namespace SceneFX.Core
         private static float _vanillaBoost = 1f;
         private static float _vanillaLuminance = 0.1f;
 
+        private static Gradient _originalLight;
+        private static Gradient _originalSky;
+        private static Gradient _originalEquator;
+        private static Gradient _originalGround;
+        private static bool _gradientsCaptured;
+
         internal static void Apply(StyleData style)
         {
             ApplyLut(style.Lut, style.NativeLut);
@@ -39,6 +45,28 @@ namespace SceneFX.Core
             {
                 dayNight.m_SunIntensity = _vanillaSun;
                 dayNight.m_Exposure = _vanillaExposure;
+
+                if (_gradientsCaptured)
+                {
+                    // Exact game gradients, not a warmth-zero approximation.
+                    dayNight.m_LightColor = _originalLight;
+                    var ambientType = typeof(DayNightProperties.AmbientColor);
+                    var ambient = dayNight.m_AmbientColor;
+                    if (_originalSky != null)
+                    {
+                        ambientType.GetField("m_SkyColor", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(ambient, _originalSky);
+                    }
+
+                    if (_originalEquator != null)
+                    {
+                        ambientType.GetField("m_EquatorColor", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(ambient, _originalEquator);
+                    }
+
+                    if (_originalGround != null)
+                    {
+                        ambientType.GetField("m_GroundColor", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).SetValue(ambient, _originalGround);
+                    }
+                }
             }
 
             var tone = FindToneMapping();
@@ -48,8 +76,27 @@ namespace SceneFX.Core
                 tone.m_ToneMappingBoostFactor = _vanillaBoost;
                 tone.m_Luminance = _vanillaLuminance;
             }
+        }
 
-            ApplyWarmth(0f);
+        private static void CaptureGradients(DayNightProperties dn)
+        {
+            if (_gradientsCaptured)
+            {
+                return;
+            }
+
+            if (dn == null || dn.m_LightColor == null)
+            {
+                return;
+            }
+
+            _originalLight = dn.m_LightColor;
+            var ambientType = typeof(DayNightProperties.AmbientColor);
+            var ambient = dn.m_AmbientColor;
+            _originalSky = (Gradient)ambientType.GetField("m_SkyColor", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(ambient);
+            _originalEquator = (Gradient)ambientType.GetField("m_EquatorColor", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(ambient);
+            _originalGround = (Gradient)ambientType.GetField("m_GroundColor", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(ambient);
+            _gradientsCaptured = true;
         }
 
         private static void TakeSnapshot()
@@ -215,6 +262,8 @@ namespace SceneFX.Core
             {
                 return;
             }
+
+            CaptureGradients(dayNight);
 
             float[] times = { 0f, 0.5f, 1f };
             var keys = new GradientColorKey[times.Length];

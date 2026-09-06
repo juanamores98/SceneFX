@@ -218,6 +218,22 @@ namespace SceneFX.UI
                 SceneRuntime.RestoreGame();
                 WorldController.Restore();
             });
+
+            group.AddCheckbox(Translator.Get("SCX_VANILLA"), SceneRuntime.VanillaMode, sel =>
+            {
+                SceneRuntime.VanillaMode = sel;
+                SceneRuntime.SaveOptions();
+                if (sel)
+                {
+                    SceneRuntime.RestoreGame();
+                    WorldController.Restore();
+                    Core.SkyMood.Restore();
+                }
+                else
+                {
+                    SceneRuntime.ApplyCurrent();
+                }
+            });
         }
 
         private void BuildLutPage(UIPanel page)

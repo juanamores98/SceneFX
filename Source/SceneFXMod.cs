@@ -60,6 +60,22 @@ namespace SceneFX
                 }
             });
 
+            group.AddCheckbox("Vanilla mode (suspend SceneFX)", SceneRuntime.VanillaMode, sel =>
+            {
+                SceneRuntime.VanillaMode = sel;
+                SceneRuntime.SaveOptions();
+                if (sel)
+                {
+                    WorldController.Restore();
+                    Core.SkyMood.Restore();
+                    SceneRuntime.RestoreGame();
+                }
+                else
+                {
+                    SceneRuntime.ApplyCurrent();
+                }
+            });
+
             group.AddButton("Open styles folder", () =>
             {
                 if (!System.IO.Directory.Exists(StyleStore.StylesFolder))
