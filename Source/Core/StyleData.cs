@@ -27,6 +27,13 @@ namespace SceneFX.Core
         [XmlElement("fogStart")] public float FogStart = 0f;      // 0..10000, 0 = keep game value
         [XmlElement("skyTonemap")] public bool SkyTonemap = true;
         [XmlElement("skyMood")] public int SkyMood = 0; // 0 = keep game sky, 1..N = procedural palette
+        [XmlElement("includeWorld")] public bool IncludeWorld;
+        [XmlElement("timeOfDay")] public float TimeOfDay = 12f;
+        [XmlElement("latitude")] public float Latitude = 36f;
+        [XmlElement("longitude")] public float Longitude = 0f;
+        [XmlElement("rain")] public float Rain = -1f;
+        [XmlElement("fog")] public float Fog = -1f;
+        [XmlElement("cloud")] public float Cloud = -1f;
 
         internal StyleData Clone()
         {

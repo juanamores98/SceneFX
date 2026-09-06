@@ -11,4 +11,11 @@
   <fogDensity>0.00006</fogDensity>
   <fogStart>2852</fogStart>
   <skyTonemap>true</skyTonemap>
+  <includeWorld>true</includeWorld>
+  <timeOfDay>12</timeOfDay>
+  <latitude>36</latitude>
+  <longitude>88</longitude>
+  <rain>0</rain>
+  <fog>0</fog>
+  <cloud>0</cloud>
 </sceneStyle>

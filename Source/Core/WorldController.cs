@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace SceneFX.Core
@@ -14,6 +14,14 @@ namespace SceneFX.Core
         private static float _vanillaLatitude;
         private static float _vanillaLongitude;
         private static DayNightProperties _dayNight;
+        private static int _frameCounter;
+
+        internal static void ClearCache()
+        {
+            _dayNight = null;
+            _snapshotTaken = false;
+            _frameCounter = 0;
+        }
 
         private static DayNightProperties DayNight
         {
@@ -21,7 +29,15 @@ namespace SceneFX.Core
             {
                 if (_dayNight == null)
                 {
-                    _dayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
+                    if (_frameCounter <= 0)
+                    {
+                        _frameCounter = 60;
+                        _dayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
+                    }
+                    else
+                    {
+                        _frameCounter--;
+                    }
                 }
 
                 return _dayNight;
@@ -119,19 +135,28 @@ namespace SceneFX.Core
             if (RainIntensity >= 0f)
             {
                 weather.m_targetRain = RainIntensity;
-                weather.m_currentRain = Mathf.Lerp(weather.m_currentRain, RainIntensity, 0.2f);
+                if (!Mathf.Approximately(weather.m_currentRain, RainIntensity))
+                {
+                    weather.m_currentRain = Mathf.Lerp(weather.m_currentRain, RainIntensity, 0.2f);
+                }
             }
 
             if (FogIntensity >= 0f)
             {
                 weather.m_targetFog = FogIntensity;
-                weather.m_currentFog = Mathf.Lerp(weather.m_currentFog, FogIntensity, 0.2f);
+                if (!Mathf.Approximately(weather.m_currentFog, FogIntensity))
+                {
+                    weather.m_currentFog = Mathf.Lerp(weather.m_currentFog, FogIntensity, 0.2f);
+                }
             }
 
             if (CloudIntensity >= 0f)
             {
                 weather.m_targetCloud = CloudIntensity;
-                weather.m_currentCloud = Mathf.Lerp(weather.m_currentCloud, CloudIntensity, 0.2f);
+                if (!Mathf.Approximately(weather.m_currentCloud, CloudIntensity))
+                {
+                    weather.m_currentCloud = Mathf.Lerp(weather.m_currentCloud, CloudIntensity, 0.2f);
+                }
             }
         }
 

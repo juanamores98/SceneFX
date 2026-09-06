@@ -18,10 +18,12 @@
         <Reference Include="ColossalManaged" />
         <Reference Include="ICities" />
         <Reference Include="UnityEngine" />
+        <Reference Include="System.Xml" />
     </ItemGroup>
 
     <ItemGroup>
         <EmbeddedResource Include="BuiltIns\*.scene.xml" />
+        <EmbeddedResource Include="BuiltIns\*.suite.xml" />
     </ItemGroup>
 
     <Target Name="DeployToModDirectory" AfterTargets="Build">

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using UnityEngine;
 
@@ -23,6 +23,41 @@ namespace SceneFX.Core
         private static Gradient _originalGround;
         private static bool _gradientsCaptured;
 
+        private static ColossalFramework.ToneMapping _cachedToneMapping;
+        private static DayNightProperties _cachedDayNight;
+        private static FogProperties _cachedFogProperties;
+
+        internal static void ClearCache()
+        {
+            _cachedToneMapping = null;
+            _cachedDayNight = null;
+            _cachedFogProperties = null;
+            _snapshotTaken = false;
+            _gradientsCaptured = false;
+            _originalLight = null;
+            _originalSky = null;
+            _originalEquator = null;
+            _originalGround = null;
+        }
+
+        private static DayNightProperties GetDayNight()
+        {
+            if (_cachedDayNight == null)
+            {
+                _cachedDayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
+            }
+            return _cachedDayNight;
+        }
+
+        private static FogProperties GetFogProperties()
+        {
+            if (_cachedFogProperties == null)
+            {
+                _cachedFogProperties = UnityEngine.Object.FindObjectOfType<FogProperties>();
+            }
+            return _cachedFogProperties;
+        }
+
         internal static void Apply(StyleData style)
         {
             ApplyLut(style.Lut, style.NativeLut);
@@ -31,6 +66,19 @@ namespace SceneFX.Core
             ApplyWarmth(style.Warmth);
             ApplyFog(style);
             SkyMood.Apply(style.SkyMood);
+
+            if (style.IncludeWorld)
+            {
+                WorldController.ApplyTime(style.TimeOfDay);
+                WorldController.ApplyPosition(style.Latitude, style.Longitude);
+                if (style.Rain >= 0f || style.Fog >= 0f || style.Cloud >= 0f)
+                {
+                    WorldController.ApplyWeather(
+                        style.Rain >= 0f ? style.Rain : 0f,
+                        style.Fog >= 0f ? style.Fog : 0f,
+                        style.Cloud >= 0f ? style.Cloud : 0f);
+                }
+            }
         }
 
         internal static void RestoreGame()
@@ -40,7 +88,7 @@ namespace SceneFX.Core
                 return;
             }
 
-            var dayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
+            var dayNight = GetDayNight();
             if (dayNight != null)
             {
                 dayNight.m_SunIntensity = _vanillaSun;
@@ -106,7 +154,7 @@ namespace SceneFX.Core
                 return;
             }
 
-            var dayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
+            var dayNight = GetDayNight();
             if (dayNight != null)
             {
                 _vanillaSun = dayNight.m_SunIntensity;
@@ -126,8 +174,16 @@ namespace SceneFX.Core
 
         internal static ColossalFramework.ToneMapping FindToneMapping()
         {
-            var camera = GameObject.Find("Main Camera");
-            return camera != null ? camera.GetComponent<ColossalFramework.ToneMapping>() : null;
+            if (_cachedToneMapping == null)
+            {
+                var camera = GameObject.Find("Main Camera");
+                if (camera != null)
+                {
+                    _cachedToneMapping = camera.GetComponent<ColossalFramework.ToneMapping>();
+                }
+            }
+
+            return _cachedToneMapping;
         }
 
         /// <summary>
@@ -240,7 +296,7 @@ namespace SceneFX.Core
         {
             TakeSnapshot();
 
-            var dayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
+            var dayNight = GetDayNight();
             if (dayNight == null)
             {
                 return;
@@ -257,7 +313,7 @@ namespace SceneFX.Core
         /// </summary>
         private static void ApplyWarmth(float warmth)
         {
-            var dayNight = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
+            var dayNight = GetDayNight();
             if (dayNight == null || dayNight.m_LightColor == null)
             {
                 return;
@@ -288,7 +344,7 @@ namespace SceneFX.Core
 
         private static void ApplyFog(StyleData style)
         {
-            var fog = UnityEngine.Object.FindObjectOfType<FogProperties>();
+            var fog = GetFogProperties();
             if (fog == null)
             {
                 return;

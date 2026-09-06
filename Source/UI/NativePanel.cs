@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -32,7 +32,11 @@ namespace SceneFX.UI
 
         private UIDropDown _styleDropDown;
         private UIDropDown _lutDropDown;
+        private UIDropDown _suiteDropDown;
         private UITextField _nameField;
+        private UITextField _suiteNameField;
+        private string _activeStyleName = "Default";
+        private bool _includeWorldInSavedStyle;
         private bool _building;
         private bool _suppressEvents;
 
@@ -202,17 +206,36 @@ namespace SceneFX.UI
                     return;
                 }
 
-                ApplyStyleByName(styleNames[sel]);
+                _activeStyleName = styleNames[sel];
+                ApplyStyleByName(_activeStyleName);
             });
 
             _nameField = (UITextField)group.AddTextfield(Translator.Get("SCX_STYLE_NAME"), "My scene", sel => { });
+
+            group.AddCheckbox("Include world (time, sun, weather)", _includeWorldInSavedStyle, sel =>
+            {
+                _includeWorldInSavedStyle = sel;
+            });
+
             group.AddButton(Translator.Get("SCX_SAVE_STYLE"), () =>
             {
                 var copy = SceneRuntime.Current.Clone();
                 copy.Name = StyleStore.SafeName(_nameField.text);
+                copy.IncludeWorld = _includeWorldInSavedStyle;
+                if (copy.IncludeWorld)
+                {
+                    copy.TimeOfDay = WorldController.ReadTimeHours();
+                    copy.Latitude = WorldLat();
+                    copy.Longitude = WorldLon();
+                    copy.Rain = WorldRain();
+                    copy.Fog = WorldFog();
+                    copy.Cloud = WorldCloud();
+                }
+
                 StyleStore.SaveStyle(copy);
                 RefreshStyleDropdown();
             });
+
             group.AddButton(Translator.Get("SCX_RESTORE_GAME"), () =>
             {
                 SceneRuntime.RestoreGame();
@@ -234,6 +257,27 @@ namespace SceneFX.UI
                     SceneRuntime.ApplyCurrent();
                 }
             });
+
+            var suiteGroup = helper.AddGroup("Suite Profile (SceneFX + Suite)");
+            string[] suiteNames = SuiteManager.ListSuiteNames();
+            _suiteDropDown = (UIDropDown)suiteGroup.AddDropdown("Profile", suiteNames, 0, sel => { });
+            suiteGroup.AddButton("Apply Suite Profile", () =>
+            {
+                if (_suiteDropDown != null && _suiteDropDown.selectedIndex >= 0 && _suiteDropDown.selectedIndex < _suiteDropDown.items.Length)
+                {
+                    string selProfile = _suiteDropDown.items[_suiteDropDown.selectedIndex];
+                    SuiteManager.ApplySuiteProfile(selProfile);
+                    RefreshDropdowns();
+                }
+            });
+
+            _suiteNameField = (UITextField)suiteGroup.AddTextfield("Suite name", "MySuite", sel => { });
+            suiteGroup.AddButton("Export Suite Profile", () =>
+            {
+                string sName = _suiteNameField != null ? _suiteNameField.text : "MySuite";
+                SuiteManager.SaveSuiteProfile(sName);
+                RefreshSuiteDropdown();
+            });
         }
 
         private void BuildLutPage(UIPanel page)
@@ -252,6 +296,20 @@ namespace SceneFX.UI
                 SceneRuntime.Current.Lut = lutNames[sel].Replace("  (compat)", string.Empty);
                 SceneRuntime.ApplyCurrent();
             });
+
+            group.AddButton("Bake Look to LUT (32³ + PNG)", () =>
+            {
+                string pngPath;
+                string bakeName = "Baked_" + System.DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                Texture3D baked = BakeToLut.Bake(SceneRuntime.Current, bakeName, out pngPath);
+                if (baked != null)
+                {
+                    SceneRuntime.Current.Lut = bakeName;
+                    RefreshDropdowns();
+                    SceneRuntime.ApplyCurrent();
+                }
+            });
+
             group.AddCheckbox(Translator.Get("SCX_SKY_TONEMAP"), SceneRuntime.Current.SkyTonemap, sel =>
             {
                 SceneRuntime.Current.SkyTonemap = sel;
@@ -498,6 +556,27 @@ namespace SceneFX.UI
                 {
                     _suppressEvents = false;
                 }
+            }
+
+            RefreshSuiteDropdown();
+        }
+
+        private void RefreshSuiteDropdown()
+        {
+            if (_suiteDropDown == null)
+            {
+                return;
+            }
+
+            _suppressEvents = true;
+            try
+            {
+                string[] suites = SuiteManager.ListSuiteNames();
+                _suiteDropDown.items = suites;
+            }
+            finally
+            {
+                _suppressEvents = false;
             }
         }
     }

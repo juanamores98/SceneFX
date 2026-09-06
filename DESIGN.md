@@ -1,4 +1,4 @@
-﻿# Diseño de SceneFX
+# Diseño de SceneFX
 
 Especificación funcional de la primera versión.
 
@@ -99,14 +99,44 @@ coincidencia por sufijo (`1539181199.Relight2Average` ↔ `Relight2Average`).
 de terceros; solo las lee si el usuario ya las posee (interoperabilidad). El
 código del mod sigue siendo MIT-0.
 
+## Perfil Suite Unificado (`Core/SuiteManager`) — El "Pegamento" de la Suite
+
+SceneFX actúa como coordinador maestro de la suite de 4 mods (SceneFX, LumenFX, AtmosphereFX, ClassicLightFX).
+- **Almacenamiento**: `%LOCALAPPDATA%\Colossal Order\Cities_Skylines\ModConfig\SceneFX\*.suite.xml`.
+- **Descubrimiento y Tolerancia a Fallos**: Localiza por reflexión en tiempo de ejecución las clases entry point de los mods (`LumenFXMod`, `AtmosphereFXMod`, `ClassicLightFXMod`). Si un mod no está instalado, omite silenciosamente su bloque sin causar `TypeLoadException` ni interrumpir la carga del resto de módulos.
+- **Formato**: XML estándar compatible con `System.Xml` (sin dependencias de `System.Xml.Linq`).
+- **Perfil Built-In `Optimized.suite.xml`**: Contiene la configuración visual óptima calibrada y validada por el autor, aplicable con un solo clic.
+
+## Propiedades Únicas (Senior Refactor)
+
+### 1. Bake de Grado a LUT Procedural (`Core/BakeToLut`)
+Permite capturar el color grading actual (exposición, ganancia solar, warmth, contraste, brillo, curva filmic de Hable y corrección gamma) y convertirlo analíticamente en una tabla volumétrica:
+- Genera una textura 3D de 32x32x32 (`Texture3D`, formato `RGBA32`).
+- Registra la textura en vivo en `NativeLut` para su uso instantáneo en el juego.
+- Exporta una tira de calibración neutra en formato PNG de 1024x32 píxeles en `%LOCALAPPDATA%\Colossal Order\Cities_Skylines\ModConfig\SceneFXStyles\Baked\`.
+
+### 2. Integración de Mundo en Estilos (`StyleData` + `WorldController`)
+Los estilos pueden opcionalmente empaquetar las condiciones ambientales:
+- Campos: `IncludeWorld`, `TimeOfDay` (0–24h), `Latitude`, `Longitude`, `Rain`, `Fog`, `Cloud`.
+- Al cargar un estilo con `IncludeWorld = true`, el motor transiciona y bloquea suavemente la hora, órbita solar y meteorología de acuerdo a la escena guardada.
+
+## Rendimiento y Optimizaciones (Senior Refactor)
+
+- **Eliminación de Búsquedas en Jerarquía**: `StyleEngine` cachea la referencia a `ColossalFramework.ToneMapping`, `DayNightProperties` y `FogProperties`. Se erradica por completo la búsqueda `GameObject.Find("Main Camera")` en cada llamada.
+- **Throttling en Búsquedas Nulas**: `WorldController` amortigua las comprobaciones de componentes nulos a intervalos de 60 frames.
+- **Clima Eficiente**: Los lerps continuos en `ApplyWeather()` se cancelan automáticamente en cuanto los valores actuales convergen con los objetivos (`Mathf.Approximately`), liberando ciclos de CPU.
+- **Persistencia de Interfaz**: `StylePanel` y `NativePanel` conservan sus coordenadas entre sesiones con clamping estricto a las dimensiones de la pantalla.
+
 ## Arquitectura
 
-- `Core/StyleData` — modelo de estilo + almacenamiento XML (estilos y estado).
-- `Core/StyleEngine` — aplicación/reversión (LUT, tono, sol, warmth, niebla).
-- `Core/NativeLut` — tablas 3D procedurales propias.
+- `Core/StyleData` — modelo de estilo ampliado con propiedades de mundo + almacenamiento XML.
+- `Core/StyleEngine` — aplicación/reversión con caché estático de componentes de render.
+- `Core/NativeLut` — tablas 3D procedurales nativas + registro dinámico de LUTs custom horneados.
+- `Core/BakeToLut` — generador analítico de Texture3D y exportador de tiras PNG 1024x32.
+- `Core/SuiteManager` — coordinador de perfiles suite multimod con reflexión y exportación XML.
 - `Core/LutCompat` — modo compatible (lectura runtime de tablas del usuario).
-- `Core/WorldController` — hora, posición solar y clima (cuarto limpio).
-- `Core/SceneRuntime` — estado global y opciones (`applyOnLoad`).
-- `UI/NativePanel` — panel nativo del juego (F10, widgets `UIHelper`).
-- `UI/StylePanel` + `PanelEngine` — ventana IMGUI clásica de respaldo (F11).
-- `SceneFXMod` — entry point IUserMod + ciclo de carga del mapa.
+- `Core/WorldController` — hora, posición solar y clima optimizado sin asignaciones continuas.
+- `Core/SceneRuntime` — estado global, persistencia de coordenadas y opciones.
+- `UI/NativePanel` — panel nativo CFUI (F10) con integración de Suite, Bake-to-LUT y guardado de mundo.
+- `UI/StylePanel` + `PanelEngine` — ventana IMGUI con pestaña dedicada de Suite, persistencia de posición y estilo cian `#4FC3F7`.
+- `SceneFXMod` — entry point IUserMod, Suite Section API y ciclo de vida seguro.

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SceneFX.Core
@@ -41,15 +41,41 @@ namespace SceneFX.Core
         };
 
         private static readonly Dictionary<string, Texture3D> Cache = new Dictionary<string, Texture3D>();
+        private static readonly Dictionary<string, Texture3D> CustomLuts = new Dictionary<string, Texture3D>();
+
+        internal static void RegisterCustom(string name, Texture3D texture)
+        {
+            if (string.IsNullOrEmpty(name) || texture == null)
+            {
+                return;
+            }
+
+            CustomLuts[name.ToLowerInvariant()] = texture;
+        }
 
         internal static bool Exists(string name)
         {
-            return !string.IsNullOrEmpty(name) && Palette.ContainsKey(name.ToLowerInvariant());
+            if (string.IsNullOrEmpty(name))
+            {
+                return false;
+            }
+
+            string key = name.ToLowerInvariant();
+            return Palette.ContainsKey(key) || CustomLuts.ContainsKey(key);
         }
 
-        internal static ICollection<string> Names()
+        internal static List<string> Names()
         {
-            return Palette.Keys;
+            var list = new List<string>(Palette.Keys);
+            foreach (string k in CustomLuts.Keys)
+            {
+                if (!list.Contains(k))
+                {
+                    list.Add(k);
+                }
+            }
+
+            return list;
         }
 
         internal static bool TryGet(string name, out Texture3D texture)
@@ -60,8 +86,16 @@ namespace SceneFX.Core
                 return false;
             }
 
+            string key = name.ToLowerInvariant();
+            Texture3D custom;
+            if (CustomLuts.TryGetValue(key, out custom) && custom != null)
+            {
+                texture = custom;
+                return true;
+            }
+
             NativeLut lut;
-            if (!Palette.TryGetValue(name.ToLowerInvariant(), out lut))
+            if (!Palette.TryGetValue(key, out lut))
             {
                 return false;
             }

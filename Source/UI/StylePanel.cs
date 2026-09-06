@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using UnityEngine;
 using SceneFX.Core;
@@ -10,21 +10,26 @@ namespace SceneFX.UI
     /// </summary>
     internal sealed class StylePanel
     {
-        private static readonly string[] Tabs = { "Styles", "Adjust", "LUT" };
+        private static readonly string[] Tabs = { "Styles", "Adjust", "LUT", "Suite" };
 
         private readonly Action _onChanged;
 
-        private Rect _rect = new Rect(200f, 500f, 480f, 430f);
+        private Rect _rect = new Rect(SceneRuntime.WindowX, SceneRuntime.WindowY, 480f, 450f);
         private int _tab;
         private Vector2 _scroll;
+        private Vector2 _suiteScroll;
         private string _newStyleName = "My scene";
+        private string _newSuiteName = "MySuite";
+        private bool _includeWorldInStyle;
         private string[] _styleFiles = new string[0];
         private string[] _luts = new string[0];
+        private string[] _suiteFiles = new string[0];
 
         internal StylePanel(Action onChanged)
         {
             _onChanged = onChanged;
             RefreshStyles();
+            RefreshSuites();
         }
 
         internal void RefreshStyles()
@@ -32,9 +37,29 @@ namespace SceneFX.UI
             _styleFiles = StyleStore.ListStyleFiles();
         }
 
+        internal void RefreshSuites()
+        {
+            _suiteFiles = SuiteManager.ListSuiteFiles();
+        }
+
         internal void Draw(int id)
         {
+            if (_rect.x != SceneRuntime.WindowX || _rect.y != SceneRuntime.WindowY)
+            {
+                _rect.x = Mathf.Clamp(SceneRuntime.WindowX, 0f, Mathf.Max(0f, Screen.width - _rect.width));
+                _rect.y = Mathf.Clamp(SceneRuntime.WindowY, 0f, Mathf.Max(0f, Screen.height - _rect.height));
+            }
+
+            Rect oldRect = _rect;
             _rect = GUI.Window(id, _rect, DrawWindow, "SceneFX");
+            if (_rect.x != oldRect.x || _rect.y != oldRect.y)
+            {
+                _rect.x = Mathf.Clamp(_rect.x, 0f, Mathf.Max(0f, Screen.width - _rect.width));
+                _rect.y = Mathf.Clamp(_rect.y, 0f, Mathf.Max(0f, Screen.height - _rect.height));
+                SceneRuntime.WindowX = _rect.x;
+                SceneRuntime.WindowY = _rect.y;
+                SceneRuntime.SaveOptions();
+            }
         }
 
         private void DrawWindow(int id)
@@ -55,9 +80,13 @@ namespace SceneFX.UI
             {
                 DrawAdjustTab();
             }
-            else
+            else if (_tab == 2)
             {
                 DrawLutTab();
+            }
+            else
+            {
+                DrawSuiteTab();
             }
         }
 
@@ -112,14 +141,30 @@ namespace SceneFX.UI
 
             GUI.EndScrollView();
 
-            float baseY = 88f + listHeight + 10f;
-            _newStyleName = GUI.TextField(new Rect(8f, baseY, _rect.width - 16f, 24f), _newStyleName);
-            baseY += 30f;
+            float baseY = 88f + listHeight + 6f;
+            _includeWorldInStyle = GUI.Toggle(new Rect(8f, baseY, 260f, 20f), _includeWorldInStyle, "Include world (time/weather)");
+            baseY += 22f;
+
+            _newStyleName = GUI.TextField(new Rect(8f, baseY, _rect.width - 16f, 22f), _newStyleName);
+            baseY += 26f;
 
             if (GUI.Button(new Rect(8f, baseY, _rect.width - 16f, 26f), "Save current look as style"))
             {
                 var copy = SceneRuntime.Current.Clone();
                 copy.Name = StyleStore.SafeName(_newStyleName);
+                copy.IncludeWorld = _includeWorldInStyle;
+                if (copy.IncludeWorld)
+                {
+                    copy.TimeOfDay = WorldController.ReadTimeHours();
+                    var dn = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
+                    copy.Latitude = dn != null ? dn.m_Latitude : 36f;
+                    copy.Longitude = dn != null ? dn.m_Longitude : 0f;
+                    var wm = WeatherManager.instance;
+                    copy.Rain = wm != null ? wm.m_currentRain : 0f;
+                    copy.Fog = wm != null ? wm.m_currentFog : 0f;
+                    copy.Cloud = wm != null ? wm.m_currentCloud : 0f;
+                }
+
                 StyleStore.SaveStyle(copy);
                 RefreshStyles();
             }
@@ -151,27 +196,40 @@ namespace SceneFX.UI
         {
             var gameLuts = StyleEngine.ListLuts();
             var compat = LutCompat.Names();
-            _luts = new string[gameLuts.Length + compat.Count];
+            var native = NativeLut.Names();
+            _luts = new string[gameLuts.Length + compat.Count + native.Count];
             gameLuts.CopyTo(_luts, 0);
             int i = gameLuts.Length;
+            foreach (string name in native)
+            {
+                _luts[i++] = name + " (native)";
+            }
             foreach (string name in compat)
             {
-                _luts[i++] = name + "  (compat)";
+                _luts[i++] = name + " (compat)";
             }
         }
 
         private void DrawLutTab()
         {
-            if (GUI.Button(new Rect(8f, 56f, 110f, 24f), "Scan LUTs"))
+            if (GUI.Button(new Rect(8f, 56f, 100f, 24f), "Scan LUTs"))
             {
                 LutCompat.ScanFolders();
                 MergeLutList();
             }
 
-            if (GUI.Button(new Rect(124f, 56f, 130f, 24f), "Scan folders"))
+            if (GUI.Button(new Rect(112f, 56f, 170f, 24f), "Bake Look to LUT (32³)"))
             {
-                LutCompat.ScanFolders();
-                MergeLutList();
+                string pngPath;
+                string bakeName = "Baked_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                Texture3D baked = BakeToLut.Bake(SceneRuntime.Current, bakeName, out pngPath);
+                if (baked != null)
+                {
+                    SceneRuntime.Current.Lut = bakeName;
+                    SceneRuntime.ApplyCurrent();
+                    _onChanged();
+                    MergeLutList();
+                }
             }
 
             if (_luts.Length == 0)
@@ -189,7 +247,8 @@ namespace SceneFX.UI
                 GUI.Label(new Rect(4f, y + 3f, 270f, 24f), lut);
                 if (GUI.Button(new Rect(280f, y, 90f, 24f), "Use"))
                 {
-                    SceneRuntime.Current.Lut = lut.Replace("  (compat)", string.Empty);
+                    string clean = lut.Replace(" (compat)", string.Empty).Replace(" (native)", string.Empty);
+                    SceneRuntime.Current.Lut = clean;
                     SceneRuntime.ApplyCurrent();
                     _onChanged();
                 }
@@ -200,6 +259,63 @@ namespace SceneFX.UI
             GUI.EndScrollView();
         }
 
+        private void DrawSuiteTab()
+        {
+            float y = 56f;
+            GUI.Label(new Rect(8f, y, 200f, 24f), "<b><color=#4FC3F7>Suite Profiles (All 4 Mods)</color></b>");
+
+            if (GUI.Button(new Rect(280f, y, 90f, 24f), "Refresh"))
+            {
+                RefreshSuites();
+            }
+
+            if (GUI.Button(new Rect(376f, y, 90f, 24f), "Optimized"))
+            {
+                SuiteManager.ApplySuiteProfile("Optimized");
+                _onChanged();
+            }
+
+            y += 30f;
+            float listHeight = 190f;
+            _suiteScroll = GUI.BeginScrollView(new Rect(8f, y, _rect.width - 16f, listHeight), _suiteScroll,
+                new Rect(0f, 0f, _rect.width - 40f, Mathf.Max(1, _suiteFiles.Length) * 28f));
+
+            float sy = 0f;
+            foreach (string file in _suiteFiles)
+            {
+                string pName = Path.GetFileNameWithoutExtension(file);
+                GUI.Label(new Rect(4f, sy + 3f, 260f, 24f), pName);
+                if (GUI.Button(new Rect(280f, sy, 80f, 24f), "Apply"))
+                {
+                    SuiteManager.ApplySuiteProfile(file);
+                    _onChanged();
+                }
+
+                sy += 28f;
+            }
+
+            GUI.EndScrollView();
+
+            float baseY = y + listHeight + 10f;
+            _newSuiteName = GUI.TextField(new Rect(8f, baseY, _rect.width - 16f, 24f), _newSuiteName);
+            baseY += 30f;
+
+            if (GUI.Button(new Rect(8f, baseY, 220f, 26f), "Export current look as suite"))
+            {
+                SuiteManager.SaveSuiteProfile(_newSuiteName);
+                RefreshSuites();
+            }
+
+            if (GUI.Button(new Rect(236f, baseY, _rect.width - 244f, 26f), "Open suite folder"))
+            {
+                if (!Directory.Exists(SuiteManager.SuiteFolder))
+                {
+                    Directory.CreateDirectory(SuiteManager.SuiteFolder);
+                }
+                Application.OpenURL("file://" + SuiteManager.SuiteFolder);
+            }
+        }
+
         private float Slider(string label, float value, float min, float max, float step, float y)
         {
             GUI.Label(new Rect(10f, y, 110f, 24f), label);
@@ -207,6 +323,12 @@ namespace SceneFX.UI
             float snapped = Mathf.Round(raw / step) * step;
             GUI.Label(new Rect(375f, y, 90f, 24f), snapped.ToString("0.00#####"));
             return snapped;
+        }
+
+        private static float Section(string title, float y)
+        {
+            GUI.Label(new Rect(8f, y, 300f, 24f), "<b><color=#4FC3F7>" + title + "</color></b>");
+            return y + 26f;
         }
     }
 }

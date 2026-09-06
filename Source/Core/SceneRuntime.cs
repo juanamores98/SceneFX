@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -24,6 +24,9 @@ namespace SceneFX.Core
 
         internal static bool VanillaMode; // suspend everything, game untouched
 
+        internal static float WindowX = 200f;
+        internal static float WindowY = 500f;
+
         internal static void LoadPersisted()
         {
             var state = StyleStore.LoadState();
@@ -38,6 +41,8 @@ namespace SceneFX.Core
                 ApplyOnLoad = options.ApplyOnLoad;
                 Borderless = options.Borderless;
                 VanillaMode = options.VanillaMode;
+                if (options.WindowX > 0f) WindowX = options.WindowX;
+                if (options.WindowY > 0f) WindowY = options.WindowY;
             }
         }
 
@@ -68,7 +73,14 @@ namespace SceneFX.Core
 
         internal static void SaveOptions()
         {
-            OptionsStore.Save(new OptionsDocument { ApplyOnLoad = ApplyOnLoad, Borderless = Borderless, VanillaMode = VanillaMode });
+            OptionsStore.Save(new OptionsDocument
+            {
+                ApplyOnLoad = ApplyOnLoad,
+                Borderless = Borderless,
+                VanillaMode = VanillaMode,
+                WindowX = WindowX,
+                WindowY = WindowY
+            });
         }
     }
 
@@ -86,6 +98,12 @@ namespace SceneFX.Core
 
         [XmlElement("vanillaMode")]
         public bool VanillaMode;
+
+        [XmlElement("windowX")]
+        public float WindowX = 200f;
+
+        [XmlElement("windowY")]
+        public float WindowY = 500f;
     }
 
     internal static class OptionsStore

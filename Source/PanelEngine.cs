@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using UnityEngine;
 using SceneFX.Core;
@@ -49,6 +49,7 @@ namespace SceneFX
         {
             _windowId = GetInstanceID();
             EnsureBuiltInStyles();
+            SuiteManager.EnsureBuiltInSuites();
             SceneRuntime.LoadPersisted();
             _panel = new StylePanel(OnSceneChanged);
 
@@ -56,6 +57,14 @@ namespace SceneFX
             {
                 SceneRuntime.ApplyCurrent();
             }
+        }
+
+        private void OnDestroy()
+        {
+            SceneRuntime.SaveOptions();
+            StyleStore.SaveState(SceneRuntime.Current);
+            StyleEngine.ClearCache();
+            WorldController.ClearCache();
         }
 
         private static void OnSceneChanged()
