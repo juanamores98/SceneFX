@@ -21,7 +21,7 @@ qUINT ni ningún shader de terceros.
 | `Shaders/SceneFX/SceneFXDepthAO.fx` | Oclusión ambiental por profundidad (halo AO sobre `GetLinearizedDepth`, 8 muestras). Alternativa propia a MXAO/qUINT. |
 | `Presets/03-SceneFX-Optimizado.ini` | Preset propio con los valores recomendados de la suite. |
 
-## Instalación (con el paquete NoWorkshopMods ya instalado)
+## Instalación (independiente: solo requiere ReShade)
 
 1. Copiar `Shaders\SceneFX\` dentro de
    `...\Cities_Skylines\reshade-shaders\Shaders\`.

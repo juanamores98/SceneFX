@@ -50,7 +50,37 @@ namespace SceneFX.Core
                 return;
             }
 
-            CustomLuts[name.ToLowerInvariant()] = texture;
+            string key = name.ToLowerInvariant();
+            Texture3D previous;
+            if (CustomLuts.TryGetValue(key, out previous) && previous != null)
+            {
+                UnityEngine.Object.Destroy(previous);
+            }
+
+            CustomLuts[key] = texture;
+        }
+
+        internal static void ClearRuntimeTextures()
+        {
+            foreach (var texture in CustomLuts.Values)
+            {
+                if (texture != null)
+                {
+                    UnityEngine.Object.Destroy(texture);
+                }
+            }
+
+            CustomLuts.Clear();
+
+            foreach (var texture in Cache.Values)
+            {
+                if (texture != null)
+                {
+                    UnityEngine.Object.Destroy(texture);
+                }
+            }
+
+            Cache.Clear();
         }
 
         internal static bool Exists(string name)

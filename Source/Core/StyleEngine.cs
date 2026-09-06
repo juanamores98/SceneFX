@@ -271,6 +271,11 @@ namespace SceneFX.Core
         {
             TakeSnapshot();
 
+            if (SuiteManager.IsLumenFXToneWriter())
+            {
+                return;
+            }
+
             var tone = FindToneMapping();
             if (tone == null)
             {

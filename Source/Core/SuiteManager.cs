@@ -133,6 +133,10 @@ namespace SceneFX.Core
                     {
                         appliedAny = true;
                     }
+                    else
+                    {
+                        Debug.LogWarning("[SceneFX] Suite section 'scenefx' not applied (rejected)");
+                    }
                 }
 
                 // 2. LumenFX
@@ -142,6 +146,10 @@ namespace SceneFX.Core
                     if (ApplySection("LumenFX.LumenFXMod", lumenNode))
                     {
                         appliedAny = true;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[SceneFX] Suite section 'lumenfx' not applied (mod missing or rejected)");
                     }
                 }
 
@@ -153,6 +161,10 @@ namespace SceneFX.Core
                     {
                         appliedAny = true;
                     }
+                    else
+                    {
+                        Debug.LogWarning("[SceneFX] Suite section 'atmospherefx' not applied (mod missing or rejected)");
+                    }
                 }
 
                 // 4. ClassicLightFX
@@ -162,6 +174,10 @@ namespace SceneFX.Core
                     if (ApplySection("ClassicLightFX.ClassicLightFXMod", classicNode))
                     {
                         appliedAny = true;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[SceneFX] Suite section 'classiclightfx' not applied (mod missing or rejected)");
                     }
                 }
 
@@ -182,8 +198,9 @@ namespace SceneFX.Core
             }
 
             var sb = new StringBuilder();
+            string escapedName = System.Security.SecurityElement.Escape(name);
             sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-            sb.AppendFormat("<suiteProfile name=\"{0}\">\n", name);
+            sb.AppendFormat("<suiteProfile name=\"{0}\">\n", escapedName);
 
             // SceneFX
             string sceneXml = SceneFXMod.ExportSuiteSection();
@@ -246,6 +263,24 @@ namespace SceneFX.Core
                 }
             }
             return null;
+        }
+
+        internal static bool IsLumenFXToneWriter()
+        {
+            var type = FindModType("LumenFX.LumenFXMod");
+            if (type == null)
+            {
+                return false;
+            }
+
+            var prop = type.GetProperty("ToneWriterActive", BindingFlags.Public | BindingFlags.Static);
+            if (prop == null)
+            {
+                return false;
+            }
+
+            object value = prop.GetValue(null, null);
+            return value is bool && (bool)value;
         }
 
         private static string ExportSection(string typeFullName)

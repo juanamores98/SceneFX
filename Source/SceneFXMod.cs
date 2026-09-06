@@ -34,6 +34,7 @@ namespace SceneFX
         public void OnDisabled()
         {
             DestroyHosts();
+            NativeLut.ClearRuntimeTextures();
         }
 
         public void OnSettingsUI(UIHelperBase helper)

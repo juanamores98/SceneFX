@@ -104,6 +104,18 @@ namespace SceneFX.Core
             // Register in NativeLut
             NativeLut.RegisterCustom(name, tex3D);
 
+            var backup = style.Clone();
+            backup.Name = style.Name + "_prebake_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            StyleStore.SaveStyle(backup);
+
+            style.Gamma = 2.2f;
+            style.Brightness = 0f;
+            style.Contrast = 0f;
+            style.Warmth = 0f;
+            style.Exposure = 1f;
+
+            Debug.Log("[SceneFX] Baked '" + name + "' to LUT; grade reset to neutral, previous look saved as '" + backup.Name + "'");
+
             // Export PNG
             try
             {
