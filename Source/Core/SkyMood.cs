@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -181,7 +181,7 @@ namespace SceneFX.Core
                     }
                 }
 
-                cubemap.SetPixels(facePixels, (CubeMapFace)face);
+                cubemap.SetPixels(facePixels, (CubemapFace)face);
             }
 
             cubemap.Apply(false, true);

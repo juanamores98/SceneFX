@@ -316,10 +316,10 @@ namespace SceneFX.UI
                 WorldController.ApplyWeather(WorldRain(), WorldFog(), v);
             });
 
-            string[] skyNames = new string[Core.SkyMood.Names.Count];
-            for (int i = 0; i < Core.SkyMood.Names.Count; i++)
+            string[] skyNames = Core.SkyMood.Names;
+            for (int i = 0; i < skyNames.Length; i++)
             {
-                skyNames[i] = Core.SkyMood.Names[i];
+                skyNames[i] = skyNames[i];
             }
 
             group.AddDropdown(Translator.Get("SCX_SKY"), skyNames, Mathf.Clamp(SceneRuntime.Current.SkyMood, 0, skyNames.Length - 1), sel =>
