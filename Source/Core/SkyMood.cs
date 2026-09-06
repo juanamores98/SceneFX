@@ -46,7 +46,7 @@ namespace SceneFX.Core
         private static Texture _originalSkybox;
         private static bool _applied;
 
-        internal static IReadOnlyList<string> Names
+        internal static string[] Names
         {
             get
             {
@@ -56,7 +56,7 @@ namespace SceneFX.Core
                     names.Add(p.Name);
                 }
 
-                return names;
+                return names.ToArray();
             }
         }
 
