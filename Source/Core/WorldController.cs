@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace SceneFX.Core
@@ -111,6 +111,12 @@ namespace SceneFX.Core
             var dayNight = DayNight;
             if (dayNight != null)
             {
+                // La posicion solar es del tema del mapa cuando hay quien lo administre.
+                if (ThemeOwnership.AtmosphereIsManaged)
+                {
+                    return;
+                }
+
                 dayNight.m_Latitude = Mathf.Clamp(latitude, -90f, 90f);
                 dayNight.m_Longitude = Mathf.Clamp(longitude, -180f, 180f);
             }
@@ -172,8 +178,11 @@ namespace SceneFX.Core
             var dayNight = DayNight;
             if (dayNight != null)
             {
-                dayNight.m_Latitude = _vanillaLatitude;
-                dayNight.m_Longitude = _vanillaLongitude;
+                if (!ThemeOwnership.AtmosphereIsManaged)
+                {
+                    dayNight.m_Latitude = _vanillaLatitude;
+                    dayNight.m_Longitude = _vanillaLongitude;
+                }
             }
 
             var weather = WeatherManager.instance;

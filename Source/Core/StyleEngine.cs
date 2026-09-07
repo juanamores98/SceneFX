@@ -101,7 +101,11 @@ namespace SceneFX.Core
             if (dayNight != null && _sunCaptured)
             {
                 dayNight.m_SunIntensity = _vanillaSun;
-                dayNight.m_Exposure = _vanillaExposure;
+
+                if (!ThemeOwnership.AtmosphereIsManaged)
+                {
+                    dayNight.m_Exposure = _vanillaExposure;
+                }
 
                 if (_gradientsCaptured)
                 {
@@ -359,7 +363,8 @@ namespace SceneFX.Core
                 dayNight.m_SunIntensity = _vanillaSun * Mathf.Clamp(style.SunIntensity, 0f, 3f);
             }
 
-            if (!SuiteManager.IsLumenFXWriting("exposure"))
+            // La exposición es del tema del mapa cuando hay quien lo administre.
+            if (!SuiteManager.IsLumenFXWriting("exposure") && !ThemeOwnership.AtmosphereIsManaged)
             {
                 dayNight.m_Exposure = _vanillaExposure * Mathf.Clamp(style.Exposure, 0.5f, 1.5f);
             }
