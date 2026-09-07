@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using UnityEngine;
 
@@ -325,9 +325,24 @@ namespace SceneFX.Core
                 return;
             }
 
-            dayNight.m_SunIntensity = _vanillaSun * Mathf.Clamp(style.SunIntensity, 0f, 3f);
-            dayNight.m_Exposure = _vanillaExposure * Mathf.Clamp(style.Exposure, 0.5f, 1.5f);
-            dayNight.m_Tonemapping = style.SkyTonemap;
+            // Cada eje se cede por separado: LumenFX puede estar escribiendo la intensidad
+            // solar y no la exposicion, o al reves. Escribir igual no solo perderia la pelea
+            // -el parche de LumenFX corre en cada refresco de luz- sino que dejaria el valor
+            // parpadeando entre los dos mods.
+            if (!SuiteManager.IsLumenFXWriting("sunIntensity"))
+            {
+                dayNight.m_SunIntensity = _vanillaSun * Mathf.Clamp(style.SunIntensity, 0f, 3f);
+            }
+
+            if (!SuiteManager.IsLumenFXWriting("exposure"))
+            {
+                dayNight.m_Exposure = _vanillaExposure * Mathf.Clamp(style.Exposure, 0.5f, 1.5f);
+            }
+
+            if (!SuiteManager.IsLumenFXWriting("skyTonemapping"))
+            {
+                dayNight.m_Tonemapping = style.SkyTonemap;
+            }
         }
 
         /// <summary>
@@ -346,6 +361,13 @@ namespace SceneFX.Core
             CaptureGradients(dayNight);
 
             if (!_gradientsCaptured || _originalLight == null)
+            {
+                return;
+            }
+
+            // La curva solar la remuestrea LumenFX entera cuando esta activo. Si los dos
+            // escriben, el ultimo en hacerlo trabaja sobre la salida del otro.
+            if (SuiteManager.IsLumenFXWriting("lightColor"))
             {
                 return;
             }

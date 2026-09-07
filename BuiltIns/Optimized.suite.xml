@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<suiteProfile name="Optimized">
+<suiteProfile name="Optimized" schema="2">
   <scenefx>
     <lut>1539181199.Relight2Average</lut>
     <nativeLut>ordinary</nativeLut>
@@ -42,6 +42,8 @@
     <adaptiveShadows>true</adaptiveShadows>
     <adaptiveExposure>true</adaptiveExposure>
     <adaptiveExposureGain>1</adaptiveExposureGain>
+    <skyRayleigh>1.116</skyRayleigh>
+    <skyMie>1.858</skyMie>
   </lumenfx>
   <atmospherefx>
     <dynamicFog>true</dynamicFog>

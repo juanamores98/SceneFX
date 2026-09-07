@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -35,17 +35,23 @@ namespace SceneFX.Core
                 }
 
                 string optPath = Path.Combine(SuiteFolder, "Optimized.suite.xml");
-                if (!File.Exists(optPath))
+                if (File.Exists(optPath))
                 {
-                    using (var stream = Assembly.GetExecutingAssembly()
-                        .GetManifestResourceStream("SceneFX.BuiltIns.Optimized.suite.xml"))
+                    string existing = File.ReadAllText(optPath);
+                    if (existing.Contains("schema=\"2\""))
                     {
-                        if (stream != null)
+                        return;
+                    }
+                }
+
+                using (var stream = Assembly.GetExecutingAssembly()
+                    .GetManifestResourceStream("SceneFX.BuiltIns.Optimized.suite.xml"))
+                {
+                    if (stream != null)
+                    {
+                        using (var reader = new StreamReader(stream))
                         {
-                            using (var reader = new StreamReader(stream))
-                            {
-                                File.WriteAllText(optPath, reader.ReadToEnd());
-                            }
+                            File.WriteAllText(optPath, reader.ReadToEnd());
                         }
                     }
                 }
@@ -267,20 +273,59 @@ namespace SceneFX.Core
 
         internal static bool IsLumenFXToneWriter()
         {
-            var type = FindModType("LumenFX.LumenFXMod");
-            if (type == null)
+            return IsLumenFXWriting("tone");
+        }
+
+        /// <summary>
+        /// Cierto si LumenFX esta escribiendo ese campo compartido ahora mismo.
+        /// </summary>
+        /// <remarks>
+        /// Pregunta primero por la lista de reclamaciones por campo. Si el LumenFX instalado
+        /// es anterior y no la publica, cae al booleano de tono de siempre, que solo puede
+        /// responder por el tono; para el resto de campos responde que no, que es como se
+        /// comportaba esto antes de existir el arbitraje.
+        /// </remarks>
+        internal static bool IsLumenFXWriting(string field)
+        {
+            try
             {
+                var type = FindModType("LumenFX.LumenFXMod");
+                if (type == null)
+                {
+                    return false;
+                }
+
+                var claims = type.GetProperty("ActiveClaims", BindingFlags.Public | BindingFlags.Static);
+                if (claims != null)
+                {
+                    string value = claims.GetValue(null, null) as string;
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        return false;
+                    }
+
+                    return ("," + value + ",").IndexOf("," + field + ",", StringComparison.Ordinal) >= 0;
+                }
+
+                if (field != "tone")
+                {
+                    return false;
+                }
+
+                var legacy = type.GetProperty("ToneWriterActive", BindingFlags.Public | BindingFlags.Static);
+                if (legacy == null)
+                {
+                    return false;
+                }
+
+                object flag = legacy.GetValue(null, null);
+                return flag is bool && (bool)flag;
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
                 return false;
             }
-
-            var prop = type.GetProperty("ToneWriterActive", BindingFlags.Public | BindingFlags.Static);
-            if (prop == null)
-            {
-                return false;
-            }
-
-            object value = prop.GetValue(null, null);
-            return value is bool && (bool)value;
         }
 
         private static string ExportSection(string typeFullName)
