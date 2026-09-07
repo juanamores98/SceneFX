@@ -21,6 +21,25 @@ namespace SceneFX.Core
         private const string VanillaXml =
             "<scenefx>" +
             "<vanillaMode>true</vanillaMode>" +
+            // Vanilla no es «poner ceros»: es soltar. Cada canal en -1 y cada interruptor de
+            // tres estados en -1 devuelven el clima y el ritmo al juego.
+            "<rain>-1</rain>" +
+            "<fog>-1</fog>" +
+            "<cloud>-1</cloud>" +
+            "<northernLights>-1</northernLights>" +
+            "<rainbow>-1</rainbow>" +
+            "<groundWetness>-1</groundWetness>" +
+            "<temperatureLock>false</temperatureLock>" +
+            "<windLock>false</windLock>" +
+            "<weatherEnabled>-1</weatherEnabled>" +
+            "<rainIsSnow>-1</rainIsSnow>" +
+            "<snowyRoads>-1</snowyRoads>" +
+            "<gameSpeed>1</gameSpeed>" +
+            "<cycleSpeedEnabled>false</cycleSpeedEnabled>" +
+            "<cycleSpeed>1</cycleSpeed>" +
+            "<nightCycleSpeed>1</nightCycleSpeed>" +
+            "<separateDayNight>false</separateDayNight>" +
+            "<cycleWhilePaused>false</cycleWhilePaused>" +
             "</scenefx>";
 
         private const string OptimizedXml =
@@ -45,6 +64,22 @@ namespace SceneFX.Core
             "<rain>0</rain>" +
             "<fog>0</fog>" +
             "<cloud>0</cloud>" +
+            // El resto del mundo se deja al juego: la receta calibrada es de imagen, no de
+            // clima ni de ritmo.
+            "<northernLights>-1</northernLights>" +
+            "<rainbow>-1</rainbow>" +
+            "<groundWetness>-1</groundWetness>" +
+            "<temperatureLock>false</temperatureLock>" +
+            "<windLock>false</windLock>" +
+            "<weatherEnabled>-1</weatherEnabled>" +
+            "<rainIsSnow>-1</rainIsSnow>" +
+            "<snowyRoads>-1</snowyRoads>" +
+            "<gameSpeed>1</gameSpeed>" +
+            "<cycleSpeedEnabled>false</cycleSpeedEnabled>" +
+            "<cycleSpeed>1</cycleSpeed>" +
+            "<nightCycleSpeed>1</nightCycleSpeed>" +
+            "<separateDayNight>false</separateDayNight>" +
+            "<cycleWhilePaused>false</cycleWhilePaused>" +
             "</scenefx>";
 
         internal static bool ApplyVanilla()

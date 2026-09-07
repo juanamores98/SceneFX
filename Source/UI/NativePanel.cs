@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -11,7 +11,7 @@ namespace SceneFX.UI
 {
     /// <summary>
     /// Native in-game panel (ColossalFramework UI) with tabbed pages so every
-    /// control stays inside the window: Style, LUT, Grade and World.
+    /// control stays inside the window: Style, LUT, Grade, World, Weather and Time.
     /// Toggled with F10 or the Unified UI tray button. Localized via the
     /// Locale folder (English fallback).
     /// </summary>
@@ -23,6 +23,8 @@ namespace SceneFX.UI
             Translator.Get("SCX_TAB_LUT"),
             Translator.Get("SCX_TAB_GRADE"),
             Translator.Get("SCX_TAB_WORLD"),
+            Translator.Get("SCX_TAB_WEATHER"),
+            Translator.Get("SCX_TAB_TIME"),
         };
 
         private UIPanel _root;
@@ -97,8 +99,8 @@ namespace SceneFX.UI
                 var view = UIView.GetAView();
                 _root = view.AddUIComponent(typeof(UIPanel)) as UIPanel;
                 _root.backgroundSprite = "MenuPanel";
-                _root.size = new Vector2(400f, 640f);
-                _root.relativePosition = new Vector3(760f, 100f);
+                _root.size = new Vector2(460f, 760f);
+                _root.relativePosition = new Vector3(700f, 80f);
                 _root.opacity = 0.95f;
 
                 var drag = _root.AddUIComponent<UIDragHandle>();
@@ -113,7 +115,7 @@ namespace SceneFX.UI
                 var close = _root.AddUIComponent<UIButton>();
                 close.text = "X";
                 close.size = new Vector2(28f, 24f);
-                close.relativePosition = new Vector3(362f, 8f);
+                close.relativePosition = new Vector3(422f, 8f);
                 close.normalBgSprite = "ButtonMenu";
                 close.hoveredBgSprite = "ButtonMenuHovered";
                 close.eventClicked += (c, p) => Hide();
@@ -125,15 +127,16 @@ namespace SceneFX.UI
                     int index = i;
                     var tab = _root.AddUIComponent<UIButton>();
                     tab.text = Tabs[i];
-                    tab.size = new Vector2(93f, 26f);
+                    tab.size = new Vector2(71f, 26f);
                     tab.relativePosition = new Vector3(x, 38f);
+                    tab.textScale = 0.8f;
                     tab.normalBgSprite = "ButtonMenu";
                     tab.hoveredBgSprite = "ButtonMenuHovered";
                     tab.focusedBgSprite = "ButtonMenuFocused";
                     tab.textColor = new Color32(255, 255, 255, 255);
                     tab.eventClicked += (c, p) => SelectTab(index);
                     _tabButtons[i] = tab;
-                    x += 96f;
+                    x += 74f;
                 }
 
                 // One page per tab; only the active one is visible.
@@ -145,6 +148,10 @@ namespace SceneFX.UI
                 BuildGradePage(_pages[2]);
                 _pages[3] = NewPage();
                 BuildWorldPage(_pages[3]);
+                _pages[4] = NewPage();
+                BuildWeatherPage(_pages[4]);
+                _pages[5] = NewPage();
+                BuildTimePage(_pages[5]);
 
                 SelectTab(0);
             }
@@ -167,7 +174,7 @@ namespace SceneFX.UI
         {
             var page = _root.AddUIComponent<UIPanel>();
             page.backgroundSprite = null;
-            page.size = new Vector2(392f, 556f);
+            page.size = new Vector2(452f, 676f);
             page.relativePosition = new Vector3(4f, 74f);
             page.isVisible = false;
             return page;
@@ -224,12 +231,7 @@ namespace SceneFX.UI
                 copy.IncludeWorld = _includeWorldInSavedStyle;
                 if (copy.IncludeWorld)
                 {
-                    copy.TimeOfDay = WorldController.ReadTimeHours();
-                    copy.Latitude = WorldLat();
-                    copy.Longitude = WorldLon();
-                    copy.Rain = WorldRain();
-                    copy.Fog = WorldFog();
-                    copy.Cloud = WorldCloud();
+                    StyleEngine.CaptureWorld(copy);
                 }
 
                 StyleStore.SaveStyle(copy);
@@ -240,6 +242,7 @@ namespace SceneFX.UI
             {
                 SceneRuntime.RestoreGame();
                 WorldController.Restore();
+                TimeController.Restore();
             });
 
             group.AddCheckbox(Translator.Get("SCX_VANILLA"), SceneRuntime.VanillaMode, sel =>
@@ -250,6 +253,7 @@ namespace SceneFX.UI
                 {
                     SceneRuntime.RestoreGame();
                     WorldController.Restore();
+                    TimeController.Restore();
                     Core.SkyMood.Restore();
                 }
                 else
@@ -377,19 +381,6 @@ namespace SceneFX.UI
             {
                 WorldController.ApplyPosition(WorldLat(), v);
             });
-            group.AddSlider(Translator.Get("SCX_RAIN"), 0f, 1f, 0.02f, WorldRain(), v =>
-            {
-                WorldController.ApplyWeather(v, WorldFog(), WorldCloud());
-            });
-            group.AddSlider(Translator.Get("SCX_FOG"), 0f, 1f, 0.02f, WorldFog(), v =>
-            {
-                WorldController.ApplyWeather(WorldRain(), v, WorldCloud());
-            });
-            group.AddSlider(Translator.Get("SCX_CLOUD"), 0f, 1f, 0.02f, WorldCloud(), v =>
-            {
-                WorldController.ApplyWeather(WorldRain(), WorldFog(), v);
-            });
-
             string[] skyNames = Core.SkyMood.Names;
             for (int i = 0; i < skyNames.Length; i++)
             {
@@ -403,6 +394,168 @@ namespace SceneFX.UI
             });
         }
 
+        /// <summary>
+        /// El clima entero, un canal por fila: la casilla dice quien manda y el deslizador
+        /// dice cuanto.
+        /// </summary>
+        /// <remarks>
+        /// <b>Que hace la casilla.</b> Sin marcar, el canal es del juego y sigue su curso.
+        /// Marcada, lo fija este mod en el valor del deslizador. Mover el deslizador la marca
+        /// sola: quien mueve un control espera verlo aplicado, no tener que armarlo antes.
+        ///
+        /// <b>Donde esta la nieve.</b> No hay canal de nieve porque el juego no lo tiene. En un
+        /// mapa de invierno la nieve es la lluvia; lo que decide cual cae es la casilla
+        /// «la lluvia cae como nieve», que sirve tambien en mapas templados.
+        /// </remarks>
+        private void BuildWeatherPage(UIPanel page)
+        {
+            var helper = new UIHelper(page);
+            var group = helper.AddGroup(Translator.Get("SCX_GROUP_WEATHER"));
+
+            AddChannel(group, "rain", "SCX_RAIN");
+            AddChannel(group, "fog", "SCX_FOG");
+            AddChannel(group, "cloud", "SCX_CLOUD");
+            AddChannel(group, "northernLights", "SCX_NORTHERN_LIGHTS");
+            AddChannel(group, "rainbow", "SCX_RAINBOW");
+            AddChannel(group, "wetness", "SCX_WETNESS");
+
+            var extra = helper.AddGroup(Translator.Get("SCX_GROUP_CLIMATE"));
+            var tempBox = (UICheckBox)extra.AddCheckbox(Translator.Get("SCX_TEMPERATURE_LOCK"),
+                WorldController.TemperatureLocked, sel =>
+                {
+                    if (_suppressEvents) return;
+                    WorldController.TemperatureLocked = sel;
+                });
+            extra.AddSlider(Translator.Get("SCX_TEMPERATURE"), -50f, 50f, 1f, WorldController.Temperature, v =>
+            {
+                WorldController.Temperature = v;
+                Arm(tempBox, () => WorldController.TemperatureLocked = true);
+            });
+
+            var windBox = (UICheckBox)extra.AddCheckbox(Translator.Get("SCX_WIND_LOCK"),
+                WorldController.WindLocked, sel =>
+                {
+                    if (_suppressEvents) return;
+                    WorldController.WindLocked = sel;
+                });
+            extra.AddSlider(Translator.Get("SCX_WIND"), 0f, 360f, 5f, WorldController.WindDirection, v =>
+            {
+                WorldController.WindDirection = v;
+                Arm(windBox, () => WorldController.WindLocked = true);
+            });
+
+            var flags = helper.AddGroup(Translator.Get("SCX_GROUP_WEATHER_FLAGS"));
+            flags.AddCheckbox(Translator.Get("SCX_WEATHER_ON"), WorldController.WeatherEnabled != 0, sel =>
+            {
+                WorldController.WeatherEnabled = sel ? 1 : 0;
+                WorldController.Tick();
+            });
+            flags.AddCheckbox(Translator.Get("SCX_RAIN_IS_SNOW"), WorldController.RainIsSnow == 1, sel =>
+            {
+                WorldController.RainIsSnow = sel ? 1 : 0;
+                WorldController.Tick();
+            });
+            flags.AddCheckbox(Translator.Get("SCX_SNOWY_ROADS"), WorldController.SnowyRoads == 1, sel =>
+            {
+                WorldController.SnowyRoads = sel ? 1 : 0;
+                WorldController.Tick();
+            });
+        }
+
+        private void AddChannel(UIHelperBase group, string channel, string labelId)
+        {
+            string label = Translator.Get(labelId);
+            var box = (UICheckBox)group.AddCheckbox(label + Translator.Get("SCX_LOCK_SUFFIX"),
+                WorldController.ChannelLocked(channel), sel =>
+                {
+                    if (_suppressEvents) return;
+                    WorldController.SetChannel(channel, sel ? WorldController.ReadChannel(channel) : -1f);
+                });
+
+            group.AddSlider(label, 0f, 1f, 0.02f, WorldController.ReadChannel(channel), v =>
+            {
+                WorldController.SetChannel(channel, v);
+                Arm(box, null);
+            });
+        }
+
+        /// <summary>Marca la casilla de un control sin volver a disparar su propio evento.</summary>
+        private void Arm(UICheckBox box, Action alsoDo)
+        {
+            if (alsoDo != null)
+            {
+                alsoDo();
+            }
+
+            if (box == null || box.isChecked)
+            {
+                return;
+            }
+
+            _suppressEvents = true;
+            try
+            {
+                box.isChecked = true;
+            }
+            finally
+            {
+                _suppressEvents = false;
+            }
+        }
+
+        /// <summary>
+        /// El ritmo: a que velocidad corre el juego y a que velocidad corre el cielo.
+        /// </summary>
+        /// <remarks>
+        /// El ciclo que se acelera aqui es el visual. Cambiarlo de verdad significa mover el
+        /// contador de simulacion, que viaja dentro de la partida guardada, y este mod no deja
+        /// rastro en una partida por estar activo. El reloj de la ciudad sigue igual.
+        /// </remarks>
+        private void BuildTimePage(UIPanel page)
+        {
+            var helper = new UIHelper(page);
+
+            var speed = helper.AddGroup(Translator.Get("SCX_GROUP_SPEED"));
+            speed.AddSlider(Translator.Get("SCX_GAME_SPEED"),
+                TimeController.MinGameSpeed, TimeController.MaxGameSpeed, 0.1f, TimeController.GameSpeed, v =>
+                {
+                    TimeController.ApplyGameSpeed(v);
+                });
+            speed.AddButton(Translator.Get("SCX_SPEED_RESET"), () => TimeController.ApplyGameSpeed(1f));
+
+            var cycle = helper.AddGroup(Translator.Get("SCX_GROUP_CYCLE"));
+            var enableBox = (UICheckBox)cycle.AddCheckbox(Translator.Get("SCX_CYCLE_ENABLE"),
+                TimeController.CycleSpeedEnabled, sel =>
+                {
+                    if (_suppressEvents) return;
+                    TimeController.CycleSpeedEnabled = sel;
+                });
+
+            cycle.AddSlider(Translator.Get("SCX_CYCLE_SPEED"),
+                TimeController.MinCycleSpeed, TimeController.MaxCycleSpeed, 0.1f, TimeController.CycleSpeed, v =>
+                {
+                    TimeController.CycleSpeed = v;
+                    Arm(enableBox, () => TimeController.CycleSpeedEnabled = true);
+                });
+
+            cycle.AddCheckbox(Translator.Get("SCX_CYCLE_SEPARATE"), TimeController.SeparateDayNight, sel =>
+            {
+                TimeController.SeparateDayNight = sel;
+            });
+
+            cycle.AddSlider(Translator.Get("SCX_CYCLE_NIGHT_SPEED"),
+                TimeController.MinCycleSpeed, TimeController.MaxCycleSpeed, 0.1f, TimeController.NightCycleSpeed, v =>
+                {
+                    TimeController.NightCycleSpeed = v;
+                    Arm(enableBox, () => TimeController.CycleSpeedEnabled = true);
+                });
+
+            cycle.AddCheckbox(Translator.Get("SCX_CYCLE_PAUSED"), TimeController.CycleWhilePaused, sel =>
+            {
+                TimeController.CycleWhilePaused = sel;
+            });
+        }
+
         private static float WorldLat()
         {
             var dn = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
@@ -413,24 +566,6 @@ namespace SceneFX.UI
         {
             var dn = UnityEngine.Object.FindObjectOfType<DayNightProperties>();
             return dn != null ? dn.m_Longitude : 0f;
-        }
-
-        private static float WorldRain()
-        {
-            var w = WeatherManager.instance;
-            return w != null ? w.m_currentRain : 0f;
-        }
-
-        private static float WorldFog()
-        {
-            var w = WeatherManager.instance;
-            return w != null ? w.m_currentFog : 0f;
-        }
-
-        private static float WorldCloud()
-        {
-            var w = WeatherManager.instance;
-            return w != null ? w.m_currentCloud : 0f;
         }
 
         private static string[] ListStyleNames()

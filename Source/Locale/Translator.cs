@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -104,16 +104,30 @@ namespace SceneFX.Locale
                 selected = LocaleManager.instance.language;
             }
 
-            var current = languages.Find(l => l.UniqueName == selected)
-                ?? languages.Find(l => l.UniqueName == FallbackLanguage);
-            if (current == null)
+            // El ingles va primero como base y el idioma elegido se pone encima. Sin esto,
+            // una cadena nueva que todavia no este traducida se veria en pantalla como su
+            // identificador —«SCX_RAINBOW»— en vez de en ingles.
+            var fallback = languages.Find(l => l.UniqueName == FallbackLanguage);
+            var current = languages.Find(l => l.UniqueName == selected);
+            if (fallback == null && current == null)
             {
                 return;
             }
 
-            foreach (TranslationEntry entry in current.Entries)
+            if (fallback != null)
             {
-                Strings[entry.Id] = entry.Text;
+                foreach (TranslationEntry entry in fallback.Entries)
+                {
+                    Strings[entry.Id] = entry.Text;
+                }
+            }
+
+            if (current != null && current != fallback)
+            {
+                foreach (TranslationEntry entry in current.Entries)
+                {
+                    Strings[entry.Id] = entry.Text;
+                }
             }
         }
     }

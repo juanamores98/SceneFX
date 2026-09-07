@@ -68,6 +68,7 @@ namespace SceneFX
                 if (sel)
                 {
                     WorldController.Restore();
+                    Core.TimeController.Restore();
                     Core.SkyMood.Restore();
                     SceneRuntime.RestoreGame();
                 }
@@ -137,10 +138,12 @@ namespace SceneFX
             base.OnLevelUnloading();
             UI.UuiButton.Unregister();
             WorldController.Restore();
+            TimeController.Restore();
             SkyMood.Restore();
             SceneRuntime.RestoreGame();
             StyleEngine.ClearCache();
             WorldController.ClearCache();
+            TimeController.ClearCache();
             DestroyHosts();
         }
 
@@ -199,6 +202,7 @@ namespace SceneFX
             {
                 var culture = System.Globalization.CultureInfo.InvariantCulture;
                 var current = SceneRuntime.Current;
+                bool worldTouched = false;
 
                 foreach (System.Xml.XmlNode node in element.ChildNodes)
                 {
@@ -230,6 +234,7 @@ namespace SceneFX
                         Core.SceneRuntime.SaveOptions();
                         if (b)
                         {
+                            Core.TimeController.Restore();
                             Core.WorldController.Restore();
                             Core.SkyMood.Restore();
                             Core.SceneRuntime.RestoreGame();
@@ -239,15 +244,39 @@ namespace SceneFX
                             Core.SceneRuntime.ApplyCurrent();
                         }
                     }
-                    else if (name == "timeofday" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.TimeOfDay = f;
-                    else if (name == "latitude" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Latitude = f;
-                    else if (name == "longitude" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Longitude = f;
-                    else if (name == "rain" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Rain = f;
-                    else if (name == "fog" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Fog = f;
-                    else if (name == "cloud" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Cloud = f;
+                    else if (name == "timeofday" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.TimeOfDay = f; worldTouched = true; }
+                    else if (name == "latitude" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Latitude = f; worldTouched = true; }
+                    else if (name == "longitude" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Longitude = f; worldTouched = true; }
+                    else if (name == "rain" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Rain = f; worldTouched = true; }
+                    else if (name == "fog" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Fog = f; worldTouched = true; }
+                    else if (name == "cloud" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Cloud = f; worldTouched = true; }
+                    else if (name == "northernlights" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.NorthernLights = f; worldTouched = true; }
+                    else if (name == "rainbow" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Rainbow = f; worldTouched = true; }
+                    else if (name == "groundwetness" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.GroundWetness = f; worldTouched = true; }
+                    else if (name == "temperature" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Temperature = f; worldTouched = true; }
+                    else if (name == "temperaturelock" && bool.TryParse(val, out b)) { current.TemperatureLock = b; worldTouched = true; }
+                    else if (name == "winddirection" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.WindDirection = f; worldTouched = true; }
+                    else if (name == "windlock" && bool.TryParse(val, out b)) { current.WindLock = b; worldTouched = true; }
+                    else if (name == "weatherenabled" && int.TryParse(val, out i)) { current.WeatherEnabled = i; worldTouched = true; }
+                    else if (name == "rainissnow" && int.TryParse(val, out i)) { current.RainIsSnow = i; worldTouched = true; }
+                    else if (name == "snowyroads" && int.TryParse(val, out i)) { current.SnowyRoads = i; worldTouched = true; }
+                    else if (name == "gamespeed" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.GameSpeed = f; worldTouched = true; }
+                    else if (name == "cyclespeedenabled" && bool.TryParse(val, out b)) { current.CycleSpeedEnabled = b; worldTouched = true; }
+                    else if (name == "cyclespeed" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.CycleSpeed = f; worldTouched = true; }
+                    else if (name == "nightcyclespeed" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.NightCycleSpeed = f; worldTouched = true; }
+                    else if (name == "separatedaynight" && bool.TryParse(val, out b)) { current.SeparateDayNight = b; worldTouched = true; }
+                    else if (name == "cyclewhilepaused" && bool.TryParse(val, out b)) { current.CycleWhilePaused = b; worldTouched = true; }
                 }
 
                 SceneRuntime.ApplyCurrent();
+
+                // Una instruccion directa sobre el mundo se obedece aunque el estilo activo no
+                // lleve marcado «incluir mundo»: quien la manda ya dijo lo que quiere.
+                if (worldTouched && !SceneRuntime.VanillaMode)
+                {
+                    Core.StyleEngine.ApplyWorld(current);
+                }
+
                 StyleStore.SaveState(current);
                 return true;
             }
@@ -261,7 +290,11 @@ namespace SceneFX
         public static string ExportSuiteSection()
         {
             var c = System.Globalization.CultureInfo.InvariantCulture;
-            var cur = SceneRuntime.Current;
+
+            // Sobre una copia: exportar es mirar, no escribir. Si se refrescara el estilo vivo
+            // con la hora del reloj, publicar un perfil pisaria la hora que el usuario guardo.
+            var cur = SceneRuntime.Current.Clone();
+            Core.StyleEngine.CaptureWorld(cur);
             return string.Format(
                 "  <scenefx>\n" +
                 "    <lut>{0}</lut>\n" +
@@ -284,6 +317,22 @@ namespace SceneFX
                 "    <fog>{17}</fog>\n" +
                 "    <cloud>{18}</cloud>\n" +
                 "    <vanillaMode>{19}</vanillaMode>\n" +
+                "    <northernLights>{20}</northernLights>\n" +
+                "    <rainbow>{21}</rainbow>\n" +
+                "    <groundWetness>{22}</groundWetness>\n" +
+                "    <temperatureLock>{23}</temperatureLock>\n" +
+                "    <temperature>{24}</temperature>\n" +
+                "    <windLock>{25}</windLock>\n" +
+                "    <windDirection>{26}</windDirection>\n" +
+                "    <weatherEnabled>{27}</weatherEnabled>\n" +
+                "    <rainIsSnow>{28}</rainIsSnow>\n" +
+                "    <snowyRoads>{29}</snowyRoads>\n" +
+                "    <gameSpeed>{30}</gameSpeed>\n" +
+                "    <cycleSpeedEnabled>{31}</cycleSpeedEnabled>\n" +
+                "    <cycleSpeed>{32}</cycleSpeed>\n" +
+                "    <nightCycleSpeed>{33}</nightCycleSpeed>\n" +
+                "    <separateDayNight>{34}</separateDayNight>\n" +
+                "    <cycleWhilePaused>{35}</cycleWhilePaused>\n" +
                 "  </scenefx>",
                 cur.Lut ?? string.Empty,
                 cur.NativeLut ?? string.Empty,
@@ -304,7 +353,23 @@ namespace SceneFX
                 cur.Rain.ToString("0.00", c),
                 cur.Fog.ToString("0.00", c),
                 cur.Cloud.ToString("0.00", c),
-                SceneRuntime.VanillaMode.ToString().ToLowerInvariant());
+                SceneRuntime.VanillaMode.ToString().ToLowerInvariant(),
+                cur.NorthernLights.ToString("0.00", c),
+                cur.Rainbow.ToString("0.00", c),
+                cur.GroundWetness.ToString("0.00", c),
+                cur.TemperatureLock.ToString().ToLowerInvariant(),
+                cur.Temperature.ToString("0.0", c),
+                cur.WindLock.ToString().ToLowerInvariant(),
+                cur.WindDirection.ToString("0.0", c),
+                cur.WeatherEnabled.ToString(c),
+                cur.RainIsSnow.ToString(c),
+                cur.SnowyRoads.ToString(c),
+                cur.GameSpeed.ToString("0.00", c),
+                cur.CycleSpeedEnabled.ToString().ToLowerInvariant(),
+                cur.CycleSpeed.ToString("0.00", c),
+                cur.NightCycleSpeed.ToString("0.00", c),
+                cur.SeparateDayNight.ToString().ToLowerInvariant(),
+                cur.CycleWhilePaused.ToString().ToLowerInvariant());
         }
     }
 }

@@ -30,5 +30,31 @@
     <Translation ID="SCX_FOG" String="Niebla" />
     <Translation ID="SCX_CLOUD" String="Nubes" />
       <Translation ID="SCX_VANILLA" String="Modo vanilla (suspender SceneFX)" />
+    <Translation ID="SCX_TAB_WEATHER" String="Clima" />
+    <Translation ID="SCX_TAB_TIME" String="Ritmo" />
+    <Translation ID="SCX_SKY" String="Cielo" />
+    <Translation ID="SCX_GROUP_WEATHER" String="Canales del clima" />
+    <Translation ID="SCX_GROUP_CLIMATE" String="Temperatura y viento" />
+    <Translation ID="SCX_GROUP_WEATHER_FLAGS" String="Comportamiento del clima" />
+    <Translation ID="SCX_GROUP_SPEED" String="Velocidad del juego" />
+    <Translation ID="SCX_GROUP_CYCLE" String="Ciclo dia/noche" />
+    <Translation ID="SCX_LOCK_SUFFIX" String=" - fijar en este valor" />
+    <Translation ID="SCX_NORTHERN_LIGHTS" String="Auroras boreales" />
+    <Translation ID="SCX_RAINBOW" String="Arcoiris" />
+    <Translation ID="SCX_WETNESS" String="Suelo mojado" />
+    <Translation ID="SCX_TEMPERATURE_LOCK" String="Fijar la temperatura" />
+    <Translation ID="SCX_TEMPERATURE" String="Temperatura" />
+    <Translation ID="SCX_WIND_LOCK" String="Fijar la direccion del viento" />
+    <Translation ID="SCX_WIND" String="Direccion del viento" />
+    <Translation ID="SCX_WEATHER_ON" String="Clima activo" />
+    <Translation ID="SCX_RAIN_IS_SNOW" String="La lluvia cae como nieve" />
+    <Translation ID="SCX_SNOWY_ROADS" String="Calles con aspecto nevado al mojarse" />
+    <Translation ID="SCX_GAME_SPEED" String="Velocidad del juego" />
+    <Translation ID="SCX_SPEED_RESET" String="Volver a la velocidad normal" />
+    <Translation ID="SCX_CYCLE_ENABLE" String="Controlar la velocidad del ciclo" />
+    <Translation ID="SCX_CYCLE_SPEED" String="Velocidad del ciclo" />
+    <Translation ID="SCX_CYCLE_SEPARATE" String="Separar la velocidad de dia y de noche" />
+    <Translation ID="SCX_CYCLE_NIGHT_SPEED" String="Velocidad de noche" />
+    <Translation ID="SCX_CYCLE_PAUSED" String="El cielo sigue girando en pausa" />
   </Translations>
 </Language>

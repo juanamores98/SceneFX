@@ -36,6 +36,30 @@ namespace SceneFX.Core
         [XmlElement("fog")] public float Fog = -1f;
         [XmlElement("cloud")] public float Cloud = -1f;
 
+        // Canales de clima que faltaban. Mismo convenio: -1 = lo lleva el juego.
+        [XmlElement("northernLights")] public float NorthernLights = -1f;
+        [XmlElement("rainbow")] public float Rainbow = -1f;
+        [XmlElement("groundWetness")] public float GroundWetness = -1f;
+
+        // Temperatura y viento admiten valores negativos, asi que llevan interruptor aparte.
+        [XmlElement("temperatureLock")] public bool TemperatureLock;
+        [XmlElement("temperature")] public float Temperature = 15f;
+        [XmlElement("windLock")] public bool WindLock;
+        [XmlElement("windDirection")] public float WindDirection;
+
+        // Tres estados: -1 sin tocar, 0 apagado, 1 encendido.
+        [XmlElement("weatherEnabled")] public int WeatherEnabled = -1;
+        [XmlElement("rainIsSnow")] public int RainIsSnow = -1;
+        [XmlElement("snowyRoads")] public int SnowyRoads = -1;
+
+        // Ritmo del juego y del ciclo dia/noche.
+        [XmlElement("gameSpeed")] public float GameSpeed = 1f;
+        [XmlElement("cycleSpeedEnabled")] public bool CycleSpeedEnabled;
+        [XmlElement("cycleSpeed")] public float CycleSpeed = 1f;
+        [XmlElement("nightCycleSpeed")] public float NightCycleSpeed = 1f;
+        [XmlElement("separateDayNight")] public bool SeparateDayNight;
+        [XmlElement("cycleWhilePaused")] public bool CycleWhilePaused;
+
         internal StyleData Clone()
         {
             return (StyleData)MemberwiseClone();

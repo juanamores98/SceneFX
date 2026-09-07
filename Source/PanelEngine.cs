@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using UnityEngine;
 using SceneFX.Core;
@@ -65,6 +65,8 @@ namespace SceneFX
             StyleStore.SaveState(SceneRuntime.Current);
             StyleEngine.ClearCache();
             WorldController.ClearCache();
+            TimeController.Restore();
+            TimeController.ClearCache();
         }
 
         private static void OnSceneChanged()
@@ -85,6 +87,7 @@ namespace SceneFX
             }
 
             WorldController.Tick();
+            TimeController.Tick();
         }
 
         private void ToggleNative()

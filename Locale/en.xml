@@ -30,5 +30,31 @@
     <Translation ID="SCX_FOG" String="Fog" />
     <Translation ID="SCX_CLOUD" String="Cloud" />
       <Translation ID="SCX_VANILLA" String="Vanilla mode (suspend SceneFX)" />
+    <Translation ID="SCX_TAB_WEATHER" String="Weather" />
+    <Translation ID="SCX_TAB_TIME" String="Time" />
+    <Translation ID="SCX_SKY" String="Sky" />
+    <Translation ID="SCX_GROUP_WEATHER" String="Weather channels" />
+    <Translation ID="SCX_GROUP_CLIMATE" String="Temperature and wind" />
+    <Translation ID="SCX_GROUP_WEATHER_FLAGS" String="Weather behaviour" />
+    <Translation ID="SCX_GROUP_SPEED" String="Game speed" />
+    <Translation ID="SCX_GROUP_CYCLE" String="Day/night cycle" />
+    <Translation ID="SCX_LOCK_SUFFIX" String=" - hold at this value" />
+    <Translation ID="SCX_NORTHERN_LIGHTS" String="Northern lights" />
+    <Translation ID="SCX_RAINBOW" String="Rainbow" />
+    <Translation ID="SCX_WETNESS" String="Ground wetness" />
+    <Translation ID="SCX_TEMPERATURE_LOCK" String="Hold temperature" />
+    <Translation ID="SCX_TEMPERATURE" String="Temperature" />
+    <Translation ID="SCX_WIND_LOCK" String="Hold wind direction" />
+    <Translation ID="SCX_WIND" String="Wind direction" />
+    <Translation ID="SCX_WEATHER_ON" String="Weather enabled" />
+    <Translation ID="SCX_RAIN_IS_SNOW" String="Rain falls as snow" />
+    <Translation ID="SCX_SNOWY_ROADS" String="Roads look snowy when wet" />
+    <Translation ID="SCX_GAME_SPEED" String="Game speed" />
+    <Translation ID="SCX_SPEED_RESET" String="Back to normal speed" />
+    <Translation ID="SCX_CYCLE_ENABLE" String="Control the cycle speed" />
+    <Translation ID="SCX_CYCLE_SPEED" String="Cycle speed" />
+    <Translation ID="SCX_CYCLE_SEPARATE" String="Separate day and night speed" />
+    <Translation ID="SCX_CYCLE_NIGHT_SPEED" String="Night speed" />
+    <Translation ID="SCX_CYCLE_PAUSED" String="Keep the sky moving while paused" />
   </Translations>
 </Language>

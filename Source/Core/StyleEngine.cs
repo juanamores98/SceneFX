@@ -82,16 +82,90 @@ namespace SceneFX.Core
 
             if (style.IncludeWorld)
             {
-                WorldController.ApplyTime(style.TimeOfDay);
-                WorldController.ApplyPosition(style.Latitude, style.Longitude);
-                if (style.Rain >= 0f || style.Fog >= 0f || style.Cloud >= 0f)
-                {
-                    WorldController.ApplyWeather(
-                        style.Rain >= 0f ? style.Rain : 0f,
-                        style.Fog >= 0f ? style.Fog : 0f,
-                        style.Cloud >= 0f ? style.Cloud : 0f);
-                }
+                ApplyWorld(style);
             }
+        }
+
+        /// <summary>Lleva al mundo lo que dice el estilo: hora, sol, clima y ritmo.</summary>
+        internal static void ApplyWorld(StyleData style)
+        {
+            WorldController.ApplyTime(style.TimeOfDay);
+            WorldController.ApplyPosition(style.Latitude, style.Longitude);
+
+            WorldController.RainIntensity = Clamped(style.Rain);
+            WorldController.FogIntensity = Clamped(style.Fog);
+            WorldController.CloudIntensity = Clamped(style.Cloud);
+            WorldController.NorthernLights = Clamped(style.NorthernLights);
+            WorldController.Rainbow = Clamped(style.Rainbow);
+            WorldController.GroundWetness = Clamped(style.GroundWetness);
+
+            WorldController.TemperatureLocked = style.TemperatureLock;
+            WorldController.Temperature = style.Temperature;
+            WorldController.WindLocked = style.WindLock;
+            WorldController.WindDirection = style.WindDirection;
+
+            WorldController.WeatherEnabled = TriState(style.WeatherEnabled);
+            WorldController.RainIsSnow = TriState(style.RainIsSnow);
+            WorldController.SnowyRoads = TriState(style.SnowyRoads);
+            WorldController.Tick();
+
+            TimeController.CycleSpeedEnabled = style.CycleSpeedEnabled;
+            TimeController.CycleSpeed = style.CycleSpeed;
+            TimeController.NightCycleSpeed = style.NightCycleSpeed;
+            TimeController.SeparateDayNight = style.SeparateDayNight;
+            TimeController.CycleWhilePaused = style.CycleWhilePaused;
+            TimeController.ApplyGameSpeed(style.GameSpeed);
+        }
+
+        /// <summary>Copia al estilo lo que hay ahora mismo en el mundo.</summary>
+        /// <remarks>
+        /// Lo que se exporta o se guarda tiene que ser lo que se ve. Los controles escriben
+        /// directamente en <see cref="WorldController"/>, asi que el estilo se refresca desde
+        /// ahi antes de guardarlo o de publicarlo a la suite.
+        /// </remarks>
+        internal static void CaptureWorld(StyleData style)
+        {
+            style.TimeOfDay = WorldController.ReadTimeHours();
+
+            var dayNight = GetDayNight();
+            if (dayNight != null)
+            {
+                style.Latitude = dayNight.m_Latitude;
+                style.Longitude = dayNight.m_Longitude;
+            }
+
+            style.Rain = WorldController.RainIntensity;
+            style.Fog = WorldController.FogIntensity;
+            style.Cloud = WorldController.CloudIntensity;
+            style.NorthernLights = WorldController.NorthernLights;
+            style.Rainbow = WorldController.Rainbow;
+            style.GroundWetness = WorldController.GroundWetness;
+
+            style.TemperatureLock = WorldController.TemperatureLocked;
+            style.Temperature = WorldController.Temperature;
+            style.WindLock = WorldController.WindLocked;
+            style.WindDirection = WorldController.WindDirection;
+
+            style.WeatherEnabled = WorldController.WeatherEnabled;
+            style.RainIsSnow = WorldController.RainIsSnow;
+            style.SnowyRoads = WorldController.SnowyRoads;
+
+            style.GameSpeed = TimeController.GameSpeed;
+            style.CycleSpeedEnabled = TimeController.CycleSpeedEnabled;
+            style.CycleSpeed = TimeController.CycleSpeed;
+            style.NightCycleSpeed = TimeController.NightCycleSpeed;
+            style.SeparateDayNight = TimeController.SeparateDayNight;
+            style.CycleWhilePaused = TimeController.CycleWhilePaused;
+        }
+
+        private static float Clamped(float value)
+        {
+            return value < 0f ? -1f : Mathf.Clamp01(value);
+        }
+
+        private static int TriState(int value)
+        {
+            return value < 0 ? -1 : (value == 0 ? 0 : 1);
         }
 
         internal static void RestoreGame()
