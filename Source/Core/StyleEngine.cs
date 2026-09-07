@@ -10,6 +10,10 @@ namespace SceneFX.Core
     /// </summary>
     internal static class StyleEngine
     {
+        // Los dueños de lo que este estilo no escribe por su cuenta.
+        private const string LumenFXMod = "LumenFX.LumenFXMod";
+        private const string AtmosphereFXMod = "AtmosphereFX.AtmosphereFXMod";
+
         private static bool _sunCaptured;
         private static bool _toneCaptured;
         private static float _vanillaSun = 1f;
@@ -314,12 +318,25 @@ namespace SceneFX.Core
             }
         }
 
+        /// <remarks>
+        /// El tono tiene un solo dueño: LumenFX. Si está cargado, este estilo no escribe la
+        /// curva —se la pide—, y así aplicar el mismo preset en un orden u otro da lo mismo.
+        /// Sin LumenFX, SceneFX la escribe como siempre.
+        /// </remarks>
         private static void ApplyTone(StyleData style)
         {
             TakeSnapshot();
 
-            if (SuiteManager.IsLumenFXToneWriter())
+            if (SuiteManager.ModPresent(LumenFXMod))
             {
+                var ci = System.Globalization.CultureInfo.InvariantCulture;
+                SuiteManager.Delegate(LumenFXMod,
+                    "<lumenfx>"
+                    + "<gamma>" + Mathf.Clamp(style.Gamma, 1.5f, 3.5f).ToString("0.###", ci) + "</gamma>"
+                    + "<brightness>" + Mathf.Clamp(style.Brightness, -1f, 1f).ToString("0.###", ci) + "</brightness>"
+                    + "<contrast>" + Mathf.Clamp(style.Contrast, -1f, 1f).ToString("0.###", ci) + "</contrast>"
+                    + "<skyTonemapping>" + (style.SkyTonemap ? "true" : "false") + "</skyTonemapping>"
+                    + "</lumenfx>");
                 return;
             }
 
@@ -396,10 +413,15 @@ namespace SceneFX.Core
                 return;
             }
 
-            // La curva solar la remuestrea LumenFX entera cuando esta activo. Si los dos
-            // escriben, el ultimo en hacerlo trabaja sobre la salida del otro.
-            if (SuiteManager.IsLumenFXWriting("lightColor"))
+            // La curva solar es de LumenFX. Se le pide la calidez y no se toca la gradiente:
+            // si los dos escriben, el ultimo trabaja sobre la salida del otro.
+            if (SuiteManager.ModPresent(LumenFXMod))
             {
+                var ci = System.Globalization.CultureInfo.InvariantCulture;
+                SuiteManager.Delegate(LumenFXMod,
+                    "<lumenfx><warmth>"
+                    + Mathf.Clamp(warmth, -1f, 1f).ToString("0.###", ci)
+                    + "</warmth></lumenfx>");
                 return;
             }
 
@@ -426,8 +448,34 @@ namespace SceneFX.Core
             };
         }
 
+        /// <remarks>
+        /// La niebla tiene un solo dueño: AtmosphereFX. Si está cargado, el estilo se la pide.
+        /// </remarks>
         private static void ApplyFog(StyleData style)
         {
+            if (SuiteManager.ModPresent(AtmosphereFXMod))
+            {
+                var ci = System.Globalization.CultureInfo.InvariantCulture;
+                var xml = new System.Text.StringBuilder("<atmospherefx>");
+                if (style.FogDensity > 0f)
+                {
+                    xml.Append("<density>")
+                       .Append(Mathf.Clamp(style.FogDensity, 0f, 0.005f).ToString("0.######", ci))
+                       .Append("</density>");
+                }
+
+                if (style.FogStart > 0f)
+                {
+                    xml.Append("<startDistance>")
+                       .Append(Mathf.Clamp(style.FogStart, 0f, 10000f).ToString("0.#", ci))
+                       .Append("</startDistance>");
+                }
+
+                xml.Append("</atmospherefx>");
+                SuiteManager.Delegate(AtmosphereFXMod, xml.ToString());
+                return;
+            }
+
             var fog = GetFogProperties();
             if (fog == null)
             {

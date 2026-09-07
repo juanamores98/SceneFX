@@ -271,6 +271,46 @@ namespace SceneFX.Core
             return null;
         }
 
+        /// <summary>Cierto si ese mod de la suite esta cargado.</summary>
+        internal static bool ModPresent(string typeFullName)
+        {
+            return FindModType(typeFullName) != null;
+        }
+
+        /// <summary>
+        /// Le pide a otro mod que escriba unos ajustes que son suyos.
+        /// </summary>
+        /// <remarks>
+        /// <b>Por que pedir en vez de escribir.</b> Varias propiedades del juego las escribian
+        /// dos o tres mods de la suite, y el resultado dependia del orden en que se aplicaran:
+        /// poner el mismo preset en uno y luego en otro daba imagenes distintas. La regla ahora
+        /// es que cada propiedad tiene un solo dueño, y quien no lo es se la pide por su API
+        /// publica —la misma que usa un perfil de suite— en vez de escribirla por su cuenta.
+        ///
+        /// Si el dueño no esta cargado, quien pide se la apaña solo: la funcion no desaparece
+        /// porque falte un mod.
+        /// </remarks>
+        internal static bool Delegate(string typeFullName, string sectionXml)
+        {
+            try
+            {
+                var type = FindModType(typeFullName);
+                if (type == null)
+                {
+                    return false;
+                }
+
+                var doc = new XmlDocument();
+                doc.LoadXml(sectionXml);
+                return ApplySection(typeFullName, doc.DocumentElement);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                return false;
+            }
+        }
+
         internal static bool IsLumenFXToneWriter()
         {
             return IsLumenFXWriting("tone");
