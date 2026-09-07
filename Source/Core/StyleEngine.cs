@@ -363,8 +363,9 @@ namespace SceneFX.Core
                 dayNight.m_SunIntensity = _vanillaSun * Mathf.Clamp(style.SunIntensity, 0f, 3f);
             }
 
-            // La exposición es del tema del mapa cuando hay quien lo administre.
-            if (!SuiteManager.IsLumenFXWriting("exposure") && !ThemeOwnership.AtmosphereIsManaged)
+            // Un valor pedido por el estilo se aplica; lo que no se repone es la línea base
+            // capturada —ver RestoreGame—, que puede ser anterior al tema.
+            if (!SuiteManager.IsLumenFXWriting("exposure"))
             {
                 dayNight.m_Exposure = _vanillaExposure * Mathf.Clamp(style.Exposure, 0.5f, 1.5f);
             }

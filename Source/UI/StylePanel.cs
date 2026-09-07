@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using UnityEngine;
 using SceneFX.Core;
@@ -13,6 +13,15 @@ namespace SceneFX.UI
         private static readonly string[] Tabs = { "Styles", "Adjust", "LUT", "Suite" };
 
         private readonly Action _onChanged;
+
+        /// <summary>
+        /// Alto que ocupo el contenido de la pestana la ultima vez que se dibujo.
+        /// </summary>
+        /// <remarks>
+        /// La ventana tenia un alto fijo. Segun la pestana, lo ultimo —que suele ser un boton—
+        /// quedaba fuera del recorte y no habia forma de pulsarlo.
+        /// </remarks>
+        private float _contentHeight;
 
         private Rect _rect = new Rect(SceneRuntime.WindowX, SceneRuntime.WindowY, 480f, 450f);
         private int _tab;
@@ -51,6 +60,12 @@ namespace SceneFX.UI
             }
 
             Rect oldRect = _rect;
+            // Que quepa la pestana que se este viendo, sin salirse de la pantalla.
+            if (_contentHeight > 0f)
+            {
+                _rect.height = Mathf.Min(_contentHeight, Screen.height - 60f);
+            }
+
             _rect = GUI.Window(id, _rect, DrawWindow, "SceneFX");
             if (_rect.x != oldRect.x || _rect.y != oldRect.y)
             {
@@ -168,6 +183,7 @@ namespace SceneFX.UI
                 StyleStore.SaveStyle(copy);
                 RefreshStyles();
             }
+            _contentHeight = baseY + 40f;
         }
 
         private void DrawAdjustTab()
@@ -190,6 +206,7 @@ namespace SceneFX.UI
                 SceneRuntime.ApplyCurrent();
                 _onChanged();
             }
+            _contentHeight = y + 40f;
         }
 
         private void MergeLutList()
@@ -257,6 +274,7 @@ namespace SceneFX.UI
             }
 
             GUI.EndScrollView();
+            _contentHeight = y + 40f;
         }
 
         private void DrawSuiteTab()
@@ -314,6 +332,7 @@ namespace SceneFX.UI
                 }
                 Application.OpenURL("file://" + SuiteManager.SuiteFolder);
             }
+            _contentHeight = baseY + 40f;
         }
 
         private float Slider(string label, float value, float min, float max, float step, float y)

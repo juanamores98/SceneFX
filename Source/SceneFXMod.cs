@@ -89,6 +89,9 @@ namespace SceneFX
 
             group.AddButton("Restore game look", () => SceneRuntime.RestoreGame());
 
+            group.AddButton("Vanilla (leave the game untouched)", () => Core.QuickPresets.ApplyVanilla());
+            group.AddButton("Optimized (the calibrated recipe)", () => Core.QuickPresets.ApplyOptimized());
+
             var suiteGroup = helper.AddGroup("Suite Profiles (SceneFX + LumenFX + AtmosphereFX + ClassicLightFX)");
             suiteGroup.AddButton("Apply 'Optimized' suite profile", () =>
             {
