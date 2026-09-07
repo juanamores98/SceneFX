@@ -219,6 +219,23 @@ namespace SceneFX
                     else if (name == "skytonemap" && bool.TryParse(val, out b)) current.SkyTonemap = b;
                     else if (name == "skymood" && int.TryParse(val, out i)) current.SkyMood = i;
                     else if (name == "includeworld" && bool.TryParse(val, out b)) current.IncludeWorld = b;
+                    else if (name == "vanillamode" && bool.TryParse(val, out b))
+                    {
+                        // Mismo camino que la casilla de opciones: se guarda y se aplica o se
+                        // deshace en el acto, no en la proxima carga.
+                        Core.SceneRuntime.VanillaMode = b;
+                        Core.SceneRuntime.SaveOptions();
+                        if (b)
+                        {
+                            Core.WorldController.Restore();
+                            Core.SkyMood.Restore();
+                            Core.SceneRuntime.RestoreGame();
+                        }
+                        else
+                        {
+                            Core.SceneRuntime.ApplyCurrent();
+                        }
+                    }
                     else if (name == "timeofday" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.TimeOfDay = f;
                     else if (name == "latitude" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Latitude = f;
                     else if (name == "longitude" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Longitude = f;
@@ -263,6 +280,7 @@ namespace SceneFX
                 "    <rain>{16}</rain>\n" +
                 "    <fog>{17}</fog>\n" +
                 "    <cloud>{18}</cloud>\n" +
+                "    <vanillaMode>{19}</vanillaMode>\n" +
                 "  </scenefx>",
                 cur.Lut ?? string.Empty,
                 cur.NativeLut ?? string.Empty,
@@ -282,7 +300,8 @@ namespace SceneFX
                 cur.Longitude.ToString("0.00", c),
                 cur.Rain.ToString("0.00", c),
                 cur.Fog.ToString("0.00", c),
-                cur.Cloud.ToString("0.00", c));
+                cur.Cloud.ToString("0.00", c),
+                SceneRuntime.VanillaMode.ToString().ToLowerInvariant());
         }
     }
 }
