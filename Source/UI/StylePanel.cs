@@ -14,15 +14,6 @@ namespace SceneFX.UI
 
         private readonly Action _onChanged;
 
-        /// <summary>
-        /// Alto que ocupo el contenido de la pestana la ultima vez que se dibujo.
-        /// </summary>
-        /// <remarks>
-        /// La ventana tenia un alto fijo. Segun la pestana, lo ultimo —que suele ser un boton—
-        /// quedaba fuera del recorte y no habia forma de pulsarlo.
-        /// </remarks>
-        private float _contentHeight;
-
         private Rect _rect = new Rect(SceneRuntime.WindowX, SceneRuntime.WindowY, 480f, 450f);
         private int _tab;
         private Vector2 _scroll;
@@ -60,12 +51,6 @@ namespace SceneFX.UI
             }
 
             Rect oldRect = _rect;
-            // Que quepa la pestana que se este viendo, sin salirse de la pantalla.
-            if (_contentHeight > 0f)
-            {
-                _rect.height = Mathf.Min(_contentHeight, Screen.height - 60f);
-            }
-
             _rect = GUI.Window(id, _rect, DrawWindow, "SceneFX");
             if (_rect.x != oldRect.x || _rect.y != oldRect.y)
             {
@@ -183,7 +168,6 @@ namespace SceneFX.UI
                 StyleStore.SaveStyle(copy);
                 RefreshStyles();
             }
-            _contentHeight = baseY + 40f;
         }
 
         private void DrawAdjustTab()
@@ -206,7 +190,6 @@ namespace SceneFX.UI
                 SceneRuntime.ApplyCurrent();
                 _onChanged();
             }
-            _contentHeight = y + 40f;
         }
 
         private void MergeLutList()
@@ -274,7 +257,6 @@ namespace SceneFX.UI
             }
 
             GUI.EndScrollView();
-            _contentHeight = y + 40f;
         }
 
         private void DrawSuiteTab()
@@ -332,13 +314,32 @@ namespace SceneFX.UI
                 }
                 Application.OpenURL("file://" + SuiteManager.SuiteFolder);
             }
-            _contentHeight = baseY + 40f;
         }
 
+        /// <summary>
+        /// Un deslizador que solo cambia el valor cuando el usuario lo mueve.
+        /// </summary>
+        /// <remarks>
+        /// Redondear al paso mas cercano y devolverlo siempre reescribia los valores cargados
+        /// de un preset, que casi nunca caen justo en un multiplo del paso. IMGUI ya avisa de
+        /// si hubo interaccion con <c>GUI.changed</c>; sin ella, el deslizador solo dibuja.
+        /// </remarks>
         private float Slider(string label, float value, float min, float max, float step, float y)
         {
             GUI.Label(new Rect(10f, y, 110f, 24f), label);
+
+            bool changedBefore = GUI.changed;
+            GUI.changed = false;
             float raw = GUI.HorizontalSlider(new Rect(125f, y + 3f, 240f, 22f), value, min, max);
+            bool moved = GUI.changed;
+            GUI.changed = changedBefore || moved;
+
+            if (!moved)
+            {
+                GUI.Label(new Rect(375f, y, 90f, 24f), value.ToString("0.00#####"));
+                return value;
+            }
+
             float snapped = Mathf.Round(raw / step) * step;
             GUI.Label(new Rect(375f, y, 90f, 24f), snapped.ToString("0.00#####"));
             return snapped;

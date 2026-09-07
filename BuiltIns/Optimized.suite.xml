@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <suiteProfile name="Optimized" schema="2">
   <scenefx>
     <lut>1539181199.Relight2Average</lut>
@@ -38,7 +38,11 @@
     <forceLowBias>false</forceLowBias>
     <biasScale>1</biasScale>
     <warmth>0.4</warmth>
-    <moonStrength>0.5</moonStrength>
+    <sunStrength>1</sunStrength>
+    <moonStrength>0.745</moonStrength>
+    <ambience>1</ambience>
+    <sunPower>5.5</sunPower>
+    <moonPower>6</moonPower>
     <adaptiveShadows>true</adaptiveShadows>
     <adaptiveExposure>true</adaptiveExposure>
     <adaptiveExposureGain>1</adaptiveExposureGain>
