@@ -87,16 +87,23 @@ Copiar `SceneFX.dll` a:
 
 - `F10`: abrir/cerrar el panel nativo del juego.
 - `F11`: ventana IMGUI clásica de respaldo.
-- Panel nativo: pestañas *Style* (cargar/guardar estilos, restaurar juego),
-  *LUT* (selector nativo + nativos + compat), *Grade*, *World* (hora, posición
-  solar, cielo), *Weather* (los canales del clima) y *Time* (velocidad del juego
-  y del ciclo día/noche).
+- Panel nativo: cuatro pestañas con tarjetas plegables y scroll propio —
+  *Style & Color*, *Sun & Light*, *Weather & Sky* y *Time & Rhythm*— más una
+  cabecera fija con Vanilla, *Suite: Optimized* y el reloj, visible desde
+  cualquiera de ellas.
 
 ## Compilación
 
 ```
 dotnet build -c Release
 ```
+
+## Arquitectura
+
+El documento ejecutivo con la arquitectura, la API de suite, las rutas de
+configuración y los cambios de cada ciclo está en
+[`ARQUITECTURA.md`](ARQUITECTURA.md). `DESIGN.md` conserva la especificación
+funcional original del formato de estilos.
 
 ## Reconocimientos
 

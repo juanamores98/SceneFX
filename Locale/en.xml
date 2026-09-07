@@ -5,6 +5,10 @@
     <Translation ID="SCX_TAB_LUT" String="LUT" />
     <Translation ID="SCX_TAB_GRADE" String="Grade" />
     <Translation ID="SCX_TAB_WORLD" String="World" />
+    <Translation ID="SCX_TAB_STYLE_COLOR" String="Style &amp; Color" />
+    <Translation ID="SCX_TAB_SUN_LIGHT" String="Sun &amp; Light" />
+    <Translation ID="SCX_TAB_WEATHER_ATMOS" String="Weather &amp; Sky" />
+    <Translation ID="SCX_TAB_TIME_SPEED" String="Time &amp; Rhythm" />
     <Translation ID="SCX_GROUP_STYLE" String="Style" />
     <Translation ID="SCX_GROUP_LUT" String="Color grading LUT" />
     <Translation ID="SCX_GROUP_GRADE" String="Live grade" />
@@ -56,5 +60,27 @@
     <Translation ID="SCX_CYCLE_SEPARATE" String="Separate day and night speed" />
     <Translation ID="SCX_CYCLE_NIGHT_SPEED" String="Night speed" />
     <Translation ID="SCX_CYCLE_PAUSED" String="Keep the sky moving while paused" />
+    <Translation ID="SCX_CARD_PROFILES" String="Style profiles &amp; LUTs" />
+    <Translation ID="SCX_CARD_GRADE" String="Live colour grading" />
+    <Translation ID="SCX_CARD_SUITE" String="Suite profile (*.suite.xml)" />
+    <Translation ID="SCX_CARD_GEO" String="Geography &amp; sky dome" />
+    <Translation ID="SCX_CARD_SUN" String="Direct sunlight" />
+    <Translation ID="SCX_CARD_WEATHER" String="Weather channels" />
+    <Translation ID="SCX_CARD_CLIMATE" String="Climate, wind &amp; snow" />
+    <Translation ID="SCX_CARD_ATMO" String="AtmosphereFX (deep and volumetric fog)" />
+    <Translation ID="SCX_CARD_SPEED" String="Game speed" />
+    <Translation ID="SCX_CARD_CYCLE" String="Visual day/night cycle" />
+    <Translation ID="SCX_OPEN_LUMENFX" String="Open the LumenFX panel (Ctrl+Alt+L)" />
+    <Translation ID="SCX_OPEN_ATMOSPHEREFX" String="Open the AtmosphereFX panel (Ctrl+Alt+A)" />
+    <Translation ID="SCX_SPEED_PAUSE" String="Pause the game" />
+    <Translation ID="SCX_RESET_GRADE" String="Reset colour grading" />
+    <Translation ID="SCX_INCLUDE_WORLD" String="Include the world (time, sun, weather)" />
+    <Translation ID="SCX_BAKE_LUT" String="Bake this look into a LUT (32³ + PNG)" />
+    <Translation ID="SCX_VANILLA_SHORT" String="Vanilla" />
+    <Translation ID="SCX_SUITE_OPTIMIZED" String="Suite: Optimized" />
+    <Translation ID="SCX_SUITE_PROFILE" String="Profile" />
+    <Translation ID="SCX_SUITE_APPLY" String="Apply suite profile" />
+    <Translation ID="SCX_SUITE_NAME" String="Suite name" />
+    <Translation ID="SCX_SUITE_EXPORT" String="Export suite profile" />
   </Translations>
 </Language>

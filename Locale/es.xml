@@ -5,6 +5,10 @@
     <Translation ID="SCX_TAB_LUT" String="LUT" />
     <Translation ID="SCX_TAB_GRADE" String="Tono" />
     <Translation ID="SCX_TAB_WORLD" String="Mundo" />
+    <Translation ID="SCX_TAB_STYLE_COLOR" String="Estilo y Color" />
+    <Translation ID="SCX_TAB_SUN_LIGHT" String="Sol y Luz" />
+    <Translation ID="SCX_TAB_WEATHER_ATMOS" String="Clima y Cielo" />
+    <Translation ID="SCX_TAB_TIME_SPEED" String="Tiempo y Ritmo" />
     <Translation ID="SCX_GROUP_STYLE" String="Estilo" />
     <Translation ID="SCX_GROUP_LUT" String="Tabla de color (LUT)" />
     <Translation ID="SCX_GROUP_GRADE" String="Ajuste en vivo" />
@@ -56,5 +60,27 @@
     <Translation ID="SCX_CYCLE_SEPARATE" String="Separar la velocidad de dia y de noche" />
     <Translation ID="SCX_CYCLE_NIGHT_SPEED" String="Velocidad de noche" />
     <Translation ID="SCX_CYCLE_PAUSED" String="El cielo sigue girando en pausa" />
+    <Translation ID="SCX_CARD_PROFILES" String="Perfiles de estilo y LUTs" />
+    <Translation ID="SCX_CARD_GRADE" String="Gradación de color en vivo" />
+    <Translation ID="SCX_CARD_SUITE" String="Perfil de suite (*.suite.xml)" />
+    <Translation ID="SCX_CARD_GEO" String="Geografía y domo celeste" />
+    <Translation ID="SCX_CARD_SUN" String="Luz directa del sol" />
+    <Translation ID="SCX_CARD_WEATHER" String="Canales del clima" />
+    <Translation ID="SCX_CARD_CLIMATE" String="Clima, viento y nieve" />
+    <Translation ID="SCX_CARD_ATMO" String="AtmosphereFX (niebla profunda y volumétrica)" />
+    <Translation ID="SCX_CARD_SPEED" String="Velocidad del juego" />
+    <Translation ID="SCX_CARD_CYCLE" String="Ciclo visual día/noche" />
+    <Translation ID="SCX_OPEN_LUMENFX" String="Abrir el panel de LumenFX (Ctrl+Alt+L)" />
+    <Translation ID="SCX_OPEN_ATMOSPHEREFX" String="Abrir el panel de AtmosphereFX (Ctrl+Alt+A)" />
+    <Translation ID="SCX_SPEED_PAUSE" String="Pausar el juego" />
+    <Translation ID="SCX_RESET_GRADE" String="Volver la gradación a neutro" />
+    <Translation ID="SCX_INCLUDE_WORLD" String="Incluir el mundo (hora, sol, clima)" />
+    <Translation ID="SCX_BAKE_LUT" String="Hornear este look en un LUT (32³ + PNG)" />
+    <Translation ID="SCX_VANILLA_SHORT" String="Vanilla" />
+    <Translation ID="SCX_SUITE_OPTIMIZED" String="Suite: Optimized" />
+    <Translation ID="SCX_SUITE_PROFILE" String="Perfil" />
+    <Translation ID="SCX_SUITE_APPLY" String="Aplicar el perfil de suite" />
+    <Translation ID="SCX_SUITE_NAME" String="Nombre de la suite" />
+    <Translation ID="SCX_SUITE_EXPORT" String="Exportar el perfil de suite" />
   </Translations>
 </Language>
