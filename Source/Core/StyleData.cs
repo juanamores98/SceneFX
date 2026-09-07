@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using ColossalFramework.IO;
 using System.IO;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -46,7 +47,26 @@ namespace SceneFX.Core
     /// </summary>
     internal static class StyleStore
     {
+        /// <remarks>
+        /// Ruta completa, no relativa: un nombre suelto se resuelve contra el directorio de
+        /// trabajo del proceso, que en Cities: Skylines es la carpeta de instalacion del juego.
+        /// Ahi acababa este archivo, dentro de Archivos de Programa. Si queda uno en el sitio
+        /// antiguo y todavia no hay ninguno en el nuevo, se lee el antiguo.
+        /// </remarks>
         private const string StateFile = "SceneFX.xml";
+
+        private static string StatePath
+        {
+            get { return Path.Combine(DataLocation.localApplicationData, StateFile); }
+        }
+
+        private static string StatePathToRead
+        {
+            get
+            {
+                return File.Exists(StatePath) || !File.Exists(StateFile) ? StatePath : StateFile;
+            }
+        }
 
         internal static string StylesFolder
         {
@@ -119,7 +139,7 @@ namespace SceneFX.Core
         {
             try
             {
-                using (var writer = new StreamWriter(StateFile))
+                using (var writer = new StreamWriter(StatePath))
                 {
                     new XmlSerializer(typeof(StyleData)).Serialize(writer, current);
                 }
@@ -134,12 +154,12 @@ namespace SceneFX.Core
         {
             try
             {
-                if (!File.Exists(StateFile))
+                if (!File.Exists(StatePathToRead))
                 {
                     return null;
                 }
 
-                using (var reader = new StreamReader(StateFile))
+                using (var reader = new StreamReader(StatePathToRead))
                 {
                     return new XmlSerializer(typeof(StyleData)).Deserialize(reader) as StyleData;
                 }

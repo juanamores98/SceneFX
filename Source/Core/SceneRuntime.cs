@@ -1,3 +1,4 @@
+﻿using ColossalFramework.IO;
 using System;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -108,18 +109,51 @@ namespace SceneFX.Core
 
     internal static class OptionsStore
     {
+                /// <remarks>
+        /// <b>Ruta completa, no relativa.</b> Un nombre suelto lo resuelve .NET contra el
+        /// directorio de trabajo del proceso, que en Cities: Skylines es la carpeta de
+        /// instalacion del juego. Ahi acababan estos XML: dentro de Archivos de Programa, donde
+        /// escribir suele requerir permisos y donde una verificacion de Steam puede borrarlos.
+        /// Se midio en partida —los cuatro archivos aparecieron en la carpeta del juego— y solo
+        /// LumenFX lo hacia bien.
+        ///
+        /// <b>La migracion.</b> Si queda un archivo en el sitio antiguo y todavia no hay uno en
+        /// el nuevo, se lee el antiguo: nadie pierde su configuracion por arreglar esto.
+        /// </remarks>
         private const string FileName = "SceneFXOptions.xml";
+
+        private static string OptionsPath
+        {
+            get { return System.IO.Path.Combine(DataLocation.localApplicationData, "SceneFXOptions.xml"); }
+        }
+
+        /// <summary>El sitio antiguo: la carpeta de trabajo del proceso.</summary>
+        private static string OptionsPathLegacy
+        {
+            get { return "SceneFXOptions.xml"; }
+        }
+
+        /// <summary>De donde leer: el sitio nuevo si existe, y si no el antiguo.</summary>
+        private static string OptionsPathToRead
+        {
+            get
+            {
+                return System.IO.File.Exists(OptionsPath) || !System.IO.File.Exists(OptionsPathLegacy)
+                    ? OptionsPath
+                    : OptionsPathLegacy;
+            }
+        }
 
         internal static OptionsDocument Load()
         {
             try
             {
-                if (!System.IO.File.Exists(FileName))
+                if (!System.IO.File.Exists(OptionsPathToRead))
                 {
                     return null;
                 }
 
-                using (var reader = new System.IO.StreamReader(FileName))
+                using (var reader = new System.IO.StreamReader(OptionsPathToRead))
                 {
                     return new XmlSerializer(typeof(OptionsDocument)).Deserialize(reader) as OptionsDocument;
                 }
@@ -135,7 +169,7 @@ namespace SceneFX.Core
         {
             try
             {
-                using (var writer = new System.IO.StreamWriter(FileName))
+                using (var writer = new System.IO.StreamWriter(OptionsPath))
                 {
                     new XmlSerializer(typeof(OptionsDocument)).Serialize(writer, document);
                 }
