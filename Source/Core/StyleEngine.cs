@@ -163,6 +163,31 @@ namespace SceneFX.Core
             _gradientsCaptured = true;
         }
 
+        /// <summary>
+        /// Toma la referencia del juego lo antes posible en la escena.
+        /// </summary>
+        /// <remarks>
+        /// <b>Por que existe aparte.</b> El snapshot se tomaba de forma perezosa, la primera
+        /// vez que el usuario aplicaba un estilo. Para entonces otro mod de la suite ya podia
+        /// haber escrito, y lo capturado no era el valor del juego sino el suyo. Medido en
+        /// partida: con ClassicLightFX aplicando su potencia solar al cargar, SceneFX capturo
+        /// 3.318695 como "vanilla" y la multiplico por el factor del estilo, dando 7.798934.
+        ///
+        /// Llamarlo al cargar el nivel no elimina la carrera entre mods —el orden de carga no
+        /// se puede fijar desde aqui— pero la reduce a esa ventana, en vez de depender de
+        /// cuando al usuario le da por abrir el panel.
+        /// </remarks>
+        internal static void CaptureBaseline()
+        {
+            TakeSnapshot();
+
+            var dayNight = GetDayNight();
+            if (dayNight != null)
+            {
+                CaptureGradients(dayNight);
+            }
+        }
+
         private static void TakeSnapshot()
         {
             var dayNight = GetDayNight();

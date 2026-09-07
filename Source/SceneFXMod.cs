@@ -1,4 +1,4 @@
-using ICities;
+﻿using ICities;
 using UnityEngine;
 using SceneFX.Core;
 
@@ -115,6 +115,9 @@ namespace SceneFX
         public override void OnLevelLoaded(LoadMode mode)
         {
             base.OnLevelLoaded(mode);
+
+            // Antes de nada: la referencia del juego, mientras todavia es del juego.
+            StyleEngine.CaptureBaseline();
 
             SuiteManager.EnsureBuiltInSuites();
             CreateHost();
