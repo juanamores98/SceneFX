@@ -57,6 +57,7 @@
     <adaptiveExposure>false</adaptiveExposure>
     <adaptiveExposureGain>1</adaptiveExposureGain>
     <toneEnabled>1</toneEnabled>
+    <legacySceneLighting>false</legacySceneLighting>
   </lumenfx>
   <atmospherefx>
     <vanillaMode>false</vanillaMode>

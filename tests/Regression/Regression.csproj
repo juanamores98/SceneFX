@@ -29,6 +29,7 @@
     <Compile Include="../../../ClassicLightFX/Source/Infrastructure/*.cs" />
     <EmbeddedResource Include="../../../ClassicLightFX/BuiltIns/Optimized.xml" LogicalName="ClassicLightFX.BuiltIns.Optimized.xml" />
     <Compile Include="../../../SceneFX/Source/Infrastructure/*.cs" />
+    <EmbeddedResource Include="../../../SceneFX/BuiltIns/Optimized.suite.xml" LogicalName="SceneFX.BuiltIns.Optimized.suite.xml" />
     <EmbeddedResource Include="../../../SceneFX/BuiltIns/Optimized.xml" LogicalName="SceneFX.BuiltIns.Optimized.xml" />
     <Compile Include="../../../ClassicLightFX/Source/ClassicLightFXMod.cs;../../../ClassicLightFX/Source/Core/QuickPresets.cs;../../../LumenFX/Source/Presets/QuickPresets.cs;../../../SceneFX/Source/Core/CameraEffects.cs" />
   </ItemGroup>

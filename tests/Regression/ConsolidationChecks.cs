@@ -104,6 +104,11 @@ partial class Program
         ok = SuiteManager.ApplySuiteProfile(migrated);
         Check("FX02 migrated multiplier preserves intensity semantics", ok && Equal(DayNightProperties.instance.m_SunIntensity, 2f) && Equal(state.SunStrength,1f), "multiplier is never mapped to colour gain");
         Check("FX02 legacy source and exact backup preserved", File.ReadAllText(input) == source && File.ReadAllText(migrated + ".source.xml") == source, "migration produces a new suite");
+        string defaultSuite;
+        using (var reader=new StreamReader(typeof(SceneFX.SceneFXMod).Assembly.GetManifestResourceStream("SceneFX.BuiltIns.Optimized.suite.xml"))) defaultSuite=reader.ReadToEnd();
+        ClassicLightFX.Core.ClassicLook.Attach();
+        ok=SuiteManager.ApplySuiteProfile(defaultSuite);
+        Check("FX06 Default suite exits imported lighting model",ok && !state.LegacySceneLighting && Equal(DayNightProperties.instance.m_SunIntensity,5.5f),"same recipe after a migrated preset");
         File.Delete(migrated); File.Delete(migrated + ".source.xml");
     }
     static ColossalFramework.ToneMapping ObjectTone() { return UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>(); }

@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: juanamores98/LumenFX
-          ref: 367d9a55ef172e20c894b3db6cd5c982e57d00c9
+          ref: e15552fbf8df17940f308cd8d3da00819d2dd30a
           path: LumenFX
       - uses: actions/checkout@v4
         with:
