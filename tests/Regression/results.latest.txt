@@ -1,4 +1,6 @@
-Regression of current FX source; .NET 8 doubles, NOT the Unity/Mono game runtime.
+Executed in GitHub Actions https://github.com/juanamores98/SceneFX/actions/runs/34292241614
+.NET 8 / C# 7.3; game/UI doubles, no Unity rendering.
+
 PASS L01 base Lumen settings round-trip | brightness=1.25 gamma=2.8
 PASS L02 all four absolute lighting settings survive restart | after save/reset/load: Rayleigh=1.116 Mie=1.858 SunPower=2.35 MoonPower=0.8
 PASS A01 normal global Atmosphere settings round-trip | density=0.000123 wind=0.0001
@@ -15,11 +17,41 @@ PASS S02 hour lock is serializable | TimeLocked member persists in the settings 
 PASS S03 explicit world capture preserves weather/speed | rain=0.7 gameSpeed=2.5
 PASS S04 last slider value flushes after throttle interval | current=.2 file=0.2 after 10 seconds; clean unload not tested here
 PASS X02 Scene restore respects active Lumen tone | Lumen boost=2.44 after Scene restore=2.44
-PASS X03 Scene tone works with Lumen suspended | Scene requests brightness=.8, boost remains 1.48
+PASS X03 Scene camera edits never take over Lumen tone | Archived Scene brightness=.8 is retained; effective boost remains 1
 PASS S05 restore game restores selected LUT | original index=0 actual=0
 PASS L04 importer distinguishes negative and neutral brightness | legacy -.8 maps to 0.4571429; neutral maps to -0
 PASS L05 full UI sun-strength range survives reload | UI permits 3; saved/reloaded=3
 PASS L06 lighting rebuilt in second city without editing | persisted warmth=0.5 LightingDirty=False gradient reference unchanged=False
+PASS FX01 bloom/LUT edits preserve all Lumen preferences | no cross-module gamma, power, warmth or exposure write
+PASS FX01 effective tone unchanged | real scalar on fake component
+PASS FX03 static volume Game restores True | both acquisition directions
+PASS FX03 static volume Game restores False | both acquisition directions
+PASS FX03 volume density Game releases | sentinel is outside numeric UI range
+PASS FX04 release old owner preserves new owner | handoff shares baseline
+PASS FX04 final owner restores original acquisition | not the old owner's transformed value
+PASS FX04 newer external value is preserved | safe release does not overwrite external changes
+PASS FX05 invalid third section changes nothing | Validation failed; nothing applied: atmospherefx: The input string 'invalid' was not in a correct format.
+PASS FX05 LUT preflight changes nothing | Validation failed; nothing applied: scenefx: LUT missing or ambiguous: missing LUT
+PASS FX05 missing LUT rejects local preset before mutation | no partially applied camera preset
+PASS FX05 disk failure restores preferences | Failed; previous settings restored: Settings write failed; files restored. Access to the path '/home/runner/work/SceneFX/SceneFX/SceneFX/tests/Regression/bin/Release/net8.0/isolated-settings-f23d5377baaa4f59b8d45753502a420f/LumenFX2.xml.tmp' is denied.
+PASS FX05 disk failure restores saved bytes | memory and disk rollback
+PASS FX05 valid suite commits after recovered disk failure | Suite applied to settings; visual verification pending
+PASS FX08 classic power applied through Lumen | derived behavior preserves user recipe
+PASS FX08 classic fog applied through Atmosphere | one writer for fog enable flags
+PASS FX08 releasing Classic reveals saved Lumen | no silent preference overwrite
+PASS FX08 classic coordinates applied through Scene | derived coordinates preserve Scene preferences
+PASS FX08 coordinate release reveals saved Scene position | position ownership released without old capture
+PASS FX06 Default releases explicit coordinates and time | recipe's Game axes restore the acquired reference
+PASS FX06 local presets include camera mode and migration model | complete preset round trip through prepared API
+PASS FX02 migrated multiplier preserves intensity semantics | multiplier is never mapped to colour gain
+PASS FX02 legacy source and exact backup preserved | migration produces a new suite
+PASS FX06 Default suite exits imported lighting model | same recipe after a migrated preset
+PASS UI01 all four panels construct and refresh | actual PanelView/FxModule source linked with UI event doubles
+PASS UI02 comma input updates exact value | invariant output XML, localized input
+PASS UI03 external notification preserves focused text | in-progress editing is not destroyed
+PASS UI04 unfocused field reflects external update | panel shows current state
+PASS UI05 Undo restores prior module snapshot | undo the last local edit, not merely the label
+PASS UI06 Spanish labels resolve | native UI labels use game language
 PASS S06 game API uses hours | no normalized-hour conversion
 PASS S07 locked hour uses engine hours | 18 hours remains 18
 PASS A05 rejected API section is atomic | valid first field not committed before invalid second field
@@ -33,7 +65,7 @@ PASS L10 preset stores every absolute light field | preset capture and apply
 PASS L11 extended export round-trip | fixed exposure round-trip
 PASS S08 optimized releases temporary locks | DEFAULT keeps the world game-owned
 PASS S09 missing LUT is explicit | no procedural or loosely matched replacement
-PASS S10 native camera toggles apply | LUT, camera tone, bloom and rain blur
+PASS S10 native camera toggles apply | LUT, bloom and rain blur; tone is left to Lumen
 PASS S11 native camera toggles restore | all captured flags restored
 PASS IO01 atomic write retains previous file | last good version is recoverable
 PASS IO02 failed save remains pending and retries | failed write followed by automatic recovery
@@ -59,4 +91,4 @@ PASS X05 API rejects unrelated XML roots | no accidental apply from an unrelated
 PASS X06 weather-only action does not claim tone | claim actual writes instead of every possible feature
 PASS S20 Scene exposure zero releases its field | same zero convention with and without Lumen
 PASS S21 Scene recaptures after release | second acquisition does not restore the first baseline
-SUMMARY PASS=60 FAIL=0. FAIL denotes a regression requirement that remains unmet.
+SUMMARY PASS=90 FAIL=0. FAIL denotes a regression requirement that remains unmet.

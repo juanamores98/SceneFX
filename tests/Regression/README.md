@@ -15,3 +15,7 @@ Cada ejecución crea una carpeta de ajustes aislada bajo la salida del test y ca
 Stubs.cs reemplaza servicios del juego para comprobar mutaciones, persistencia y orden. No emula render, UI, ciclo de vida Unity ni aplicación de Harmony. Gradient.Evaluate es intencionalmente simplificado: no hay aserciones de paridad visual.
 
 Resultados de la revisión: results.latest.txt. Builds reales: builds.latest.txt. Verificación de DLL instaladas: installed-unchanged.json. La matriz de aceptación real está en ../../docs/VALIDACION.md.
+
+## Consolidación 2.1
+
+El harness también enlaza `FxModule`, `PanelView` y las etiquetas de los cuatro módulos. `UiStubs.cs` permite comprobar eventos, foco, entrada decimal y deshacer; no reproduce el layout ni los gráficos nativos. La migración usa un directorio de datos aislado por ejecución. Resultado ejecutado y límites: [VALIDACION-2.1.md](../../docs/VALIDACION-2.1.md).
