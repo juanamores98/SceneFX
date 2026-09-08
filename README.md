@@ -42,3 +42,8 @@ Sin importador de presets ECX. El ciclo sigue siendo visual, separado del reloj 
 [Paridad](docs/PARIDAD.md) · [Estado](docs/ESTADO-SESION.md) · [Procedencia](PROCEDENCIA.md). `DESIGN.md` se conserva como referencia histórica.
 
 Código propio bajo **MIT-0**, [LICENSE](LICENSE).
+
+
+## Consolidación 2.1
+
+Cambios de propiedad, Game, presets y convivencia: [contrato v3 y pruebas](docs/CONSOLIDACION-v3.md). Actualizar los cuatro FX juntos para usar suites.

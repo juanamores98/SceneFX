@@ -49,6 +49,7 @@ namespace SceneFX.Infrastructure
 
         internal static void WriteText(string path, string text)
         {
+            if (FxTransaction.Stage(path, text)) { LastError = string.Empty; return; }
             string fullPath = Path.GetFullPath(path);
             string temporary = fullPath + ".tmp";
             try

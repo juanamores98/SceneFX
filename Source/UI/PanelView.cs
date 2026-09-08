@@ -18,8 +18,12 @@ namespace SceneFX.UI
         private readonly Func<string> _statusText;
         private readonly UILabel _status;
         private readonly UILabel _title;
-        private readonly UIButton _vanilla, _optimized, _close;
+        private readonly UIButton _vanilla, _optimized, _undoButton, _close;
+        private Func<string> _capture;
+        private Func<string, bool> _apply;
+        private string _undo;
         private bool _refreshing;
+        private readonly List<Action> _unsubscribe = new List<Action>();
         private int _selected;
         private string _error = string.Empty;
 
@@ -49,14 +53,31 @@ namespace SceneFX.UI
                 drag.relativePosition = Vector3.zero;
                 _resize.Add(w => drag.size = new Vector2(w - 44f, 32f));
             }
-            _vanilla = Button(Root, "VANILLA", vanilla);
-            _optimized = Button(Root, "OPTIMIZED", optimized);
+            _vanilla = Button(Root, "Game", vanilla);
+            _optimized = Button(Root, "Default v3", optimized);
             _vanilla.tooltip = "Release this mod's changes and keep that mode across cities.";
             _optimized.tooltip = "Apply this mod's part of Render It Plus / Default.";
+            var ownType = typeof(PanelView).Assembly.GetType("SceneFX.SceneFXMod");
+            var readMethod = ownType.GetMethod("ExportSuiteSection");
+            var applyMethod = ownType.GetMethod("ApplySuiteSection", new[] { typeof(string) });
+            _capture = () => (string)readMethod.Invoke(null, null);
+            _apply = xml => (bool)applyMethod.Invoke(null, new object[] { xml });
+            _undoButton = Button(Root, "Undo", () => { if (_undo != null && !_apply(_undo)) throw new InvalidOperationException("Could not restore previous settings"); });
             _status = Root.AddUIComponent<UILabel>();
             _status.textScale = 0.75f;
             _status.autoSize = false;
             _status.wordWrap = true;
+            // Subscribe to each loaded module once; preserve focused edits on notifications.
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                foreach (string module in new[] { "SceneFX", "LumenFX", "AtmosphereFX", "ClassicLightFX" })
+                {
+                    var type = assembly.GetType(module + "." + module + "Mod", false);
+                    var changed = type == null ? null : type.GetEvent("StateChanged");
+                    if (changed == null) continue;
+                    Action handler = () => { if (Root != null && Root.isVisible) Refresh(); };
+                    changed.AddEventHandler(null, handler);
+                    _unsubscribe.Add(() => changed.RemoveEventHandler(null, handler));
+                }
             SetSize(width, height);
         }
 
@@ -94,10 +115,12 @@ namespace SceneFX.UI
             Root.size = new Vector2(width, height);
             _title.width = width - 50f;
             _close.relativePosition = new Vector3(width - 34f, 6f);
-            float half = (width - 24f) / 2f;
-            _vanilla.size = _optimized.size = new Vector2(half, 28f);
+            float half = (width - 32f) / 3f;
+            _vanilla.size = _optimized.size = _undoButton.size = new Vector2(half, 28f);
             _vanilla.relativePosition = new Vector3(8f, 36f);
             _optimized.relativePosition = new Vector3(16f + half, 36f);
+            _undoButton.relativePosition = new Vector3(24f + 2f * half, 36f);
+            _undoButton.isEnabled = _undo != null;
             float tabWidth = _pages.Count == 0 ? 0f : (width - 16f) / _pages.Count;
             for (int i = 0; i < _pages.Count; i++)
             {
@@ -124,7 +147,7 @@ namespace SceneFX.UI
         {
             var row = Row(page, 24f);
             var label = row.AddUIComponent<UILabel>();
-            label.text = text;
+            label.text = UiText.Get(text);
             label.textScale = 0.86f;
             label.textColor = new Color32(79, 195, 247, 255);
             label.relativePosition = new Vector3(0f, 4f);
@@ -142,7 +165,7 @@ namespace SceneFX.UI
         private UIButton Button(UIComponent parent, string text, Action action)
         {
             var button = parent.AddUIComponent<UIButton>();
-            button.text = text;
+            button.text = UiText.Get(text);
             button.textScale = 0.85f;
             button.normalBgSprite = "ButtonMenu";
             button.hoveredBgSprite = "ButtonMenuHovered";
@@ -154,7 +177,7 @@ namespace SceneFX.UI
         public void Check(UIComponent page, string label, Func<bool> read, Action<bool> write)
         {
             var row = Row(page, 34f);
-            var box = (UICheckBox)new UIHelper(row).AddCheckbox(label, read(), value =>
+            var box = (UICheckBox)new UIHelper(row).AddCheckbox(UiText.Get(label), read(), value =>
             {
                 if (!_refreshing) Run(() => write(value));
             });
@@ -168,29 +191,34 @@ namespace SceneFX.UI
         }
 
         public void Number(UIComponent page, string label, Func<float> read, Action<float> write,
-            float min, float max, float step)
+            float min, float max, float step, bool log = false, Func<bool> enabled = null, float? reset = null)
         {
-            var row = Row(page, 70f);
+            var row = Row(page, 54f);
+            float initial = reset ?? read();
             var title = row.AddUIComponent<UILabel>();
-            title.text = label;
+            title.text = UiText.Get(label);
             title.textScale = 0.84f;
             title.autoSize = false;
-            title.height = 40f;
+            title.height = 30f;
             title.wordWrap = true;
             var field = row.AddUIComponent<UITextField>();
             field.normalBgSprite = "TextFieldPanel";
             field.focusedBgSprite = "TextFieldPanelHovered";
             field.textScale = 0.85f;
             field.height = 24f;
-            field.width = 92f;
+            field.width = 80f;
             field.padding = new RectOffset(4, 4, 3, 2);
             field.builtinKeyNavigation = true;
             var slider = row.AddUIComponent<UISlider>();
-            slider.minValue = min;
-            slider.maxValue = max;
-            slider.stepSize = step;
+            double scale = Math.Max(step, 0.0000001f);
+            double span = Math.Log(1d + (max - min) / scale);
+            Func<float, float> toValue = t => log ? (float)(min + scale * (Math.Exp(t * span) - 1d)) : t;
+            Func<float, float> toSlider = v => log ? (float)(Math.Log(1d + Math.Max(0d, v - min) / scale) / span) : v;
+            slider.minValue = log ? 0f : min;
+            slider.maxValue = log ? 1f : max;
+            slider.stepSize = log ? 0.001f : step;
             slider.height = 18f;
-            slider.relativePosition = new Vector3(4f, 48f);
+            slider.relativePosition = new Vector3(4f, 34f);
             var track = slider.AddUIComponent<UISlicedSprite>();
             track.spriteName = "ScrollbarTrack";
             track.height = 12f;
@@ -198,51 +226,79 @@ namespace SceneFX.UI
             thumb.spriteName = "ScrollbarThumb";
             thumb.size = new Vector2(12f, 18f);
             slider.thumbObject = thumb;
+            var resetButton = Button(row, "↶", () => write(initial));
+            resetButton.tooltip = reset.HasValue ? "Reset this setting" : "Restore value at panel opening";
+            resetButton.size = new Vector2(24f, 24f);
             _resize.Add(w =>
             {
-                title.width = w - 98f;
-                field.relativePosition = new Vector3(w - 92f, 0f);
+                title.width = w - 112f;
+                field.relativePosition = new Vector3(w - 108f, 0f);
+                resetButton.relativePosition = new Vector3(w - 24f, 0f);
                 slider.width = w - 8f;
                 track.width = slider.width;
             });
-            slider.eventValueChanged += (c, value) => { if (!_refreshing) Run(() => write(value)); };
+            slider.eventValueChanged += (c, value) => { if (!_refreshing) Run(() => write(Mathf.Clamp(toValue(value), min, max))); };
             field.eventTextSubmitted += (c, text) =>
             {
                 if (_refreshing) return;
                 Run(() =>
                 {
                     float value;
-                    if (!float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+                    if (!float.TryParse(text.Trim().Replace(',', '.'), NumberStyles.Float, CultureInfo.InvariantCulture, out value)
                         || float.IsNaN(value) || float.IsInfinity(value) || value < min || value > max)
                         throw new ArgumentException("Enter a number between " + min + " and " + max + ".");
                     write(value);
                 });
             };
-            _refresh.Add(() => { float value = read(); slider.value = value; field.text = value.ToString("0.######", CultureInfo.InvariantCulture); });
+            _refresh.Add(() => {
+                bool active = enabled == null || enabled();
+                field.isEnabled = slider.isEnabled = resetButton.isEnabled = active;
+                row.tooltip = active ? string.Empty : "Controlled by the selected mode; switch to Manual to edit";
+                float value = read(); slider.value = toSlider(value);
+                if (!field.containsFocus) field.text = value.ToString("0.######", CultureInfo.CurrentCulture);
+            });
+        }
+
+        public void OptionalNumber(UIComponent page, string label, Func<float> read, Action<float> write,
+            float min, float max, float step, bool log = false)
+        {
+            float manual = read() >= 0f ? read() : min;
+            Choice(page, label + " mode", () => new[] { "Game", "Manual" }, () => read() < 0f ? 0 : 1,
+                mode => { if (read() >= 0f) manual = read(); write(mode == 0 ? -1f : manual); });
+            Number(page, label, () => read() < 0f ? manual : read(), v => { manual = v; write(v); }, min, max, step,
+                log, () => read() >= 0f, min);
+        }
+        public void Info(UIComponent page, Func<string> text)
+        {
+            var row = Row(page, 42f);
+            var label = row.AddUIComponent<UILabel>(); label.autoSize = false;
+            label.wordWrap = true; label.textScale = 0.78f; label.height = 40f;
+            _resize.Add(w => label.width = w);
+            _refresh.Add(() => label.text = UiText.Get(text()));
         }
 
         public void Choice(UIComponent page, string label, Func<string[]> items, Func<int> selected, Action<int> write)
         {
             var row = Row(page, 60f);
-            var dropdown = (UIDropDown)new UIHelper(row).AddDropdown(label, items(), selected(), value =>
+            var dropdown = (UIDropDown)new UIHelper(row).AddDropdown(UiText.Get(label), UiText.Items(items()), selected(), value =>
             {
                 if (!_refreshing) Run(() => write(value));
             });
             _resize.Add(w => { dropdown.width = w; dropdown.listWidth = (int)w; if (dropdown.parent != null) dropdown.parent.width = w; });
-            _refresh.Add(() => { dropdown.items = items(); dropdown.selectedIndex = selected(); });
+            _refresh.Add(() => { dropdown.items = UiText.Items(items()); dropdown.selectedIndex = selected(); });
         }
 
         public void Text(UIComponent page, string label, Func<string> read, Action<string> write)
         {
             var row = Row(page, 60f);
-            var field = (UITextField)new UIHelper(row).AddTextfield(label, read(), value => { if (!_refreshing) write(value); }, null);
+            var field = (UITextField)new UIHelper(row).AddTextfield(UiText.Get(label), read(), value => { if (!_refreshing) write(value); }, null);
             _resize.Add(w => { field.width = w; if (field.parent != null) field.parent.width = w; });
-            _refresh.Add(() => field.text = read());
+            _refresh.Add(() => { if (!field.containsFocus) field.text = read(); });
         }
 
         private void Run(Action action)
         {
-            try { action(); _error = string.Empty; }
+            try { string before = _capture == null ? null : _capture(); action(); if (_capture != null && before != _capture()) _undo = before; _error = string.Empty; }
             catch (Exception e) { _error = e.Message; Debug.LogException(e); }
             Refresh();
         }
@@ -262,6 +318,8 @@ namespace SceneFX.UI
 
         public void Dispose()
         {
+            foreach (var unsubscribe in _unsubscribe) unsubscribe();
+            _unsubscribe.Clear();
             if (Root != null) UnityEngine.Object.Destroy(Root.gameObject);
             Root = null;
             _refresh.Clear();

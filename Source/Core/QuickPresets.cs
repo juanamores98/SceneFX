@@ -12,7 +12,6 @@ namespace SceneFX.Core
 
         internal static bool ApplyOptimized()
         {
-            SceneRuntime.RestoreGame();
             using (var stream = typeof(QuickPresets).Assembly.GetManifestResourceStream("SceneFX.BuiltIns.Optimized.xml"))
             {
                 if (stream == null) return false;

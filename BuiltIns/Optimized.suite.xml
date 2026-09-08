@@ -1,20 +1,10 @@
-<suiteProfile name="Optimized" schema="3">
-  <scenefx>
+<suiteProfile name="Default-v3" schema="3" reference="RenderItPlus-Default-2026-09-08">
+  <scenefx schema="3">
     <vanillaMode>false</vanillaMode>
     <lut>1539181199.Relight2Average</lut>
     <lutEnabled>1</lutEnabled>
-    <toneEnabled>1</toneEnabled>
     <bloomEnabled>1</bloomEnabled>
     <rainMotionBlur>0</rainMotionBlur>
-    <gamma>3.15</gamma>
-    <brightness>-0.4</brightness>
-    <contrast>-0.7</contrast>
-    <sunIntensity>1</sunIntensity>
-    <exposure>1.102</exposure>
-    <warmth>0.4</warmth>
-    <fogDensity>0</fogDensity>
-    <fogStart>0</fogStart>
-    <skyTonemap>true</skyTonemap>
     <includeWorld>false</includeWorld>
     <timeLocked>false</timeLocked>
     <timeSet>false</timeSet>
@@ -66,6 +56,7 @@
     <skyExposure>1.102</skyExposure>
     <adaptiveExposure>false</adaptiveExposure>
     <adaptiveExposureGain>1</adaptiveExposureGain>
+    <toneEnabled>1</toneEnabled>
   </lumenfx>
   <atmospherefx>
     <vanillaMode>false</vanillaMode>

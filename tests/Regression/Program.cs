@@ -8,7 +8,7 @@ using LumenFX.Runtime;
 using AC = AtmosphereFX.Config.ModConfig;
 using AO = AtmosphereFX.Config.ConfigStore;
 using CO = ClassicLightFX.Options.ModOptions;
-class Program {
+partial class Program {
  static int pass,fail;
  static string ConfigDir=>ColossalFramework.IO.DataLocation.localApplicationData;
  static void Check(string id,bool ok,string detail) { Console.WriteLine((ok?"PASS ":"FAIL ")+id+" | "+detail);if(ok)pass++;else fail++; }
@@ -18,6 +18,8 @@ class Program {
  static void Read<T>(string xml){new XmlSerializer(typeof(T)).Deserialize(new StringReader(xml));}
  static void FreshWorld() {
   ClassicLightFX.Core.ClassicLook.Detach();
+  AppDomain.CurrentDomain.SetData("FX.ClassicRequests.v1", string.Empty);
+  AppDomain.CurrentDomain.SetData("FX.PropertyLedger.v1", null);
   UnityEngine.Object.Registry.Clear();
   DayNightProperties.instance=new DayNightProperties();new FogProperties();new FogEffect();new DayNightFogEffect();new RenderProperties();
   new GameObject("Main Camera");new ColossalFramework.ToneMapping();
@@ -105,7 +107,7 @@ class Program {
   Check("X02 Scene restore respects active Lumen tone",Equal(UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>().m_ToneMappingBoostFactor,lumenBoost),"Lumen boost="+lumenBoost+" after Scene restore="+UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>().m_ToneMappingBoostFactor);
   FreshWorld();
   state.VanillaMode=true;SceneRuntime.Current.Brightness=.8f;SceneRuntime.ApplyCurrent();
-  Check("X03 Scene tone works with Lumen suspended",!Equal(UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>().m_ToneMappingBoostFactor,1),"Scene requests brightness=.8, boost remains "+UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>().m_ToneMappingBoostFactor);
+  Check("X03 Scene camera edits never take over Lumen tone",Equal(UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>().m_ToneMappingBoostFactor,1),"Archived Scene brightness=.8 is retained; effective boost remains "+UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>().m_ToneMappingBoostFactor);
   FreshWorld();
   StyleEngine.CaptureBaseline();StyleEngine.ApplyLut("Other","");SceneRuntime.RestoreGame();
   Check("S05 restore game restores selected LUT",ColorCorrectionManager.instance.lastSelection==0,"original index=0 actual="+ColorCorrectionManager.instance.lastSelection);
@@ -125,6 +127,7 @@ class Program {
   var secondCityGradient=DayNightProperties.instance.m_LightColor;
   LumenFX.IO.StateStore.Load();TunerRuntime.ApplyAll();
   Check("L06 lighting rebuilt in second city without editing",!ReferenceEquals(secondCityGradient,DayNightProperties.instance.m_LightColor),"persisted warmth="+state.Warmth+" LightingDirty="+state.LightingDirty+" gradient reference unchanged="+ReferenceEquals(secondCityGradient,DayNightProperties.instance.m_LightColor));
+  ConsolidationChecks();
   ExtraChecks();
   TransitionChecks();
   Console.WriteLine("SUMMARY PASS="+pass+" FAIL="+fail+". FAIL denotes a regression requirement that remains unmet.");
@@ -254,7 +257,7 @@ class Program {
   var lut=new ColossalFramework.ColorCorrectionLut();var bloom=new UnityStandardAssets.ImageEffects.Bloom();var rain=new RainParticleProperties();
   var style=new StyleData {LutEnabled=0,ToneEnabled=0,BloomEnabled=0,RainMotionBlur=1};
   CameraEffects.Apply(style);
-  Check("S10 native camera toggles apply",!lut.enabled&&!bloom.enabled&&!UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>().enabled&&rain.ForceRainMotionBlur,"LUT, camera tone, bloom and rain blur");
+  Check("S10 native camera toggles apply",!lut.enabled&&!bloom.enabled&&UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>().enabled&&rain.ForceRainMotionBlur,"LUT, bloom and rain blur; tone is left to Lumen");
   CameraEffects.Restore();
   Check("S11 native camera toggles restore",lut.enabled&&bloom.enabled&&UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>().enabled&&!rain.ForceRainMotionBlur,"all captured flags restored");
   FreshWorld();

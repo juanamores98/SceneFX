@@ -15,6 +15,8 @@ namespace SceneFX.Core
     /// </summary>
     public static class SuiteManager
     {
+        public static string LastResult { get; private set; }
+
         public static string SuiteFolder
         {
             get
@@ -34,7 +36,7 @@ namespace SceneFX.Core
                     Directory.CreateDirectory(SuiteFolder);
                 }
 
-                string optPath = Path.Combine(SuiteFolder, "Optimized.suite.xml");
+                string optPath = Path.Combine(SuiteFolder, "Default-v3.suite.xml");
                 if (File.Exists(optPath)) return;
 
                 using (var stream = Assembly.GetExecutingAssembly()
@@ -114,7 +116,7 @@ namespace SceneFX.Core
 
             try
             {
-                var doc = new XmlDocument();
+                var doc = new XmlDocument { XmlResolver = null };
                 doc.LoadXml(xml);
                 var root = doc.DocumentElement;
                 if (root == null)
@@ -122,73 +124,67 @@ namespace SceneFX.Core
                     return false;
                 }
 
-                bool appliedAny = false;
-                bool allApplied = true;
-
-                // 1. SceneFX
-                var sceneNode = root.SelectSingleNode("scenefx") as XmlElement;
-                if (sceneNode != null)
+                if (root.Name != "suiteProfile") throw new InvalidOperationException("Expected suiteProfile root.");
+                var types = new Dictionary<string, string> {
+                    { "scenefx", "SceneFX.SceneFXMod" }, { "lumenfx", "LumenFX.LumenFXMod" },
+                    { "atmospherefx", "AtmosphereFX.AtmosphereFXMod" }, { "classiclightfx", "ClassicLightFX.ClassicLightFXMod" }
+                };
+                var sections = new List<XmlElement>();
+                var previous = new List<string>();
+                var seen = new HashSet<string>();
+                foreach (XmlNode child in root.ChildNodes)
                 {
-                    if (SceneFXMod.ApplySuiteSection(sceneNode))
-                    {
-                        appliedAny = true;
-                    }
-                    else
-                    {
-                        allApplied = false;
-                        Debug.LogWarning("[SceneFX] Suite section 'scenefx' not applied (rejected)");
-                    }
+                    var section = child as XmlElement;
+                    if (section == null) continue;
+                    if (!types.ContainsKey(section.Name) || !seen.Add(section.Name)) throw new InvalidOperationException("Unknown or duplicate suite section: " + section.Name);
+                    var type = FindModType(types[section.Name]);
+                    if (type == null) throw new InvalidOperationException("Required participant missing: " + section.Name);
+                    var validate = type.GetMethod("ValidateSuiteSection", new[] { typeof(string) });
+                    var ready = type.GetProperty("ReadyForSuite");
+                    if (validate == null || ready == null) throw new InvalidOperationException("Update all four FX before applying suites: " + section.Name);
+                    if (!(bool)ready.GetValue(null, null)) throw new InvalidOperationException("Participant is not ready in this city: " + section.Name);
+                    if (!(bool)validate.Invoke(null, new object[] { section.OuterXml }))
+                        throw new InvalidOperationException(section.Name + ": " + type.GetProperty("LastApplyError").GetValue(null, null));
+                    string before = ExportSection(types[section.Name]);
+                    if (string.IsNullOrEmpty(before)) throw new InvalidOperationException("Could not capture " + section.Name);
+                    sections.Add(section); previous.Add(before);
                 }
+                if (sections.Count == 0) throw new InvalidOperationException("The suite has no sections.");
 
-                // 2. LumenFX
-                var lumenNode = root.SelectSingleNode("lumenfx") as XmlElement;
-                if (lumenNode != null)
+                Infrastructure.FxTransaction.Begin();
+                int attempted = -1;
+                try
                 {
-                    if (ApplySection("LumenFX.LumenFXMod", lumenNode))
+                    for (int i = 0; i < sections.Count; i++)
                     {
-                        appliedAny = true;
+                        attempted = i;
+                        if (!ApplySection(types[sections[i].Name], sections[i])) throw new InvalidOperationException("Rejected while applying " + sections[i].Name);
                     }
-                    else
-                    {
-                        allApplied = false;
-                        Debug.LogWarning("[SceneFX] Suite section 'lumenfx' not applied (mod missing or rejected)");
-                    }
+                    Infrastructure.FxTransaction.Commit();
+                    LastResult = "Suite applied to settings; visual verification pending";
+                    return true;
                 }
-
-                // 3. AtmosphereFX
-                var atmoNode = root.SelectSingleNode("atmospherefx") as XmlElement;
-                if (atmoNode != null)
+                catch (Exception failure)
                 {
-                    if (ApplySection("AtmosphereFX.AtmosphereFXMod", atmoNode))
+                    bool restored = !failure.Message.StartsWith("PARTIAL:", StringComparison.Ordinal);
+                    if (!Infrastructure.FxTransaction.Active) Infrastructure.FxTransaction.Begin();
+                    // Include the failing participant: it may have changed state before rejecting.
+                    for (int i = attempted; i >= 0; i--)
                     {
-                        appliedAny = true;
+                        var before = new XmlDocument(); before.LoadXml(previous[i]);
+                        if (!ApplySection(types[sections[i].Name], before.DocumentElement)) restored = false;
+                        if (ExportSection(types[sections[i].Name]) != previous[i]) restored = false;
                     }
-                    else
-                    {
-                        allApplied = false;
-                        Debug.LogWarning("[SceneFX] Suite section 'atmospherefx' not applied (mod missing or rejected)");
-                    }
+                    Infrastructure.FxTransaction.Abort();
+                    LastResult = (restored ? "Failed; previous settings restored: " : "PARTIAL; rollback could not be verified: ") + failure.Message;
+                    Debug.LogWarning("[SceneFX] " + LastResult);
+                    return false;
                 }
-
-                // 4. ClassicLightFX
-                var classicNode = root.SelectSingleNode("classiclightfx") as XmlElement;
-                if (classicNode != null)
-                {
-                    if (ApplySection("ClassicLightFX.ClassicLightFXMod", classicNode))
-                    {
-                        appliedAny = true;
-                    }
-                    else
-                    {
-                        allApplied = false;
-                        Debug.LogWarning("[SceneFX] Suite section 'classiclightfx' not applied (mod missing or rejected)");
-                    }
-                }
-
-                return appliedAny && allApplied;
+                finally { Infrastructure.FxTransaction.Abort(); }
             }
             catch (Exception e)
             {
+                LastResult = "Validation failed; nothing applied: " + e.Message;
                 Debug.LogException(e);
                 return false;
             }
@@ -298,7 +294,7 @@ namespace SceneFX.Core
                     return false;
                 }
 
-                var doc = new XmlDocument();
+                var doc = new XmlDocument { XmlResolver = null };
                 doc.LoadXml(sectionXml);
                 return ApplySection(typeFullName, doc.DocumentElement);
             }

@@ -48,8 +48,10 @@ namespace UnityEngine {
  public struct GradientColorKey { public Color color; public float time; public GradientColorKey(Color c,float t){color=c;time=t;} }
  public struct GradientAlphaKey { public float alpha,time; public GradientAlphaKey(float a,float t){alpha=a;time=t;} }
  public class Gradient {
-  public GradientColorKey[] colorKeys={new GradientColorKey(new Color(.5f,.5f,.5f),0),new GradientColorKey(new Color(.5f,.5f,.5f),1)};
-  public GradientAlphaKey[] alphaKeys={new GradientAlphaKey(1,0),new GradientAlphaKey(1,1)};
+  private GradientColorKey[] _colorKeys={new GradientColorKey(new Color(.5f,.5f,.5f),0),new GradientColorKey(new Color(.5f,.5f,.5f),1)};
+  private GradientAlphaKey[] _alphaKeys={new GradientAlphaKey(1,0),new GradientAlphaKey(1,1)};
+  public GradientColorKey[] colorKeys {get{return (GradientColorKey[])_colorKeys.Clone();}set{_colorKeys=(GradientColorKey[])value.Clone();}}
+  public GradientAlphaKey[] alphaKeys {get{return (GradientAlphaKey[])_alphaKeys.Clone();}set{_alphaKeys=(GradientAlphaKey[])value.Clone();}}
   public Color Evaluate(float t){return colorKeys[0].color; } // no visual/gradient assertions
  }
  public enum ShadowQuality { Disable,HardOnly,All }
@@ -119,7 +121,7 @@ public class SimulationManager {public static SimulationManager instance=Colossa
 public class WeatherProperties {public bool m_rainIsSnow;}
 public class WeatherManager {public static WeatherManager instance=new WeatherManager();public bool m_enableWeather=true;public WeatherProperties m_properties=new WeatherProperties();public float m_currentRain,m_targetRain,m_currentFog,m_targetFog,m_currentCloud,m_targetCloud,m_currentNorthernLights,m_targetNorthernLights,m_currentRainbow,m_targetRainbow,m_groundWetness,m_targetTemperature,m_currentTemperature,m_targetDirection,m_windDirection;}
 public class NetManager {public static NetManager instance=new NetManager();public bool m_treatWetAsSnow;}
-public class ColorCorrectionManager {public static ColorCorrectionManager instance=new ColorCorrectionManager();public string[] items={"Original","Other"};public int lastSelection; public int currentSelection {set {lastSelection=value;}}public ColossalFramework.Texture3DWrapper[] m_BuiltinLUTs=new ColossalFramework.Texture3DWrapper[0];public void SetLUT(UnityEngine.Texture3D t){} }
+public class ColorCorrectionManager {public static ColorCorrectionManager instance=new ColorCorrectionManager();public string[] items={"Original","Other","1539181199.Relight2Average"};public int lastSelection; public int currentSelection {set {lastSelection=value;}}public ColossalFramework.Texture3DWrapper[] m_BuiltinLUTs=new ColossalFramework.Texture3DWrapper[0];public void SetLUT(UnityEngine.Texture3D t){} }
 namespace AtmosphereFX.Runtime {public class AtmosphereEngine:UnityEngine.MonoBehaviour {public static void OpenWindow(){} } }
 namespace AtmosphereFX.Options {internal static class OptionsPanel {internal static void Build(ICities.UIHelperBase h){} } }
 namespace AtmosphereFX.UI {public static class UuiButton {public static void Register(string n,string d,UnityEngine.Texture2D t,Action<bool>a){} public static void Unregister(){} } public static class TrayIcon{public static UnityEngine.Texture2D Make(){return null;}} }

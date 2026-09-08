@@ -139,11 +139,62 @@ namespace SceneFX
             }
         }
 
+        public static void RefreshDerivedState() {  NotifyStateChanged(); }
+        public static bool ReadyForSuite { get { return UnityEngine.Object.FindObjectOfType<DayNightProperties>() != null && GameObject.Find("Main Camera") != null; } }
+        public static string LastApplyError { get; private set; }
+        public static string ApplicationStatus { get; private set; }
+        public static event System.Action StateChanged;
+        public static void NotifyStateChanged()
+        {
+            var changed = StateChanged;
+            if (changed == null) return;
+            foreach (System.Action observer in changed.GetInvocationList())
+                try { observer(); } catch (System.Exception e) { UnityEngine.Debug.LogException(e); }
+        }
+        public static bool ValidateSuiteSection(string xml)
+        {
+            try
+            {
+                var doc = new System.Xml.XmlDocument { XmlResolver = null }; doc.LoadXml(xml);
+                return ParseSection(doc.DocumentElement, false);
+            }
+            catch (System.Exception e) { LastApplyError = e.Message; return false; }
+        }
         public static bool ApplySuiteSection(System.Xml.XmlElement element)
+        {
+            if (!ParseSection(element, false)) return false;
+            if (Infrastructure.FxTransaction.Active) return ParseSection(element, true);
+            string previous = ExportSuiteSection();
+            Infrastructure.FxTransaction.Begin();
+            try
+            {
+                if (!ParseSection(element, true)) throw new System.InvalidOperationException(LastApplyError);
+                Infrastructure.FxTransaction.Commit();
+                return true;
+            }
+            catch (System.Exception failure)
+            {
+                if (!Infrastructure.FxTransaction.Active) Infrastructure.FxTransaction.Begin();
+                var doc = new System.Xml.XmlDocument(); doc.LoadXml(previous);
+                bool restored = ParseSection(doc.DocumentElement, true) && ExportSuiteSection() == previous;
+                Infrastructure.FxTransaction.Abort();
+                LastApplyError = failure.Message;
+                ApplicationStatus = (restored && !failure.Message.StartsWith("PARTIAL:") ? "Failed; previous settings restored: " : "PARTIAL; rollback could not be verified: ") + failure.Message;
+                NotifyStateChanged();
+                return false;
+            }
+            finally { Infrastructure.FxTransaction.Abort(); }
+        }
+        private static bool ParseSection(System.Xml.XmlElement element, bool commit)
         {
             if (element == null || !element.Name.Equals("scenefx", System.StringComparison.OrdinalIgnoreCase)) return false;
             try
             {
+                LastApplyError = string.Empty;
+                Infrastructure.FxStorage.LastError = string.Empty;
+                string schema = element.GetAttribute("schema");
+                if (schema.Length > 0 && schema != "2" && schema != "3") throw new System.ArgumentException("Unsupported preset schema: " + schema);
+
                 var culture = System.Globalization.CultureInfo.InvariantCulture;
                 var current = SceneRuntime.Current.Clone();
                 bool vanilla = SceneRuntime.VanillaMode;
@@ -168,6 +219,7 @@ namespace SceneFX
                     else if (name == "fogdensity") current.FogDensity = float.Parse(val, culture);
                     else if (name == "fogstart") current.FogStart = float.Parse(val, culture);
                     else if (name == "skytonemap") current.SkyTonemap = bool.Parse(val);
+                    else if (name == "worldconfigured") current.WorldConfigured = bool.Parse(val);
                     else if (name == "includeworld") current.IncludeWorld = bool.Parse(val);
                     else if (name == "vanillamode")
                     {
@@ -204,11 +256,22 @@ namespace SceneFX
                     else if (name == "cyclewhilepaused") { current.CycleWhilePaused = bool.Parse(val); worldTouched = true; }
                 }
 
-                SceneRuntime.ReplaceState(current, vanilla, worldTouched || current.IncludeWorld);
+                current.Validate();
+                if (!vanilla) StyleEngine.ValidateResources(current);
+                if (!commit) return true;
+                SceneRuntime.ReplaceState(current, vanilla, element.GetAttribute("kind") == "snapshot" ? current.WorldConfigured : worldTouched || current.IncludeWorld);
+                SceneRuntime.Flush();
+                if (!string.IsNullOrEmpty(Infrastructure.FxStorage.LastError)) throw new System.IO.IOException(Infrastructure.FxStorage.LastError);
+                ApplicationStatus = "Applied to settings; verify appearance in game";
+                Infrastructure.FxInterop.RefreshCompanions();
+                NotifyStateChanged();
                 return true;
             }
             catch (System.Exception e)
             {
+                LastApplyError = e.Message;
+                ApplicationStatus = "Failed: " + e.Message;
+
                 UnityEngine.Debug.LogException(e);
                 return false;
             }
@@ -226,6 +289,7 @@ namespace SceneFX
             var result = new System.Xml.XmlDocument();
             var section = result.CreateElement("scenefx");
             result.AppendChild(section);
+            section.SetAttribute("schema", "3"); section.SetAttribute("kind", "snapshot");
             foreach (System.Xml.XmlNode child in doc.DocumentElement.ChildNodes)
                 section.AppendChild(result.ImportNode(child, true));
             var mode = result.CreateElement("vanillaMode");

@@ -59,6 +59,7 @@ namespace SceneFX.Core
             var next = style.Clone();
             next.Validate();
             if (!next.IncludeWorld) next.CopyWorldFrom(_current);
+            StyleEngine.ValidateResources(next);
             _current = next;
             VanillaMode = false;
             ApplyCurrent();
@@ -73,6 +74,7 @@ namespace SceneFX.Core
         internal static void ReplaceState(StyleData state, bool vanilla, bool applyWorld)
         {
             state.Validate();
+            if (!vanilla) StyleEngine.ValidateResources(state);
             _current = state;
             VanillaMode = vanilla;
             if (vanilla) RestoreGame();

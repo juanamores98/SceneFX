@@ -7,7 +7,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Stubs.cs;Program.cs" />
+    <Compile Include="Stubs.cs;Program.cs;ConsolidationChecks.cs" />
     <Compile Include="../../../AtmosphereFX/Source/AtmosphereFXMod.cs" />
     <Compile Include="../../../AtmosphereFX/Source/Config/*.cs" />
     <Compile Include="../../../AtmosphereFX/Source/Runtime/SettingsApplier.cs;../../../AtmosphereFX/Source/Runtime/VanillaSnapshot.cs;../../../AtmosphereFX/Source/Runtime/PerFrameWatcher.cs" />
@@ -16,7 +16,7 @@
     <Compile Include="../../../LumenFX/Source/Core/TunerEngine.cs" />
     <Compile Include="../../../ClassicLightFX/Source/Options/ModOptions.cs;../../../ClassicLightFX/Source/Core/ClassicLook.cs;../../../ClassicLightFX/Source/Core/ClassicFogDriver.cs;../../../ClassicLightFX/Source/Core/ThemeOwnership.cs" />
     <Compile Include="../../../SceneFX/Source/SceneFXMod.cs;../../../SceneFX/Source/PanelEngine.cs" />
-    <Compile Include="../../../SceneFX/Source/Core/StyleData.cs;../../../SceneFX/Source/Core/SceneRuntime.cs;../../../SceneFX/Source/Core/StyleEngine.cs;../../../SceneFX/Source/Core/WorldController.cs;../../../SceneFX/Source/Core/TimeController.cs;../../../SceneFX/Source/Core/SuiteManager.cs;../../../SceneFX/Source/Core/ThemeOwnership.cs;../../../SceneFX/Source/Core/QuickPresets.cs" />
+    <Compile Include="../../../SceneFX/Source/Core/LegacyMigration.cs;../../../SceneFX/Source/Core/StyleData.cs;../../../SceneFX/Source/Core/SceneRuntime.cs;../../../SceneFX/Source/Core/StyleEngine.cs;../../../SceneFX/Source/Core/WorldController.cs;../../../SceneFX/Source/Core/TimeController.cs;../../../SceneFX/Source/Core/SuiteManager.cs;../../../SceneFX/Source/Core/ThemeOwnership.cs;../../../SceneFX/Source/Core/QuickPresets.cs" />
     <Compile Include="../../../AtmosphereFX/Source/Infrastructure/*.cs" />
     <EmbeddedResource Include="../../../AtmosphereFX/BuiltIns/Optimized.xml" LogicalName="AtmosphereFX.BuiltIns.Optimized.xml" />
     <Compile Include="../../../LumenFX/Source/Infrastructure/*.cs" />
