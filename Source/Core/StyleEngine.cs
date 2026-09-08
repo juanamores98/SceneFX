@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using UnityEngine;
 
@@ -29,6 +29,29 @@ namespace SceneFX.Core
         private static float _filmicF = 0.24f;
         private static float _filmicW = 11f;
 
+        private static bool _toneWritten, _sunWritten, _exposureWritten, _skyWritten, _gradientWritten;
+        private static bool _fogWritten, _lutWritten;
+        private static float _fogDensity;
+        private static float _fogStart;
+        private static bool _skyTonemap;
+        private static int _lutSelection;
+        private static int _lastLutSelection;
+        private static bool _delegateCompanions;
+        internal static string LastLutError = string.Empty;
+        internal static string ActiveClaims
+        {
+            get
+            {
+                return (_lutWritten ? "lut," : "")
+                    + (_toneWritten && !SuiteManager.IsLumenFXWriting("tone") ? "tone," : "")
+                    + (_sunWritten && !SuiteManager.IsLumenFXWriting("sunIntensity") ? "sunIntensity," : "")
+                    + (_exposureWritten && !SuiteManager.IsLumenFXWriting("exposure") ? "exposure," : "")
+                    + (_skyWritten && !SuiteManager.IsLumenFXWriting("skyTonemapping") ? "skyTonemapping," : "")
+                    + (_gradientWritten && !SuiteManager.IsLumenFXWriting("lightColor") ? "lightColor," : "")
+                    + (_fogWritten && !Infrastructure.FxInterop.Claims(AtmosphereFXMod, "fog") ? "fog," : "");
+            }
+        }
+
         private static Gradient _originalLight;
         private static Gradient _originalSky;
         private static Gradient _originalEquator;
@@ -44,6 +67,10 @@ namespace SceneFX.Core
             _cachedToneMapping = null;
             _cachedDayNight = null;
             _cachedFogProperties = null;
+            _toneWritten = _sunWritten = _exposureWritten = _skyWritten = _gradientWritten = false;
+            _fogWritten = _lutWritten = false;
+            LastLutError = string.Empty;
+            CameraEffects.Clear();
             _sunCaptured = false;
             _toneCaptured = false;
             _gradientsCaptured = false;
@@ -71,28 +98,26 @@ namespace SceneFX.Core
             return _cachedFogProperties;
         }
 
-        internal static void Apply(StyleData style)
+        internal static void Apply(StyleData style, bool delegateCompanions = true)
         {
-            ApplyLut(style.Lut, style.NativeLut);
+            _delegateCompanions = delegateCompanions;
+            ApplyLut(style.Lut, string.Empty);
+            CameraEffects.Apply(style);
             ApplyTone(style);
             ApplySun(style);
             ApplyWarmth(style.Warmth);
             ApplyFog(style);
-            SkyMood.Apply(style.SkyMood);
 
-            if (style.IncludeWorld)
-            {
-                ApplyWorld(style);
-            }
         }
 
         /// <summary>Lleva al mundo lo que dice el estilo: hora, sol, clima y ritmo.</summary>
         internal static void ApplyWorld(StyleData style)
         {
-            WorldController.ApplyTime(style.TimeOfDay);
-            WorldController.ApplyPosition(style.Latitude, style.Longitude);
+            WorldController.TimeLocked = style.TimeLocked;
+            if (style.TimeSet || style.IncludeWorld) WorldController.ApplyTime(style.TimeOfDay);
+            if (style.PositionSet || style.IncludeWorld) WorldController.ApplyPosition(style.Latitude, style.Longitude);
 
-            WorldController.RainIntensity = Clamped(style.Rain);
+            WorldController.RainIntensity = style.Rain < 0f ? -1f : Mathf.Clamp(style.Rain, 0f, 2.5f);
             WorldController.FogIntensity = Clamped(style.Fog);
             WorldController.CloudIntensity = Clamped(style.Cloud);
             WorldController.NorthernLights = Clamped(style.NorthernLights);
@@ -123,9 +148,12 @@ namespace SceneFX.Core
         /// directamente en <see cref="WorldController"/>, asi que el estilo se refresca desde
         /// ahi antes de guardarlo o de publicarlo a la suite.
         /// </remarks>
-        internal static void CaptureWorld(StyleData style)
+        internal static void CaptureWorld(StyleData style, bool snapshotMoment = false)
         {
-            style.TimeOfDay = WorldController.ReadTimeHours();
+            style.TimeOfDay = snapshotMoment ? WorldController.ReadTimeHours() : WorldController.TimeOfDayHours;
+            style.TimeLocked = WorldController.TimeLocked;
+            style.TimeSet = WorldController.TimeSet;
+            style.PositionSet = WorldController.PositionSet;
 
             var dayNight = GetDayNight();
             if (dayNight != null)
@@ -170,22 +198,27 @@ namespace SceneFX.Core
 
         internal static void RestoreGame()
         {
-            if (!_sunCaptured && !_toneCaptured)
+            CameraEffects.Restore();
+            RestoreLut();
+            if (_fogWritten && !Infrastructure.FxInterop.Claims(AtmosphereFXMod, "fog"))
             {
-                return;
+                var fog = GetFogProperties();
+                if (fog != null) { fog.m_FogDensity = _fogDensity; fog.m_FogStart = _fogStart; }
             }
+            _fogWritten = false;
 
             var dayNight = GetDayNight();
             if (dayNight != null && _sunCaptured)
             {
-                dayNight.m_SunIntensity = _vanillaSun;
+                if (_sunWritten && !SuiteManager.IsLumenFXWriting("sunIntensity")) dayNight.m_SunIntensity = _vanillaSun;
+                if (_skyWritten && !SuiteManager.IsLumenFXWriting("skyTonemapping")) dayNight.m_Tonemapping = _skyTonemap;
 
-                if (!ThemeOwnership.AtmosphereIsManaged)
+                if (_exposureWritten && !ThemeOwnership.AtmosphereIsManaged && !SuiteManager.IsLumenFXWriting("exposure"))
                 {
                     dayNight.m_Exposure = _vanillaExposure;
                 }
 
-                if (_gradientsCaptured)
+                if (_gradientWritten && _gradientsCaptured && !SuiteManager.IsLumenFXWriting("lightColor"))
                 {
                     // Exact game gradients, not a warmth-zero approximation.
                     dayNight.m_LightColor = _originalLight;
@@ -209,7 +242,7 @@ namespace SceneFX.Core
             }
 
             var tone = FindToneMapping();
-            if (tone != null && _toneCaptured)
+            if (tone != null && _toneCaptured && _toneWritten && !SuiteManager.IsLumenFXWriting("tone"))
             {
                 tone.m_ToneMappingGamma = _vanillaGamma;
                 tone.m_ToneMappingBoostFactor = _vanillaBoost;
@@ -222,6 +255,8 @@ namespace SceneFX.Core
                 tone.m_ToneMappingParamsFilmic.F = _filmicF;
                 tone.m_ToneMappingParamsFilmic.W = _filmicW;
             }
+            _toneWritten = _sunWritten = _exposureWritten = _skyWritten = _gradientWritten = false;
+            _sunCaptured = _toneCaptured = _gradientsCaptured = false;
         }
 
         private static void CaptureGradients(DayNightProperties dn)
@@ -275,6 +310,7 @@ namespace SceneFX.Core
             var dayNight = GetDayNight();
             if (dayNight != null && !_sunCaptured)
             {
+                _skyTonemap = dayNight.m_Tonemapping;
                 _vanillaSun = dayNight.m_SunIntensity;
                 _vanillaExposure = dayNight.m_Exposure;
                 _sunCaptured = true;
@@ -332,64 +368,40 @@ namespace SceneFX.Core
             return names;
         }
 
-        internal static void ApplyLut(string name, string nativeFallback)
+        internal static void ApplyLut(string name, string ignoredLegacyFallback)
         {
             var manager = ColorCorrectionManager.instance;
-            if (manager == null)
+            if (manager == null || manager.items == null) return;
+            if (string.IsNullOrEmpty(name)) { RestoreLut(); LastLutError = string.Empty; return; }
+            int found = Array.IndexOf(manager.items, name);
+            if (found < 0)
             {
-                return;
-            }
-
-            // 1. Native game selector: builtin + user-installed LUT assets.
-            if (!string.IsNullOrEmpty(name) && manager.items != null)
-            {
-                // Exact name, then suffix (workshop-id.name), then loose contains.
-                int found = -1;
-                for (int i = 0; i < manager.items.Length && found < 0; i++)
-                {
-                    if (manager.items[i] == name)
+                // Accept a short asset name only if its Workshop suffix is unambiguous.
+                for (int i = 0; i < manager.items.Length; i++)
+                    if (manager.items[i] != null && manager.items[i].EndsWith("." + name, StringComparison.Ordinal))
                     {
+                        if (found >= 0) { found = -1; break; }
                         found = i;
                     }
-                }
-
-                for (int i = 0; i < manager.items.Length && found < 0; i++)
-                {
-                    string item = manager.items[i];
-                    if (item != null && (item.EndsWith("." + name, StringComparison.Ordinal) || item.Contains(name)))
-                    {
-                        found = i;
-                    }
-                }
-
-                if (found >= 0)
-                {
-                    manager.currentSelection = found;
-                    return;
-                }
             }
-
-            // 2. Compatibility mode: tables installed by the user on this
-            // machine, read at runtime. Nothing is shipped with the mod.
-            Texture3D custom;
-            if (LutCompat.TryGet(name, out custom))
+            if (found < 0)
             {
-                manager.SetLUT(custom);
+                LastLutError = "LUT not installed: " + name;
                 return;
             }
+            if (!_lutWritten) _lutSelection = manager.lastSelection;
+            manager.currentSelection = found;
+            _lastLutSelection = found;
+            _lutWritten = true;
+            LastLutError = string.Empty;
+        }
 
-            // 3. Native procedural table generated by this mod.
-            if (NativeLut.TryGet(name, out custom))
-            {
-                manager.SetLUT(custom);
-                return;
-            }
-
-            // 4. Style-defined fallback table.
-            if (NativeLut.TryGet(nativeFallback, out custom))
-            {
-                manager.SetLUT(custom);
-            }
+        private static void RestoreLut()
+        {
+            var manager = ColorCorrectionManager.instance;
+            if (_lutWritten && manager != null && manager.lastSelection == _lastLutSelection)
+                manager.currentSelection = _lutSelection;
+            _lutWritten = false;
         }
 
         /// <remarks>
@@ -401,15 +413,19 @@ namespace SceneFX.Core
         {
             TakeSnapshot();
 
-            if (SuiteManager.ModPresent(LumenFXMod))
+            if (SuiteManager.IsLumenFXWriting("tone"))
             {
+                if (!_delegateCompanions) return;
                 var ci = System.Globalization.CultureInfo.InvariantCulture;
                 SuiteManager.Delegate(LumenFXMod,
                     "<lumenfx>"
                     + "<gamma>" + Mathf.Clamp(style.Gamma, 1.5f, 3.5f).ToString("0.###", ci) + "</gamma>"
-                    + "<brightness>" + Mathf.Clamp(style.Brightness, -1f, 1f).ToString("0.###", ci) + "</brightness>"
+                    + "<brightness>" + Mathf.Clamp(style.Brightness, -1f, 4f).ToString("0.###", ci) + "</brightness>"
                     + "<contrast>" + Mathf.Clamp(style.Contrast, -1f, 1f).ToString("0.###", ci) + "</contrast>"
                     + "<skyTonemapping>" + (style.SkyTonemap ? "true" : "false") + "</skyTonemapping>"
+                    + "<skyExposure>" + style.Exposure.ToString("R", ci) + "</skyExposure>"
+                    + "<warmth>" + style.Warmth.ToString("R", ci) + "</warmth>"
+                    + "<sunStrength>" + style.SunIntensity.ToString("R", ci) + "</sunStrength>"
                     + "</lumenfx>");
                 return;
             }
@@ -420,19 +436,20 @@ namespace SceneFX.Core
                 return;
             }
 
+            _toneWritten = true;
             float c = Mathf.Clamp(style.Contrast, -1f, 1f);
 
-            tone.m_ToneMappingGamma = Mathf.Clamp(style.Gamma, 1.2f, 3f);
-            tone.m_ToneMappingBoostFactor = 1f + 0.5f * Mathf.Clamp(style.Brightness, -1f, 1f);
-            tone.m_Luminance = 0.11f + 0.02f * c;
+            tone.m_ToneMappingGamma = Mathf.Clamp(style.Gamma, 1.5f, 3.5f);
+            tone.m_ToneMappingBoostFactor = (style.Brightness <= 1f ? 1f + 0.6f * style.Brightness : 1.6f + 0.84f * (style.Brightness - 1f));
+            tone.m_Luminance = 0.10f + 0.02f * c;
 
-            tone.m_ToneMappingParamsFilmic.A = 0.5f + 0.18f * c;
-            tone.m_ToneMappingParamsFilmic.B = 0.26f - 0.14f * c;
-            tone.m_ToneMappingParamsFilmic.C = 0.1f - 0.008f * c;
-            tone.m_ToneMappingParamsFilmic.D = 0.72f + 0.18f * c;
+            tone.m_ToneMappingParamsFilmic.A = 0.50f + 0.20f * c;
+            tone.m_ToneMappingParamsFilmic.B = 0.25f - 0.15f * c;
+            tone.m_ToneMappingParamsFilmic.C = 0.10f - 0.01f * c;
+            tone.m_ToneMappingParamsFilmic.D = 0.70f + 0.20f * c;
             tone.m_ToneMappingParamsFilmic.E = 0.01f;
-            tone.m_ToneMappingParamsFilmic.F = 0.24f - 0.11f * c;
-            tone.m_ToneMappingParamsFilmic.W = 11f + 2.2f * c;
+            tone.m_ToneMappingParamsFilmic.F = 0.25f - 0.12f * c;
+            tone.m_ToneMappingParamsFilmic.W = 11.2f + 2.5f * c;
         }
 
         private static void ApplySun(StyleData style)
@@ -451,6 +468,7 @@ namespace SceneFX.Core
             // parpadeando entre los dos mods.
             if (!SuiteManager.IsLumenFXWriting("sunIntensity"))
             {
+                _sunWritten = true;
                 dayNight.m_SunIntensity = _vanillaSun * Mathf.Clamp(style.SunIntensity, 0f, 3f);
             }
 
@@ -458,11 +476,21 @@ namespace SceneFX.Core
             // capturada —ver RestoreGame—, que puede ser anterior al tema.
             if (!SuiteManager.IsLumenFXWriting("exposure"))
             {
-                dayNight.m_Exposure = _vanillaExposure * Mathf.Clamp(style.Exposure, 0.5f, 1.5f);
+                if (style.Exposure > 0f)
+                {
+                    _exposureWritten = true;
+                    dayNight.m_Exposure = Mathf.Clamp(style.Exposure, 0f, 5f);
+                }
+                else if (_exposureWritten)
+                {
+                    if (!ThemeOwnership.AtmosphereIsManaged) dayNight.m_Exposure = _vanillaExposure;
+                    _exposureWritten = false;
+                }
             }
 
             if (!SuiteManager.IsLumenFXWriting("skyTonemapping"))
             {
+                _skyWritten = true;
                 dayNight.m_Tonemapping = style.SkyTonemap;
             }
         }
@@ -489,15 +517,8 @@ namespace SceneFX.Core
 
             // La curva solar es de LumenFX. Se le pide la calidez y no se toca la gradiente:
             // si los dos escriben, el ultimo trabaja sobre la salida del otro.
-            if (SuiteManager.ModPresent(LumenFXMod))
-            {
-                var ci = System.Globalization.CultureInfo.InvariantCulture;
-                SuiteManager.Delegate(LumenFXMod,
-                    "<lumenfx><warmth>"
-                    + Mathf.Clamp(warmth, -1f, 1f).ToString("0.###", ci)
-                    + "</warmth></lumenfx>");
-                return;
-            }
+            if (SuiteManager.IsLumenFXWriting("lightColor")) return;
+            _gradientWritten = true;
 
             if (Mathf.Approximately(warmth, 0f))
             {
@@ -527,8 +548,10 @@ namespace SceneFX.Core
         /// </remarks>
         private static void ApplyFog(StyleData style)
         {
-            if (SuiteManager.ModPresent(AtmosphereFXMod))
+            if (style.FogDensity <= 0f && style.FogStart <= 0f) return;
+            if (Infrastructure.FxInterop.Claims(AtmosphereFXMod, "fog"))
             {
+                if (!_delegateCompanions) return;
                 var ci = System.Globalization.CultureInfo.InvariantCulture;
                 var xml = new System.Text.StringBuilder("<atmospherefx>");
                 if (style.FogDensity > 0f)
@@ -556,6 +579,7 @@ namespace SceneFX.Core
                 return;
             }
 
+            if (!_fogWritten) { _fogDensity = fog.m_FogDensity; _fogStart = fog.m_FogStart; _fogWritten = true; }
             if (style.FogDensity > 0f)
             {
                 fog.m_FogDensity = Mathf.Clamp(style.FogDensity, 0f, 0.005f);

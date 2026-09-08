@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -35,14 +35,7 @@ namespace SceneFX.Core
                 }
 
                 string optPath = Path.Combine(SuiteFolder, "Optimized.suite.xml");
-                if (File.Exists(optPath))
-                {
-                    string existing = File.ReadAllText(optPath);
-                    if (existing.Contains("schema=\"2\""))
-                    {
-                        return;
-                    }
-                }
+                if (File.Exists(optPath)) return;
 
                 using (var stream = Assembly.GetExecutingAssembly()
                     .GetManifestResourceStream("SceneFX.BuiltIns.Optimized.suite.xml"))
@@ -51,7 +44,7 @@ namespace SceneFX.Core
                     {
                         using (var reader = new StreamReader(stream))
                         {
-                            File.WriteAllText(optPath, reader.ReadToEnd());
+                            Infrastructure.FxStorage.WriteText(optPath, reader.ReadToEnd());
                         }
                     }
                 }
@@ -77,7 +70,7 @@ namespace SceneFX.Core
             var list = new List<string>();
             foreach (string file in ListSuiteFiles())
             {
-                list.Add(Path.GetFileNameWithoutExtension(file).Replace("-", " "));
+                list.Add(Path.GetFileName(file).Substring(0, Path.GetFileName(file).Length - ".suite.xml".Length));
             }
 
             if (list.Count == 0)
@@ -130,6 +123,7 @@ namespace SceneFX.Core
                 }
 
                 bool appliedAny = false;
+                bool allApplied = true;
 
                 // 1. SceneFX
                 var sceneNode = root.SelectSingleNode("scenefx") as XmlElement;
@@ -141,6 +135,7 @@ namespace SceneFX.Core
                     }
                     else
                     {
+                        allApplied = false;
                         Debug.LogWarning("[SceneFX] Suite section 'scenefx' not applied (rejected)");
                     }
                 }
@@ -155,6 +150,7 @@ namespace SceneFX.Core
                     }
                     else
                     {
+                        allApplied = false;
                         Debug.LogWarning("[SceneFX] Suite section 'lumenfx' not applied (mod missing or rejected)");
                     }
                 }
@@ -169,6 +165,7 @@ namespace SceneFX.Core
                     }
                     else
                     {
+                        allApplied = false;
                         Debug.LogWarning("[SceneFX] Suite section 'atmospherefx' not applied (mod missing or rejected)");
                     }
                 }
@@ -183,11 +180,12 @@ namespace SceneFX.Core
                     }
                     else
                     {
+                        allApplied = false;
                         Debug.LogWarning("[SceneFX] Suite section 'classiclightfx' not applied (mod missing or rejected)");
                     }
                 }
 
-                return appliedAny;
+                return appliedAny && allApplied;
             }
             catch (Exception e)
             {
@@ -254,7 +252,7 @@ namespace SceneFX.Core
 
             string xml = ExportSuiteProfile(name);
             string path = Path.Combine(SuiteFolder, StyleStore.SafeName(name) + ".suite.xml");
-            File.WriteAllText(path, xml);
+            Infrastructure.FxStorage.WriteText(path, xml);
             return path;
         }
 

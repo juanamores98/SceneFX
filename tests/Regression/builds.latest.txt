@@ -1,0 +1,82 @@
+AtmosphereFX
+Exit code: 0
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.RuntimeIdentifierInference.targets(383,5): message NETSDK1057: You are using a preview version of .NET. See: https://aka.ms/dotnet-support-policy [C:\Workspace\ModCS1Testing\AtmosphereFX\AtmosphereFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Data". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\AtmosphereFX\AtmosphereFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Drawing". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\AtmosphereFX\AtmosphereFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Runtime.Serialization". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\AtmosphereFX\AtmosphereFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Xml.Linq". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\AtmosphereFX\AtmosphereFX.csproj]
+  AtmosphereFX -> C:\Workspace\ModCS1Testing\AtmosphereFX\bin\Release\net35\AtmosphereFX.dll
+
+Build succeeded.
+
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Data". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\AtmosphereFX\AtmosphereFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Drawing". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\AtmosphereFX\AtmosphereFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Runtime.Serialization". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\AtmosphereFX\AtmosphereFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Xml.Linq". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\AtmosphereFX\AtmosphereFX.csproj]
+    4 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.68
+
+
+LumenFX
+Exit code: 0
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.RuntimeIdentifierInference.targets(383,5): message NETSDK1057: You are using a preview version of .NET. See: https://aka.ms/dotnet-support-policy [C:\Workspace\ModCS1Testing\LumenFX\LumenFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Data". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\LumenFX\LumenFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Drawing". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\LumenFX\LumenFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Runtime.Serialization". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\LumenFX\LumenFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Xml.Linq". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\LumenFX\LumenFX.csproj]
+  LumenFX -> C:\Workspace\ModCS1Testing\LumenFX\bin\Release\net35\LumenFX.dll
+
+Build succeeded.
+
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Data". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\LumenFX\LumenFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Drawing". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\LumenFX\LumenFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Runtime.Serialization". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\LumenFX\LumenFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Xml.Linq". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\LumenFX\LumenFX.csproj]
+    4 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.70
+
+
+ClassicLightFX
+Exit code: 0
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.RuntimeIdentifierInference.targets(383,5): message NETSDK1057: You are using a preview version of .NET. See: https://aka.ms/dotnet-support-policy [C:\Workspace\ModCS1Testing\ClassicLightFX\ClassicLightFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Data". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\ClassicLightFX\ClassicLightFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Drawing". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\ClassicLightFX\ClassicLightFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Runtime.Serialization". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\ClassicLightFX\ClassicLightFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Xml.Linq". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\ClassicLightFX\ClassicLightFX.csproj]
+  ClassicLightFX -> C:\Workspace\ModCS1Testing\ClassicLightFX\bin\Release\net35\ClassicLightFX.dll
+
+Build succeeded.
+
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Data". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\ClassicLightFX\ClassicLightFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Drawing". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\ClassicLightFX\ClassicLightFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Runtime.Serialization". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\ClassicLightFX\ClassicLightFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Xml.Linq". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\ClassicLightFX\ClassicLightFX.csproj]
+    4 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.69
+
+
+SceneFX
+Exit code: 0
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Sdks\Microsoft.NET.Sdk\targets\Microsoft.NET.RuntimeIdentifierInference.targets(383,5): message NETSDK1057: You are using a preview version of .NET. See: https://aka.ms/dotnet-support-policy [C:\Workspace\ModCS1Testing\SceneFX\SceneFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Data". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\SceneFX\SceneFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Drawing". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\SceneFX\SceneFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Runtime.Serialization". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\SceneFX\SceneFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Xml.Linq". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\SceneFX\SceneFX.csproj]
+  SceneFX -> C:\Workspace\ModCS1Testing\SceneFX\bin\Release\net35\SceneFX.dll
+
+Build succeeded.
+
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Data". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\SceneFX\SceneFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Drawing". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\SceneFX\SceneFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Runtime.Serialization". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\SceneFX\SceneFX.csproj]
+C:\Program Files\dotnet\sdk\10.0.400-preview.0.26322.102\Microsoft.Common.CurrentVersion.targets(2453,5): warning MSB3245: Could not resolve this reference. Could not locate the assembly "System.Xml.Linq". Check to make sure the assembly exists on disk. If this reference is required by your code, you may get compilation errors. [C:\Workspace\ModCS1Testing\SceneFX\SceneFX.csproj]
+    4 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.71

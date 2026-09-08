@@ -1,27 +1,48 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<suiteProfile name="Optimized" schema="2">
+<suiteProfile name="Optimized" schema="3">
   <scenefx>
+    <vanillaMode>false</vanillaMode>
     <lut>1539181199.Relight2Average</lut>
-    <nativeLut>ordinary</nativeLut>
+    <lutEnabled>1</lutEnabled>
+    <toneEnabled>1</toneEnabled>
+    <bloomEnabled>1</bloomEnabled>
+    <rainMotionBlur>0</rainMotionBlur>
     <gamma>3.15</gamma>
     <brightness>-0.4</brightness>
     <contrast>-0.7</contrast>
     <sunIntensity>1</sunIntensity>
     <exposure>1.102</exposure>
     <warmth>0.4</warmth>
-    <fogDensity>0.00006</fogDensity>
-    <fogStart>2852</fogStart>
+    <fogDensity>0</fogDensity>
+    <fogStart>0</fogStart>
     <skyTonemap>true</skyTonemap>
-    <skyMood>0</skyMood>
-    <includeWorld>true</includeWorld>
-    <timeOfDay>12</timeOfDay>
-    <latitude>36</latitude>
-    <longitude>88</longitude>
-    <rain>0</rain>
-    <fog>0</fog>
-    <cloud>0</cloud>
+    <includeWorld>false</includeWorld>
+    <timeLocked>false</timeLocked>
+    <timeSet>false</timeSet>
+    <positionSet>false</positionSet>
+    <rain>-1</rain>
+    <fog>-1</fog>
+    <cloud>-1</cloud>
+    <northernLights>-1</northernLights>
+    <rainbow>-1</rainbow>
+    <groundWetness>-1</groundWetness>
+    <temperatureLock>false</temperatureLock>
+    <windLock>false</windLock>
+    <weatherEnabled>-1</weatherEnabled>
+    <rainIsSnow>-1</rainIsSnow>
+    <snowyRoads>-1</snowyRoads>
+    <gameSpeed>1</gameSpeed>
+    <cycleSpeedEnabled>false</cycleSpeedEnabled>
+    <cycleSpeed>1</cycleSpeed>
+    <nightCycleSpeed>1</nightCycleSpeed>
+    <separateDayNight>false</separateDayNight>
+    <cycleWhilePaused>false</cycleWhilePaused>
   </scenefx>
   <lumenfx>
+    <vanillaMode>false</vanillaMode>
+    <sunStrength>1</sunStrength>
+    <moonStrength>0.745</moonStrength>
+    <ambience>1</ambience>
+    <warmth>0.4</warmth>
     <sunTemp>0.55</sunTemp>
     <sunTint>-0.5</sunTint>
     <moonTemp>0.2</moonTemp>
@@ -37,50 +58,61 @@
     <softShadows>true</softShadows>
     <forceLowBias>false</forceLowBias>
     <biasScale>1</biasScale>
-    <warmth>0.4</warmth>
-    <sunStrength>1</sunStrength>
-    <moonStrength>0.745</moonStrength>
-    <ambience>1</ambience>
+    <adaptiveShadows>true</adaptiveShadows>
     <sunPower>5.5</sunPower>
     <moonPower>6</moonPower>
-    <adaptiveShadows>true</adaptiveShadows>
-    <adaptiveExposure>true</adaptiveExposure>
-    <adaptiveExposureGain>1</adaptiveExposureGain>
     <skyRayleigh>1.116</skyRayleigh>
     <skyMie>1.858</skyMie>
+    <skyExposure>1.102</skyExposure>
+    <adaptiveExposure>false</adaptiveExposure>
+    <adaptiveExposureGain>1</adaptiveExposureGain>
   </lumenfx>
   <atmospherefx>
-    <dynamicFog>true</dynamicFog>
+    <vanillaMode>false</vanillaMode>
+    <applyOnLoad>true</applyOnLoad>
+    <dynamicFog>false</dynamicFog>
     <colorDecay>0.21</colorDecay>
-    <density>0.00006</density>
+    <density>6E-05</density>
     <noise>0.51</noise>
     <fogHeight>500</fogHeight>
     <horizonHeight>1300</horizonHeight>
     <startDistance>2852</startDistance>
     <windSpeed>0</windSpeed>
-    <edgeFog>false</edgeFog>
+    <edgeFogDynamic>false</edgeFogDynamic>
+    <edgeFogCubemap>false</edgeFogCubemap>
     <cubemapFog>true</cubemapFog>
     <offAtNight>true</offAtNight>
-    <volumeFog>true</volumeFog>
-    <scatterFalloff>1.7</scatterFalloff>
+    <volumeFog>false</volumeFog>
+    <scatterFalloff>59049.0</scatterFalloff>
     <scatterStrength>1.72</scatterStrength>
     <scatterColorMode>0</scatterColorMode>
-    <scatterR>0.565</scatterR>
-    <scatterG>0.925</scatterG>
+    <scatterR>0.5647059</scatterR>
+    <scatterG>0.9254902</scatterG>
     <scatterB>1</scatterB>
     <autoVolumeColor>false</autoVolumeColor>
-    <volumeR>0.651</volumeR>
-    <volumeG>0.886</volumeG>
+    <volumeR>0.6509804</volumeR>
+    <volumeG>0.8862745</volumeG>
     <volumeB>1</volumeB>
     <volumeStart>0</volumeStart>
+    <staticVolumeFog>1</staticVolumeFog>
+    <staticHeight>600</staticHeight>
+    <staticStart>3710</staticStart>
+    <staticDistance>4800</staticDistance>
+    <staticEdgeDistance>2800</staticEdgeDistance>
+    <volumeHeight>600</volumeHeight>
+    <volumeDensity>0.00141</volumeDensity>
+    <volumeDistance>4800</volumeDistance>
+    <volumeEdgeDistance>2800</volumeEdgeDistance>
   </atmospherefx>
   <classiclightfx>
+    <vanillaMode>false</vanillaMode>
     <swapLuts>false</swapLuts>
     <sunColor>false</sunColor>
     <sunStrength>false</sunStrength>
     <sunCoords>false</sunCoords>
     <classicFogMode>false</classicFogMode>
     <classicFogTint>false</classicFogTint>
+    <classicFogWithCycle>false</classicFogWithCycle>
     <applyOnLoad>true</applyOnLoad>
   </classiclightfx>
 </suiteProfile>

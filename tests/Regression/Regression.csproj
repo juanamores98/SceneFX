@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Stubs.cs;Program.cs" />
+    <Compile Include="../../../AtmosphereFX/Source/AtmosphereFXMod.cs" />
+    <Compile Include="../../../AtmosphereFX/Source/Config/*.cs" />
+    <Compile Include="../../../AtmosphereFX/Source/Runtime/SettingsApplier.cs;../../../AtmosphereFX/Source/Runtime/VanillaSnapshot.cs;../../../AtmosphereFX/Source/Runtime/PerFrameWatcher.cs" />
+    <Compile Include="../../../LumenFX/Source/LumenFXMod.cs;../../../LumenFX/Source/IO/StateStore.cs;../../../LumenFX/Source/Runtime/TunerRuntime.cs;../../../LumenFX/Source/Presets/PresetLibrary.cs" />
+    <Compile Include="../../../LumenFX/Source/Core/LightState.cs;../../../LumenFX/Source/Core/LightingMixer.cs;../../../LumenFX/Source/Core/TonemapProfile.cs;../../../LumenFX/Source/Core/VanillaSnapshot.cs;../../../LumenFX/Source/Core/ThemeOwnership.cs" />
+    <Compile Include="../../../LumenFX/Source/Core/TunerEngine.cs" />
+    <Compile Include="../../../ClassicLightFX/Source/Options/ModOptions.cs;../../../ClassicLightFX/Source/Core/ClassicLook.cs;../../../ClassicLightFX/Source/Core/ClassicFogDriver.cs;../../../ClassicLightFX/Source/Core/ThemeOwnership.cs" />
+    <Compile Include="../../../SceneFX/Source/SceneFXMod.cs;../../../SceneFX/Source/PanelEngine.cs" />
+    <Compile Include="../../../SceneFX/Source/Core/StyleData.cs;../../../SceneFX/Source/Core/SceneRuntime.cs;../../../SceneFX/Source/Core/StyleEngine.cs;../../../SceneFX/Source/Core/WorldController.cs;../../../SceneFX/Source/Core/TimeController.cs;../../../SceneFX/Source/Core/SuiteManager.cs;../../../SceneFX/Source/Core/ThemeOwnership.cs;../../../SceneFX/Source/Core/QuickPresets.cs" />
+    <Compile Include="../../../AtmosphereFX/Source/Infrastructure/*.cs" />
+    <EmbeddedResource Include="../../../AtmosphereFX/BuiltIns/Optimized.xml" LogicalName="AtmosphereFX.BuiltIns.Optimized.xml" />
+    <Compile Include="../../../LumenFX/Source/Infrastructure/*.cs" />
+    <EmbeddedResource Include="../../../LumenFX/BuiltIns/Optimized.xml" LogicalName="LumenFX.BuiltIns.Optimized.xml" />
+    <Compile Include="../../../ClassicLightFX/Source/Infrastructure/*.cs" />
+    <EmbeddedResource Include="../../../ClassicLightFX/BuiltIns/Optimized.xml" LogicalName="ClassicLightFX.BuiltIns.Optimized.xml" />
+    <Compile Include="../../../SceneFX/Source/Infrastructure/*.cs" />
+    <EmbeddedResource Include="../../../SceneFX/BuiltIns/Optimized.xml" LogicalName="SceneFX.BuiltIns.Optimized.xml" />
+    <Compile Include="../../../ClassicLightFX/Source/ClassicLightFXMod.cs;../../../ClassicLightFX/Source/Core/QuickPresets.cs;../../../LumenFX/Source/Presets/QuickPresets.cs;../../../SceneFX/Source/Core/CameraEffects.cs" />
+  </ItemGroup>
+</Project>

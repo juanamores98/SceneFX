@@ -1,0 +1,4 @@
+Source: C:\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\RenderIt-Plus.xml
+SHA256 of source file: 71062f3ac84872ca305db47237e5fd7168bf5b5b629cfff9b24eae45ad6bbfba
+Profile: Default (Active=true)
+Read only; no game settings were changed.

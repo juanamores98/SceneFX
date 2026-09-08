@@ -1,0 +1,30 @@
+[
+  {
+    "Mod": "AtmosphereFX",
+    "Path": "C:\\Users\\amore\\AppData\\Local\\Colossal Order\\Cities_Skylines\\Addons\\Mods\\AtmosphereFX\\AtmosphereFX.dll",
+    "BaselineSHA256": "0F10B400091324662D56847EFE1BF07B623B8BBBBD0DD617DA956934A9AD2BF7",
+    "CurrentSHA256": "0F10B400091324662D56847EFE1BF07B623B8BBBBD0DD617DA956934A9AD2BF7",
+    "Unchanged": true
+  },
+  {
+    "Mod": "LumenFX",
+    "Path": "C:\\Users\\amore\\AppData\\Local\\Colossal Order\\Cities_Skylines\\Addons\\Mods\\LumenFX\\LumenFX.dll",
+    "BaselineSHA256": "2DBD99045DC74F6901E3AB56F25C04216CF8E753DA0A4A785E580DBC47D9B7BF",
+    "CurrentSHA256": "2DBD99045DC74F6901E3AB56F25C04216CF8E753DA0A4A785E580DBC47D9B7BF",
+    "Unchanged": true
+  },
+  {
+    "Mod": "ClassicLightFX",
+    "Path": "C:\\Users\\amore\\AppData\\Local\\Colossal Order\\Cities_Skylines\\Addons\\Mods\\ClassicLightFX\\ClassicLightFX.dll",
+    "BaselineSHA256": "D26EDD8ED7572A0C2E42DA2CFA60A162A0275BB0BB0641F93820CEF25E7FF865",
+    "CurrentSHA256": "D26EDD8ED7572A0C2E42DA2CFA60A162A0275BB0BB0641F93820CEF25E7FF865",
+    "Unchanged": true
+  },
+  {
+    "Mod": "SceneFX",
+    "Path": "C:\\Users\\amore\\AppData\\Local\\Colossal Order\\Cities_Skylines\\Addons\\Mods\\SceneFX\\SceneFX.dll",
+    "BaselineSHA256": "CFD12B5A0334B68E2DECB1E89D162CF5EC57C7FE1B77ACD07BF9BF19E106C413",
+    "CurrentSHA256": "CFD12B5A0334B68E2DECB1E89D162CF5EC57C7FE1B77ACD07BF9BF19E106C413",
+    "Unchanged": true
+  }
+]

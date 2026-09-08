@@ -1,0 +1,62 @@
+Regression of current FX source; .NET 8 doubles, NOT the Unity/Mono game runtime.
+PASS L01 base Lumen settings round-trip | brightness=1.25 gamma=2.8
+PASS L02 all four absolute lighting settings survive restart | after save/reset/load: Rayleigh=1.116 Mie=1.858 SunPower=2.35 MoonPower=0.8
+PASS A01 normal global Atmosphere settings round-trip | density=0.000123 wind=0.0001
+PASS A02 suite export preserves usable wind precision | 0.0001 -> 0.0001
+PASS C01 Classic options round-trip | ClassicFogWithCycle=True SunColor=False
+PASS A03 Vanilla quick preset restores captured fog | expected=0.00223 actual=0.00223 VanillaMode=True
+PASS A04 reject non-finite fog config | engine fog density=0.00223
+PASS L03 reject non-finite gamma | engine gamma=2.2
+PASS C02 ApplyOnLoad=false keeps fog untouched | dynamic=True classic=False
+PASS C03 classic fog cycle behavior equals Daylight Classic | mismatches=0/8
+PASS X01 Classic respects active Lumen sun power | Lumen requested 6; Classic changed actual to 6
+PASS S01 UI weather and speed reach automatic settings | saved rain=0.8 saved gameSpeed=2
+PASS S02 hour lock is serializable | TimeLocked member persists in the settings schema
+PASS S03 explicit world capture preserves weather/speed | rain=0.7 gameSpeed=2.5
+PASS S04 last slider value flushes after throttle interval | current=.2 file=0.2 after 10 seconds; clean unload not tested here
+PASS X02 Scene restore respects active Lumen tone | Lumen boost=2.44 after Scene restore=2.44
+PASS X03 Scene tone works with Lumen suspended | Scene requests brightness=.8, boost remains 1.48
+PASS S05 restore game restores selected LUT | original index=0 actual=0
+PASS L04 importer distinguishes negative and neutral brightness | legacy -.8 maps to 0.4571429; neutral maps to -0
+PASS L05 full UI sun-strength range survives reload | UI permits 3; saved/reloaded=3
+PASS L06 lighting rebuilt in second city without editing | persisted warmth=0.5 LightingDirty=False gradient reference unchanged=False
+PASS S06 game API uses hours | no normalized-hour conversion
+PASS S07 locked hour uses engine hours | 18 hours remains 18
+PASS A05 rejected API section is atomic | valid first field not committed before invalid second field
+PASS L07 rejected API section is atomic | no partial state update
+PASS L08 malformed persisted state is atomic | failed XML load leaves old state intact
+PASS A06 canonical Default fog | active Default flags and effective exponent
+PASS A07 split fog depth applies | separate component depth fields
+PASS A08 extended settings export round-trip | static depth is not omitted
+PASS L09 canonical Default lighting | fixed exposure and absolute powers
+PASS L10 preset stores every absolute light field | preset capture and apply
+PASS L11 extended export round-trip | fixed exposure round-trip
+PASS S08 optimized releases temporary locks | DEFAULT keeps the world game-owned
+PASS S09 missing LUT is explicit | no procedural or loosely matched replacement
+PASS S10 native camera toggles apply | LUT, camera tone, bloom and rain blur
+PASS S11 native camera toggles restore | all captured flags restored
+PASS IO01 atomic write retains previous file | last good version is recoverable
+PASS IO02 failed save remains pending and retries | failed write followed by automatic recovery
+PASS L12 exposure captures before writing and releases | 0 returns to the captured map exposure
+PASS L13 released exposure is not written again | another writer's later value is preserved
+PASS S12 Game releases individual weather switches | no full mode reset is necessary
+PASS S13 weather recaptures on later acquisition | new baseline is captured each time
+PASS S14 cycle starts in a freshly paused city | public game day length and frame duration seed the rate
+PASS S15 night speed follows the visual clock | independent visual night while simulation still reports day
+PASS S16 explicit scene capture takes the visible hour | automatic preferences and explicit snapshots have different intent
+PASS L14 malformed numeric text rejects complete section | no partial success from an unparsed field
+PASS A09 malformed numeric text rejects complete section | no partial mutation
+PASS C04 malformed Boolean rejects complete section | previous settings remain intact
+PASS S17 malformed text rejects complete scene section | previous scene remains intact
+PASS S18 Vanilla mode survives restart | options flush saves the selected mode
+PASS IO03 failed options save remains pending | mode is retried after a failed write
+PASS A10 optimized label matches saved values | numeric comparison is independent of XML formatting
+PASS L15 optimized label matches saved values | absolute fields and tone included
+PASS C05 optimized label matches saved values | DEFAULT has the classic features disabled
+PASS S19 optimized label matches saved values | LUT name and world ownership included
+PASS X04 partial suite is reported as failure | some sections can apply; missing/rejected sections prevent success
+PASS X05 API rejects unrelated XML roots | no accidental apply from an unrelated document
+PASS X06 weather-only action does not claim tone | claim actual writes instead of every possible feature
+PASS S20 Scene exposure zero releases its field | same zero convention with and without Lumen
+PASS S21 Scene recaptures after release | second acquisition does not restore the first baseline
+SUMMARY PASS=60 FAIL=0. FAIL denotes a regression requirement that remains unmet.

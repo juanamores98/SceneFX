@@ -28,10 +28,10 @@ namespace SceneFX.Core
     /// </remarks>
     internal static class TimeController
     {
-        internal const float MinGameSpeed = 0.1f;
+        internal const float MinGameSpeed = 0.01f;
         internal const float MaxGameSpeed = 5f;
         internal const float MinCycleSpeed = 0f;
-        internal const float MaxCycleSpeed = 10f;
+        internal const float MaxCycleSpeed = 128f;
 
         /// <summary>Multiplicador de <see cref="Time.timeScale"/>. 1 = el juego sin tocar.</summary>
         internal static float GameSpeed = 1f;
@@ -52,6 +52,7 @@ namespace SceneFX.Core
         internal static bool CycleWhilePaused;
 
         private static bool _timeScaleTouched;
+        private static float _previousTimeScale = 1f;
         private static DayNightProperties _dayNight;
         private static int _searchCooldown;
 
@@ -105,13 +106,14 @@ namespace SceneFX.Core
                 // esta usando timeScale, no se lo pisamos al pasar por aqui.
                 if (_timeScaleTouched)
                 {
-                    Time.timeScale = 1f;
+                    Time.timeScale = _previousTimeScale;
                     _timeScaleTouched = false;
                 }
 
                 return;
             }
 
+            if (!_timeScaleTouched) _previousTimeScale = Time.timeScale;
             Time.timeScale = s;
             _timeScaleTouched = true;
         }
@@ -124,7 +126,9 @@ namespace SceneFX.Core
                 return;
             }
 
-            float now = dayNight.m_TimeOfDay;
+            // Read the simulation clock, never our own visual output from the last frame.
+            var simulation = SimulationManager.instance;
+            float now = simulation != null ? simulation.m_currentDayTimeHour / 24f : dayNight.normalizedTimeOfDay;
 
             // Con la hora clavada manda WorldController: aqui solo se toma nota de donde quedo
             // el reloj, para no dar un salto cuando se suelte.
@@ -163,10 +167,14 @@ namespace SceneFX.Core
             float speed = SpeedFor(_ownTod);
             float step = advanced * speed;
 
-            if (advanced <= 0f && CycleWhilePaused && _learnedRate > 0f)
+            if (advanced <= 0f && CycleWhilePaused && simulation != null && simulation.SimulationPaused)
             {
-                // El juego no movio el reloj (pausa). Se mueve con el ritmo aprendido.
-                step = _learnedRate * real * speed;
+                // A freshly loaded paused city has no observed rate yet. Use the game's
+                // public frame duration and day length until a running sample is available.
+                float rate = _learnedRate > 0f ? _learnedRate
+                    : GameSpeed * Mathf.Max(1, simulation.SelectedSimulationSpeed)
+                        / (Mathf.Max(0.0001f, Time.fixedDeltaTime) * SimulationManager.DAYTIME_FRAMES);
+                step = rate * real * speed;
             }
 
             if (step <= 0f && speed > 0f && advanced <= 0f)
@@ -175,7 +183,7 @@ namespace SceneFX.Core
             }
 
             _ownTod = Mathf.Repeat(_ownTod + step, 1f);
-            dayNight.m_TimeOfDay = _ownTod;
+            dayNight.m_TimeOfDay = _ownTod * 24f;
         }
 
         private static float SpeedFor(float normalizedTimeOfDay)
@@ -193,14 +201,8 @@ namespace SceneFX.Core
 
         private static bool IsNight(float normalizedTimeOfDay)
         {
-            var sim = SimulationManager.instance;
-            if (sim != null)
-            {
-                return sim.m_isNightTime;
-            }
-
             float hour = normalizedTimeOfDay * 24f;
-            return hour < 6f || hour >= 20f;
+            return hour < SimulationManager.SUNRISE_HOUR || hour >= SimulationManager.SUNSET_HOUR;
         }
 
         /// <summary>Devuelve el ritmo al juego y suelta el reloj.</summary>

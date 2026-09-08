@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ColossalFramework.IO;
 using System.IO;
 using System.Xml.Serialization;
@@ -16,18 +16,16 @@ namespace SceneFX.Core
         [XmlAttribute("name")]
         public string Name = "Default";
 
-        [XmlElement("lut")] public string Lut = "";              // empty = leave current
-        [XmlElement("nativeLut")] public string NativeLut = "";  // fallback: procedurally generated table owned by the mod
-        [XmlElement("gamma")] public float Gamma = 2.2f;          // 1.2..3.0
-        [XmlElement("brightness")] public float Brightness = 0f;  // -1..1
+        [XmlElement("lut")] public string Lut = "";              // empty = release the selected LUT
+        [XmlElement("gamma")] public float Gamma = 2.2f;          // 1.5..3.5
+        [XmlElement("brightness")] public float Brightness = 0f;  // -1..4
         [XmlElement("contrast")] public float Contrast = 0f;      // -1..1
         [XmlElement("sunIntensity")] public float SunIntensity = 1f;  // 0..3, multiplier over current
-        [XmlElement("exposure")] public float Exposure = 1f;      // 0.5..1.5
+        [XmlElement("exposure")] public float Exposure = 1f;      // absolute sky exposure, 0 = release
         [XmlElement("warmth")] public float Warmth = 0f;          // -1..1
         [XmlElement("fogDensity")] public float FogDensity = 0f;  // 0..0.005, 0 = keep game value
         [XmlElement("fogStart")] public float FogStart = 0f;      // 0..10000, 0 = keep game value
         [XmlElement("skyTonemap")] public bool SkyTonemap = true;
-        [XmlElement("skyMood")] public int SkyMood = 0; // 0 = keep game sky, 1..N = procedural palette
         [XmlElement("includeWorld")] public bool IncludeWorld;
         [XmlElement("timeOfDay")] public float TimeOfDay = 12f;
         [XmlElement("latitude")] public float Latitude = 36f;
@@ -59,6 +57,78 @@ namespace SceneFX.Core
         [XmlElement("nightCycleSpeed")] public float NightCycleSpeed = 1f;
         [XmlElement("separateDayNight")] public bool SeparateDayNight;
         [XmlElement("cycleWhilePaused")] public bool CycleWhilePaused;
+
+        [XmlElement("timeLocked")] public bool TimeLocked;
+        [XmlElement("timeSet")] public bool TimeSet;
+        [XmlElement("positionSet")] public bool PositionSet;
+        [XmlElement("worldConfigured")] public bool WorldConfigured;
+        [XmlElement("lutEnabled")] public int LutEnabled = -1;
+        [XmlElement("toneEnabled")] public int ToneEnabled = -1;
+        [XmlElement("bloomEnabled")] public int BloomEnabled = -1;
+        [XmlElement("rainMotionBlur")] public int RainMotionBlur = -1;
+
+        internal void CopyWorldFrom(StyleData source)
+        {
+            TimeOfDay = source.TimeOfDay;
+            TimeLocked = source.TimeLocked;
+            TimeSet = source.TimeSet;
+            PositionSet = source.PositionSet;
+            Latitude = source.Latitude;
+            Longitude = source.Longitude;
+            Rain = source.Rain;
+            Fog = source.Fog;
+            Cloud = source.Cloud;
+            NorthernLights = source.NorthernLights;
+            Rainbow = source.Rainbow;
+            GroundWetness = source.GroundWetness;
+            TemperatureLock = source.TemperatureLock;
+            Temperature = source.Temperature;
+            WindLock = source.WindLock;
+            WindDirection = source.WindDirection;
+            WeatherEnabled = source.WeatherEnabled;
+            RainIsSnow = source.RainIsSnow;
+            SnowyRoads = source.SnowyRoads;
+            GameSpeed = source.GameSpeed;
+            CycleSpeedEnabled = source.CycleSpeedEnabled;
+            CycleSpeed = source.CycleSpeed;
+            NightCycleSpeed = source.NightCycleSpeed;
+            SeparateDayNight = source.SeparateDayNight;
+            CycleWhilePaused = source.CycleWhilePaused;
+            WorldConfigured = source.WorldConfigured;
+        }
+
+        internal void Validate()
+        {
+            WeatherEnabled = Math.Max(-1, Math.Min(1, WeatherEnabled));
+            RainIsSnow = Math.Max(-1, Math.Min(1, RainIsSnow));
+            SnowyRoads = Math.Max(-1, Math.Min(1, SnowyRoads));
+            LutEnabled = Math.Max(-1, Math.Min(1, LutEnabled));
+            ToneEnabled = Math.Max(-1, Math.Min(1, ToneEnabled));
+            BloomEnabled = Math.Max(-1, Math.Min(1, BloomEnabled));
+            RainMotionBlur = Math.Max(-1, Math.Min(1, RainMotionBlur));
+            Gamma = Infrastructure.FxStorage.Clamp(Gamma, 1.5f, 3.5f);
+            Brightness = Infrastructure.FxStorage.Clamp(Brightness, -1f, 4f);
+            Contrast = Infrastructure.FxStorage.Clamp(Contrast, -1f, 1f);
+            SunIntensity = Infrastructure.FxStorage.Clamp(SunIntensity, 0f, 3f);
+            Exposure = Infrastructure.FxStorage.Clamp(Exposure, 0f, 5f);
+            Warmth = Infrastructure.FxStorage.Clamp(Warmth, -1f, 1f);
+            FogDensity = Infrastructure.FxStorage.Clamp(FogDensity, 0f, 0.005f);
+            FogStart = Infrastructure.FxStorage.Clamp(FogStart, 0f, 10000f);
+            TimeOfDay = Infrastructure.FxStorage.Clamp(TimeOfDay, 0f, 24f);
+            Latitude = Infrastructure.FxStorage.Clamp(Latitude, -90f, 90f);
+            Longitude = Infrastructure.FxStorage.Clamp(Longitude, -180f, 180f);
+            Rain = Infrastructure.FxStorage.Clamp(Rain, -1f, 2.5f);
+            Fog = Infrastructure.FxStorage.Clamp(Fog, -1f, 1f);
+            Cloud = Infrastructure.FxStorage.Clamp(Cloud, -1f, 1f);
+            NorthernLights = Infrastructure.FxStorage.Clamp(NorthernLights, -1f, 1f);
+            Rainbow = Infrastructure.FxStorage.Clamp(Rainbow, -1f, 1f);
+            GroundWetness = Infrastructure.FxStorage.Clamp(GroundWetness, -1f, 1f);
+            Temperature = Infrastructure.FxStorage.Clamp(Temperature, -100f, 100f);
+            WindDirection = Infrastructure.FxStorage.Clamp(WindDirection, 0f, 360f);
+            GameSpeed = Infrastructure.FxStorage.Clamp(GameSpeed, 0.01f, 5f);
+            CycleSpeed = Infrastructure.FxStorage.Clamp(CycleSpeed, 0f, 128f);
+            NightCycleSpeed = Infrastructure.FxStorage.Clamp(NightCycleSpeed, 0f, 128f);
+        }
 
         internal StyleData Clone()
         {
@@ -96,9 +166,7 @@ namespace SceneFX.Core
         {
             get
             {
-                return Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    Path.Combine("Colossal Order", Path.Combine("Cities_Skylines", "ModConfig\\SceneFXStyles")));
+                return Path.Combine(DataLocation.localApplicationData, "ModConfig/SceneFXStyles");
             }
         }
 
@@ -114,11 +182,10 @@ namespace SceneFX.Core
 
         internal static StyleData LoadStyle(string path)
         {
-            var serializer = new XmlSerializer(typeof(StyleData));
-            using (var reader = new StreamReader(path))
-            {
-                return serializer.Deserialize(reader) as StyleData;
-            }
+            if (!File.Exists(path)) return null;
+            var style = Infrastructure.FxStorage.ReadXml<StyleData>(path);
+            style.Validate();
+            return style;
         }
 
         internal static void SaveStyle(StyleData style)
@@ -129,10 +196,8 @@ namespace SceneFX.Core
             }
 
             string path = Path.Combine(StylesFolder, SafeName(style.Name) + ".scene.xml");
-            using (var writer = new StreamWriter(path))
-            {
-                new XmlSerializer(typeof(StyleData)).Serialize(writer, style);
-            }
+            style.Validate();
+            Infrastructure.FxStorage.WriteXml(path, style);
         }
 
         internal static void DeleteStyle(string path)
@@ -159,18 +224,17 @@ namespace SceneFX.Core
             return clean.Length == 0 ? "style" : clean;
         }
 
-        internal static void SaveState(StyleData current)
+        internal static bool SaveState(StyleData current)
         {
             try
             {
-                using (var writer = new StreamWriter(StatePath))
-                {
-                    new XmlSerializer(typeof(StyleData)).Serialize(writer, current);
-                }
+                Infrastructure.FxStorage.WriteXml(StatePath, current);
+                return true;
             }
             catch (Exception e)
             {
                 Debug.LogException(e);
+                return false;
             }
         }
 
@@ -183,10 +247,7 @@ namespace SceneFX.Core
                     return null;
                 }
 
-                using (var reader = new StreamReader(StatePathToRead))
-                {
-                    return new XmlSerializer(typeof(StyleData)).Deserialize(reader) as StyleData;
-                }
+                return LoadStyle(StatePathToRead);
             }
             catch (Exception e)
             {

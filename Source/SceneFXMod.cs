@@ -1,4 +1,4 @@
-﻿using ICities;
+using ICities;
 using UnityEngine;
 using SceneFX.Core;
 
@@ -13,6 +13,16 @@ namespace SceneFX
         private const string HostObjectName = "SceneFX";
 
         private GameObject _host;
+        public static string ActiveClaims
+        {
+            get
+            {
+                if (!SceneRuntime.Active || SceneRuntime.VanillaMode) return string.Empty;
+                string claims = StyleEngine.ActiveClaims;
+                if (WorldController.PositionSet) claims += "sunPosition";
+                return claims;
+            }
+        }
 
         public string Name
         {
@@ -26,6 +36,7 @@ namespace SceneFX
 
         public void OnEnabled()
         {
+            SceneRuntime.LoadPersisted();
             // Covers enabling the mod while a map is already running; the
             // gameplay scene replaces menu-time hosts anyway.
             CreateHost();
@@ -33,83 +44,19 @@ namespace SceneFX
 
         public void OnDisabled()
         {
+            UI.UuiButton.Unregister();
             DestroyHosts();
-            NativeLut.ClearRuntimeTextures();
+            SceneRuntime.RestoreGame();
         }
 
         public void OnSettingsUI(UIHelperBase helper)
         {
             var group = helper.AddGroup("SceneFX");
-
-            group.AddCheckbox("Apply last style when a map loads", SceneRuntime.ApplyOnLoad, sel =>
-            {
-                SceneRuntime.ApplyOnLoad = sel;
-                SceneRuntime.SaveOptions();
-            });
-
-            group.AddCheckbox("Borderless windowed mode", SceneRuntime.Borderless, sel =>
-            {
-                SceneRuntime.Borderless = sel;
-                SceneRuntime.SaveOptions();
-                if (sel)
-                {
-                    Core.BorderlessMode.Apply();
-                }
-                else
-                {
-                    Core.BorderlessMode.Restore();
-                }
-            });
-
-            group.AddCheckbox("Vanilla mode (suspend SceneFX)", SceneRuntime.VanillaMode, sel =>
-            {
-                SceneRuntime.VanillaMode = sel;
-                SceneRuntime.SaveOptions();
-                if (sel)
-                {
-                    WorldController.Restore();
-                    Core.TimeController.Restore();
-                    Core.SkyMood.Restore();
-                    SceneRuntime.RestoreGame();
-                }
-                else
-                {
-                    SceneRuntime.ApplyCurrent();
-                }
-            });
-
-            group.AddButton("Open styles folder", () =>
-            {
-                if (!System.IO.Directory.Exists(StyleStore.StylesFolder))
-                {
-                    System.IO.Directory.CreateDirectory(StyleStore.StylesFolder);
-                }
-
-                Application.OpenURL("file://" + StyleStore.StylesFolder);
-            });
-
-            group.AddButton("Restore game look", () => SceneRuntime.RestoreGame());
-
-            group.AddButton("Vanilla (leave the game untouched)", () => Core.QuickPresets.ApplyVanilla());
-            group.AddButton("Optimized (the calibrated recipe)", () => Core.QuickPresets.ApplyOptimized());
-
-            var suiteGroup = helper.AddGroup("Suite Profiles (SceneFX + LumenFX + AtmosphereFX + ClassicLightFX)");
-            suiteGroup.AddButton("Apply 'Optimized' suite profile", () =>
-            {
-                SuiteManager.ApplySuiteProfile("Optimized");
-            });
-            suiteGroup.AddButton("Export current look to suite profile", () =>
-            {
-                SuiteManager.SaveSuiteProfile("User_Export_" + System.DateTime.Now.ToString("yyyyMMdd_HHmmss"));
-            });
-            suiteGroup.AddButton("Open suite folder", () =>
-            {
-                if (!System.IO.Directory.Exists(SuiteManager.SuiteFolder))
-                {
-                    System.IO.Directory.CreateDirectory(SuiteManager.SuiteFolder);
-                }
-                Application.OpenURL("file://" + SuiteManager.SuiteFolder);
-            });
+            group.AddButton("VANILLA", FxModule.Release);
+            group.AddButton("OPTIMIZED / Default", FxModule.ApplyOptimized);
+            group.AddButton("Open compact panel", () => FxModule.OpenStandalone());
+            group.AddCheckbox("Apply saved settings when a city loads", SceneRuntime.ApplyOnLoad, value => { SceneRuntime.ApplyOnLoad = value; SceneRuntime.SaveOptions(); });
+            group.AddCheckbox("Borderless game window (Windows)", SceneRuntime.Borderless, value => { SceneRuntime.Borderless = value; if (value) BorderlessMode.Apply(); else BorderlessMode.Restore(); SceneRuntime.SaveOptions(); });
         }
 
         /// <summary>
@@ -137,14 +84,11 @@ namespace SceneFX
         {
             base.OnLevelUnloading();
             UI.UuiButton.Unregister();
-            WorldController.Restore();
-            TimeController.Restore();
-            SkyMood.Restore();
+            DestroyHosts();
             SceneRuntime.RestoreGame();
             StyleEngine.ClearCache();
             WorldController.ClearCache();
             TimeController.ClearCache();
-            DestroyHosts();
         }
 
         private void CreateHost()
@@ -197,11 +141,12 @@ namespace SceneFX
 
         public static bool ApplySuiteSection(System.Xml.XmlElement element)
         {
-            if (element == null) return false;
+            if (element == null || !element.Name.Equals("scenefx", System.StringComparison.OrdinalIgnoreCase)) return false;
             try
             {
                 var culture = System.Globalization.CultureInfo.InvariantCulture;
-                var current = SceneRuntime.Current;
+                var current = SceneRuntime.Current.Clone();
+                bool vanilla = SceneRuntime.VanillaMode;
                 bool worldTouched = false;
 
                 foreach (System.Xml.XmlNode node in element.ChildNodes)
@@ -209,75 +154,57 @@ namespace SceneFX
                     if (node.NodeType != System.Xml.XmlNodeType.Element) continue;
                     string name = node.Name.ToLowerInvariant();
                     string val = node.InnerText != null ? node.InnerText.Trim() : string.Empty;
-                    bool b;
-                    float f;
-                    int i;
+
+
+
 
                     if (name == "lut") current.Lut = val;
-                    else if (name == "nativelut") current.NativeLut = val;
-                    else if (name == "gamma" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Gamma = f;
-                    else if (name == "brightness" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Brightness = f;
-                    else if (name == "contrast" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Contrast = f;
-                    else if (name == "sunintensity" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.SunIntensity = f;
-                    else if (name == "exposure" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Exposure = f;
-                    else if (name == "warmth" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.Warmth = f;
-                    else if (name == "fogdensity" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.FogDensity = f;
-                    else if (name == "fogstart" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) current.FogStart = f;
-                    else if (name == "skytonemap" && bool.TryParse(val, out b)) current.SkyTonemap = b;
-                    else if (name == "skymood" && int.TryParse(val, out i)) current.SkyMood = i;
-                    else if (name == "includeworld" && bool.TryParse(val, out b)) current.IncludeWorld = b;
-                    else if (name == "vanillamode" && bool.TryParse(val, out b))
+                    else if (name == "gamma") current.Gamma = float.Parse(val, culture);
+                    else if (name == "brightness") current.Brightness = float.Parse(val, culture);
+                    else if (name == "contrast") current.Contrast = float.Parse(val, culture);
+                    else if (name == "sunintensity") current.SunIntensity = float.Parse(val, culture);
+                    else if (name == "exposure") current.Exposure = float.Parse(val, culture);
+                    else if (name == "warmth") current.Warmth = float.Parse(val, culture);
+                    else if (name == "fogdensity") current.FogDensity = float.Parse(val, culture);
+                    else if (name == "fogstart") current.FogStart = float.Parse(val, culture);
+                    else if (name == "skytonemap") current.SkyTonemap = bool.Parse(val);
+                    else if (name == "includeworld") current.IncludeWorld = bool.Parse(val);
+                    else if (name == "vanillamode")
                     {
-                        // Mismo camino que la casilla de opciones: se guarda y se aplica o se
-                        // deshace en el acto, no en la proxima carga.
-                        Core.SceneRuntime.VanillaMode = b;
-                        Core.SceneRuntime.SaveOptions();
-                        if (b)
-                        {
-                            Core.TimeController.Restore();
-                            Core.WorldController.Restore();
-                            Core.SkyMood.Restore();
-                            Core.SceneRuntime.RestoreGame();
-                        }
-                        else
-                        {
-                            Core.SceneRuntime.ApplyCurrent();
-                        }
+                        vanilla = bool.Parse(val);
                     }
-                    else if (name == "timeofday" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.TimeOfDay = f; worldTouched = true; }
-                    else if (name == "latitude" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Latitude = f; worldTouched = true; }
-                    else if (name == "longitude" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Longitude = f; worldTouched = true; }
-                    else if (name == "rain" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Rain = f; worldTouched = true; }
-                    else if (name == "fog" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Fog = f; worldTouched = true; }
-                    else if (name == "cloud" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Cloud = f; worldTouched = true; }
-                    else if (name == "northernlights" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.NorthernLights = f; worldTouched = true; }
-                    else if (name == "rainbow" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Rainbow = f; worldTouched = true; }
-                    else if (name == "groundwetness" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.GroundWetness = f; worldTouched = true; }
-                    else if (name == "temperature" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.Temperature = f; worldTouched = true; }
-                    else if (name == "temperaturelock" && bool.TryParse(val, out b)) { current.TemperatureLock = b; worldTouched = true; }
-                    else if (name == "winddirection" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.WindDirection = f; worldTouched = true; }
-                    else if (name == "windlock" && bool.TryParse(val, out b)) { current.WindLock = b; worldTouched = true; }
-                    else if (name == "weatherenabled" && int.TryParse(val, out i)) { current.WeatherEnabled = i; worldTouched = true; }
-                    else if (name == "rainissnow" && int.TryParse(val, out i)) { current.RainIsSnow = i; worldTouched = true; }
-                    else if (name == "snowyroads" && int.TryParse(val, out i)) { current.SnowyRoads = i; worldTouched = true; }
-                    else if (name == "gamespeed" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.GameSpeed = f; worldTouched = true; }
-                    else if (name == "cyclespeedenabled" && bool.TryParse(val, out b)) { current.CycleSpeedEnabled = b; worldTouched = true; }
-                    else if (name == "cyclespeed" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.CycleSpeed = f; worldTouched = true; }
-                    else if (name == "nightcyclespeed" && float.TryParse(val, System.Globalization.NumberStyles.Float, culture, out f)) { current.NightCycleSpeed = f; worldTouched = true; }
-                    else if (name == "separatedaynight" && bool.TryParse(val, out b)) { current.SeparateDayNight = b; worldTouched = true; }
-                    else if (name == "cyclewhilepaused" && bool.TryParse(val, out b)) { current.CycleWhilePaused = b; worldTouched = true; }
+                    else if (name == "timelocked") { current.TimeLocked = bool.Parse(val); worldTouched = true; }
+                    else if (name == "timeset") current.TimeSet = bool.Parse(val);
+                    else if (name == "positionset") current.PositionSet = bool.Parse(val);
+                    else if (name == "lutenabled") current.LutEnabled = int.Parse(val, culture);
+                    else if (name == "toneenabled") current.ToneEnabled = int.Parse(val, culture);
+                    else if (name == "bloomenabled") current.BloomEnabled = int.Parse(val, culture);
+                    else if (name == "rainmotionblur") current.RainMotionBlur = int.Parse(val, culture);
+                    else if (name == "timeofday") { current.TimeOfDay = float.Parse(val, culture); current.TimeSet = true; worldTouched = true; }
+                    else if (name == "latitude") { current.Latitude = float.Parse(val, culture); current.PositionSet = true; worldTouched = true; }
+                    else if (name == "longitude") { current.Longitude = float.Parse(val, culture); current.PositionSet = true; worldTouched = true; }
+                    else if (name == "rain") { current.Rain = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "fog") { current.Fog = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "cloud") { current.Cloud = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "northernlights") { current.NorthernLights = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "rainbow") { current.Rainbow = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "groundwetness") { current.GroundWetness = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "temperature") { current.Temperature = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "temperaturelock") { current.TemperatureLock = bool.Parse(val); worldTouched = true; }
+                    else if (name == "winddirection") { current.WindDirection = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "windlock") { current.WindLock = bool.Parse(val); worldTouched = true; }
+                    else if (name == "weatherenabled") { current.WeatherEnabled = int.Parse(val, culture); worldTouched = true; }
+                    else if (name == "rainissnow") { current.RainIsSnow = int.Parse(val, culture); worldTouched = true; }
+                    else if (name == "snowyroads") { current.SnowyRoads = int.Parse(val, culture); worldTouched = true; }
+                    else if (name == "gamespeed") { current.GameSpeed = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "cyclespeedenabled") { current.CycleSpeedEnabled = bool.Parse(val); worldTouched = true; }
+                    else if (name == "cyclespeed") { current.CycleSpeed = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "nightcyclespeed") { current.NightCycleSpeed = float.Parse(val, culture); worldTouched = true; }
+                    else if (name == "separatedaynight") { current.SeparateDayNight = bool.Parse(val); worldTouched = true; }
+                    else if (name == "cyclewhilepaused") { current.CycleWhilePaused = bool.Parse(val); worldTouched = true; }
                 }
 
-                SceneRuntime.ApplyCurrent();
-
-                // Una instruccion directa sobre el mundo se obedece aunque el estilo activo no
-                // lleve marcado «incluir mundo»: quien la manda ya dijo lo que quiere.
-                if (worldTouched && !SceneRuntime.VanillaMode)
-                {
-                    Core.StyleEngine.ApplyWorld(current);
-                }
-
-                StyleStore.SaveState(current);
+                SceneRuntime.ReplaceState(current, vanilla, worldTouched || current.IncludeWorld);
                 return true;
             }
             catch (System.Exception e)
@@ -289,87 +216,22 @@ namespace SceneFX
 
         public static string ExportSuiteSection()
         {
-            var c = System.Globalization.CultureInfo.InvariantCulture;
-
-            // Sobre una copia: exportar es mirar, no escribir. Si se refrescara el estilo vivo
-            // con la hora del reloj, publicar un perfil pisaria la hora que el usuario guardo.
-            var cur = SceneRuntime.Current.Clone();
-            Core.StyleEngine.CaptureWorld(cur);
-            return string.Format(
-                "  <scenefx>\n" +
-                "    <lut>{0}</lut>\n" +
-                "    <nativeLut>{1}</nativeLut>\n" +
-                "    <gamma>{2}</gamma>\n" +
-                "    <brightness>{3}</brightness>\n" +
-                "    <contrast>{4}</contrast>\n" +
-                "    <sunIntensity>{5}</sunIntensity>\n" +
-                "    <exposure>{6}</exposure>\n" +
-                "    <warmth>{7}</warmth>\n" +
-                "    <fogDensity>{8}</fogDensity>\n" +
-                "    <fogStart>{9}</fogStart>\n" +
-                "    <skyTonemap>{10}</skyTonemap>\n" +
-                "    <skyMood>{11}</skyMood>\n" +
-                "    <includeWorld>{12}</includeWorld>\n" +
-                "    <timeOfDay>{13}</timeOfDay>\n" +
-                "    <latitude>{14}</latitude>\n" +
-                "    <longitude>{15}</longitude>\n" +
-                "    <rain>{16}</rain>\n" +
-                "    <fog>{17}</fog>\n" +
-                "    <cloud>{18}</cloud>\n" +
-                "    <vanillaMode>{19}</vanillaMode>\n" +
-                "    <northernLights>{20}</northernLights>\n" +
-                "    <rainbow>{21}</rainbow>\n" +
-                "    <groundWetness>{22}</groundWetness>\n" +
-                "    <temperatureLock>{23}</temperatureLock>\n" +
-                "    <temperature>{24}</temperature>\n" +
-                "    <windLock>{25}</windLock>\n" +
-                "    <windDirection>{26}</windDirection>\n" +
-                "    <weatherEnabled>{27}</weatherEnabled>\n" +
-                "    <rainIsSnow>{28}</rainIsSnow>\n" +
-                "    <snowyRoads>{29}</snowyRoads>\n" +
-                "    <gameSpeed>{30}</gameSpeed>\n" +
-                "    <cycleSpeedEnabled>{31}</cycleSpeedEnabled>\n" +
-                "    <cycleSpeed>{32}</cycleSpeed>\n" +
-                "    <nightCycleSpeed>{33}</nightCycleSpeed>\n" +
-                "    <separateDayNight>{34}</separateDayNight>\n" +
-                "    <cycleWhilePaused>{35}</cycleWhilePaused>\n" +
-                "  </scenefx>",
-                cur.Lut ?? string.Empty,
-                cur.NativeLut ?? string.Empty,
-                cur.Gamma.ToString("0.00", c),
-                cur.Brightness.ToString("0.00", c),
-                cur.Contrast.ToString("0.00", c),
-                cur.SunIntensity.ToString("0.00", c),
-                cur.Exposure.ToString("0.000", c),
-                cur.Warmth.ToString("0.00", c),
-                cur.FogDensity.ToString("0.000000", c),
-                cur.FogStart.ToString("0.0", c),
-                cur.SkyTonemap.ToString().ToLowerInvariant(),
-                cur.SkyMood.ToString(c),
-                cur.IncludeWorld.ToString().ToLowerInvariant(),
-                cur.TimeOfDay.ToString("0.00", c),
-                cur.Latitude.ToString("0.00", c),
-                cur.Longitude.ToString("0.00", c),
-                cur.Rain.ToString("0.00", c),
-                cur.Fog.ToString("0.00", c),
-                cur.Cloud.ToString("0.00", c),
-                SceneRuntime.VanillaMode.ToString().ToLowerInvariant(),
-                cur.NorthernLights.ToString("0.00", c),
-                cur.Rainbow.ToString("0.00", c),
-                cur.GroundWetness.ToString("0.00", c),
-                cur.TemperatureLock.ToString().ToLowerInvariant(),
-                cur.Temperature.ToString("0.0", c),
-                cur.WindLock.ToString().ToLowerInvariant(),
-                cur.WindDirection.ToString("0.0", c),
-                cur.WeatherEnabled.ToString(c),
-                cur.RainIsSnow.ToString(c),
-                cur.SnowyRoads.ToString(c),
-                cur.GameSpeed.ToString("0.00", c),
-                cur.CycleSpeedEnabled.ToString().ToLowerInvariant(),
-                cur.CycleSpeed.ToString("0.00", c),
-                cur.NightCycleSpeed.ToString("0.00", c),
-                cur.SeparateDayNight.ToString().ToLowerInvariant(),
-                cur.CycleWhilePaused.ToString().ToLowerInvariant());
+            var state = SceneRuntime.Current.Clone();
+            var doc = new System.Xml.XmlDocument();
+            using (var writer = new System.IO.StringWriter(System.Globalization.CultureInfo.InvariantCulture))
+            {
+                new System.Xml.Serialization.XmlSerializer(typeof(StyleData)).Serialize(writer, state);
+                doc.LoadXml(writer.ToString());
+            }
+            var result = new System.Xml.XmlDocument();
+            var section = result.CreateElement("scenefx");
+            result.AppendChild(section);
+            foreach (System.Xml.XmlNode child in doc.DocumentElement.ChildNodes)
+                section.AppendChild(result.ImportNode(child, true));
+            var mode = result.CreateElement("vanillaMode");
+            mode.InnerText = SceneRuntime.VanillaMode ? "true" : "false";
+            section.AppendChild(mode);
+            return section.OuterXml;
         }
     }
 }

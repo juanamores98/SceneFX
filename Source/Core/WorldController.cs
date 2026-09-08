@@ -4,7 +4,7 @@ using UnityEngine;
 namespace SceneFX.Core
 {
     /// <summary>
-    /// Clean-room world controls built on the game's own public fields:
+    /// World controls built on the game's own public fields:
     /// time of day, sun coordinates and weather intensities. A snapshot of
     /// the untouched values allows full restoration.
     /// </summary>
@@ -23,11 +23,12 @@ namespace SceneFX.Core
     {
         private static bool _snapshotTaken;
         private static float _vanillaLatitude;
+        private static float _vanillaTime;
         private static float _vanillaLongitude;
         private static bool _vanillaWeatherEnabled;
         private static bool _vanillaRainIsSnow;
         private static bool _vanillaSnowyRoads;
-        private static bool _weatherFlagsCaptured;
+        private static bool _weatherWritten, _snowWritten, _roadsWritten;
         private static DayNightProperties _dayNight;
         private static int _frameCounter;
 
@@ -35,7 +36,8 @@ namespace SceneFX.Core
         {
             _dayNight = null;
             _snapshotTaken = false;
-            _weatherFlagsCaptured = false;
+            TimeSet = PositionSet = false;
+            _weatherWritten = _snowWritten = _roadsWritten = false;
             _frameCounter = 0;
         }
 
@@ -61,6 +63,8 @@ namespace SceneFX.Core
         }
 
         internal static bool TimeLocked;
+        internal static bool TimeSet;
+        internal static bool PositionSet;
         internal static float TimeOfDayHours = 12f;   // 0..24
 
         // Canales del clima: -1 = lo lleva el juego.
@@ -92,33 +96,12 @@ namespace SceneFX.Core
             var dayNight = DayNight;
             if (dayNight != null)
             {
+                _vanillaTime = dayNight.m_TimeOfDay;
                 _vanillaLatitude = dayNight.m_Latitude;
                 _vanillaLongitude = dayNight.m_Longitude;
             }
 
-            _snapshotTaken = true;
-        }
-
-        private static void SnapshotWeatherFlags()
-        {
-            if (_weatherFlagsCaptured)
-            {
-                return;
-            }
-
-            var weather = WeatherManager.instance;
-            if (weather == null)
-            {
-                return;
-            }
-
-            _vanillaWeatherEnabled = weather.m_enableWeather;
-            _vanillaRainIsSnow = weather.m_properties != null && weather.m_properties.m_rainIsSnow;
-
-            var net = NetManager.instance;
-            _vanillaSnowyRoads = net != null && net.m_treatWetAsSnow;
-
-            _weatherFlagsCaptured = true;
+            _snapshotTaken = dayNight != null;
         }
 
         internal static void Tick()
@@ -131,7 +114,7 @@ namespace SceneFX.Core
 
             if (TimeLocked)
             {
-                dayNight.m_TimeOfDay = Mathf.Repeat(TimeOfDayHours / 24f, 1f);
+                dayNight.m_TimeOfDay = Mathf.Repeat(TimeOfDayHours, 24f);
             }
 
             ApplyWeather();
@@ -139,11 +122,13 @@ namespace SceneFX.Core
 
         internal static void ApplyTime(float hours)
         {
-            TimeOfDayHours = Mathf.Repeat(hours, 24f);
+            Snapshot();
+            TimeSet = true;
+            TimeOfDayHours = Mathf.Repeat(Infrastructure.FxStorage.Clamp(hours, 0f, 24f), 24f);
             var dayNight = DayNight;
             if (dayNight != null)
             {
-                dayNight.m_TimeOfDay = TimeOfDayHours / 24f;
+                dayNight.m_TimeOfDay = TimeOfDayHours;
             }
         }
 
@@ -152,7 +137,7 @@ namespace SceneFX.Core
             var dayNight = DayNight;
             if (dayNight != null)
             {
-                return dayNight.m_TimeOfDay * 24f;
+                return dayNight.m_TimeOfDay;
             }
 
             return TimeOfDayHours;
@@ -161,6 +146,7 @@ namespace SceneFX.Core
         internal static void ApplyPosition(float latitude, float longitude)
         {
             Snapshot();
+            PositionSet = true;
             var dayNight = DayNight;
             if (dayNight != null)
             {
@@ -171,7 +157,7 @@ namespace SceneFX.Core
 
         internal static void ApplyWeather(float rain, float fog, float cloud)
         {
-            RainIntensity = rain < 0f ? -1f : Mathf.Clamp01(rain);
+            RainIntensity = rain < 0f ? -1f : Mathf.Clamp(rain, 0f, 2.5f);
             FogIntensity = fog < 0f ? -1f : Mathf.Clamp01(fog);
             CloudIntensity = cloud < 0f ? -1f : Mathf.Clamp01(cloud);
             ApplyWeather();
@@ -180,7 +166,7 @@ namespace SceneFX.Core
         /// <summary>Fija o suelta un canal del clima por nombre. Un valor negativo lo suelta.</summary>
         internal static void SetChannel(string channel, float value)
         {
-            float v = value < 0f ? -1f : Mathf.Clamp01(value);
+            float v = value < 0f ? -1f : Infrastructure.FxStorage.Clamp(value, 0f, channel == "rain" ? 2.5f : 1f);
             switch (channel)
             {
                 case "rain": RainIntensity = v; break;
@@ -280,21 +266,28 @@ namespace SceneFX.Core
 
         private static void ApplyFlags(WeatherManager weather)
         {
-            if (WeatherEnabled < 0 && RainIsSnow < 0 && SnowyRoads < 0)
-            {
-                return;
-            }
-
-            SnapshotWeatherFlags();
-
             if (WeatherEnabled >= 0)
             {
+                if (!_weatherWritten) _vanillaWeatherEnabled = weather.m_enableWeather;
+                _weatherWritten = true;
                 weather.m_enableWeather = WeatherEnabled == 1;
+            }
+            else if (_weatherWritten)
+            {
+                weather.m_enableWeather = _vanillaWeatherEnabled;
+                _weatherWritten = false;
             }
 
             if (RainIsSnow >= 0 && weather.m_properties != null)
             {
+                if (!_snowWritten) _vanillaRainIsSnow = weather.m_properties.m_rainIsSnow;
+                _snowWritten = true;
                 weather.m_properties.m_rainIsSnow = RainIsSnow == 1;
+            }
+            else if (_snowWritten && weather.m_properties != null)
+            {
+                weather.m_properties.m_rainIsSnow = _vanillaRainIsSnow;
+                _snowWritten = false;
             }
 
             if (SnowyRoads >= 0)
@@ -304,8 +297,15 @@ namespace SceneFX.Core
                 var net = NetManager.instance;
                 if (net != null)
                 {
+                    if (!_roadsWritten) _vanillaSnowyRoads = net.m_treatWetAsSnow;
+                    _roadsWritten = true;
                     net.m_treatWetAsSnow = SnowyRoads == 1;
                 }
+            }
+            else if (_roadsWritten && NetManager.instance != null)
+            {
+                NetManager.instance.m_treatWetAsSnow = _vanillaSnowyRoads;
+                _roadsWritten = false;
             }
         }
 
@@ -318,8 +318,8 @@ namespace SceneFX.Core
                 var dayNight = DayNight;
                 if (dayNight != null && !ThemeOwnership.AtmosphereIsManaged)
                 {
-                    dayNight.m_Latitude = _vanillaLatitude;
-                    dayNight.m_Longitude = _vanillaLongitude;
+                    if (PositionSet) { dayNight.m_Latitude = _vanillaLatitude; dayNight.m_Longitude = _vanillaLongitude; }
+                    if (TimeSet) dayNight.m_TimeOfDay = _vanillaTime;
                 }
             }
 
@@ -333,11 +333,13 @@ namespace SceneFX.Core
             WindLocked = false;
 
             RestoreFlags();
+            TimeSet = PositionSet = false;
+            _snapshotTaken = false;
         }
 
         private static void RestoreFlags()
         {
-            if (!_weatherFlagsCaptured)
+            if (!_weatherWritten && !_snowWritten && !_roadsWritten)
             {
                 WeatherEnabled = -1;
                 RainIsSnow = -1;
@@ -350,15 +352,15 @@ namespace SceneFX.Core
                 var weather = WeatherManager.instance;
                 if (weather != null)
                 {
-                    weather.m_enableWeather = _vanillaWeatherEnabled;
-                    if (weather.m_properties != null)
+                    if (_weatherWritten) weather.m_enableWeather = _vanillaWeatherEnabled;
+                    if (_snowWritten && weather.m_properties != null)
                     {
                         weather.m_properties.m_rainIsSnow = _vanillaRainIsSnow;
                     }
                 }
 
                 var net = NetManager.instance;
-                if (net != null)
+                if (_roadsWritten && net != null)
                 {
                     net.m_treatWetAsSnow = _vanillaSnowyRoads;
                 }
@@ -371,7 +373,7 @@ namespace SceneFX.Core
             WeatherEnabled = -1;
             RainIsSnow = -1;
             SnowyRoads = -1;
-            _weatherFlagsCaptured = false;
+            _weatherWritten = _snowWritten = _roadsWritten = false;
         }
     }
 }

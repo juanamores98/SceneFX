@@ -14,7 +14,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Remove="tests\**\*.cs" />
+        <EmbeddedResource Include="BuiltIns\Optimized.xml" />
+        <EmbeddedResource Include="BuiltIns\Optimized.suite.xml" />
         <Reference Include="Assembly-CSharp" />
+        <Reference Include="Assembly-CSharp-firstpass" />
         <Reference Include="ColossalManaged" />
         <Reference Include="ICities" />
         <Reference Include="UnityEngine" />
@@ -22,11 +26,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="BuiltIns\*.scene.xml" />
-        <EmbeddedResource Include="BuiltIns\*.suite.xml" />
     </ItemGroup>
 
-    <Target Name="DeployToModDirectory" AfterTargets="Build">
+    <Target Name="DeployToModDirectory" AfterTargets="Build" Condition="'$(DeployMod)' == 'true'">
         <PropertyGroup>
             <DeployDir>$(LOCALAPPDATA)/Colossal Order/Cities_Skylines/Addons/Mods/SceneFX/</DeployDir>
         </PropertyGroup>

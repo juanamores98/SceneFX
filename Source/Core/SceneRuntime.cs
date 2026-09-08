@@ -1,4 +1,4 @@
-﻿using ColossalFramework.IO;
+using ColossalFramework.IO;
 using System;
 using System.Xml.Serialization;
 using UnityEngine;
@@ -13,75 +13,123 @@ namespace SceneFX.Core
     {
         private static StyleData _current = new StyleData();
         private static float _lastStateSave = -10f;
-
-        internal static StyleData Current
-        {
-            get { return _current; }
-        }
-
+        private static bool _dirty;
+        internal static bool Active;
+        internal static StyleData Current { get { return _current; } }
         internal static bool ApplyOnLoad = true;
-
         internal static bool Borderless;
-
-        internal static bool VanillaMode; // suspend everything, game untouched
-
+        internal static bool VanillaMode = true;
         internal static float WindowX = 200f;
-        internal static float WindowY = 500f;
+        internal static float WindowY = 60f;
 
         internal static void LoadPersisted()
         {
             var state = StyleStore.LoadState();
-            if (state != null)
-            {
-                _current = state;
-            }
-
-            OptionsDocument options = OptionsStore.Load();
-            if (options != null)
-            {
-                ApplyOnLoad = options.ApplyOnLoad;
-                Borderless = options.Borderless;
-                VanillaMode = options.VanillaMode;
-                if (options.WindowX > 0f) WindowX = options.WindowX;
-                if (options.WindowY > 0f) WindowY = options.WindowY;
-            }
+            if (state != null) _current = state;
+            var options = OptionsStore.Load();
+            if (options == null) return;
+            ApplyOnLoad = options.ApplyOnLoad;
+            Borderless = options.Borderless;
+            VanillaMode = options.VanillaMode;
+            WindowX = options.WindowX;
+            WindowY = options.WindowY;
         }
 
-        /// <summary>
-        /// Applies the current style live; the state document is persisted at
-        /// most once per second so slider drags stay cheap.
-        /// </summary>
         internal static void ApplyCurrent()
         {
-            if (VanillaMode)
-            {
-                // Suspended: apply nothing, keep the game untouched.
-                return;
-            }
-
+            if (VanillaMode) return;
+            _current.Validate();
+            Active = true;
             StyleEngine.Apply(_current);
-            if (Time.realtimeSinceStartup - _lastStateSave > 1f)
+            QueueSave();
+        }
+
+        internal static void ApplyOnLevel()
+        {
+            if (!ApplyOnLoad || VanillaMode) return;
+            _current.Validate();
+            Active = true;
+            // Companion settings loaded from their own files remain authoritative.
+            StyleEngine.Apply(_current, false);
+            if (_current.WorldConfigured || _current.IncludeWorld) StyleEngine.ApplyWorld(_current);
+        }
+
+        internal static void LoadStyle(StyleData style)
+        {
+            var next = style.Clone();
+            next.Validate();
+            if (!next.IncludeWorld) next.CopyWorldFrom(_current);
+            _current = next;
+            VanillaMode = false;
+            ApplyCurrent();
+            if (next.IncludeWorld)
             {
-                _lastStateSave = Time.realtimeSinceStartup;
-                StyleStore.SaveState(_current);
+                next.WorldConfigured = true;
+                StyleEngine.ApplyWorld(next);
             }
+            SaveOptions();
+        }
+
+        internal static void ReplaceState(StyleData state, bool vanilla, bool applyWorld)
+        {
+            state.Validate();
+            _current = state;
+            VanillaMode = vanilla;
+            if (vanilla) RestoreGame();
+            else
+            {
+                ApplyCurrent();
+                if (applyWorld)
+                {
+                    _current.WorldConfigured = true;
+                    StyleEngine.ApplyWorld(_current);
+                }
+            }
+            QueueSave();
+            SaveOptions();
+        }
+
+        internal static void WorldChanged()
+        {
+            VanillaMode = false;
+            Active = true;
+            _current.WorldConfigured = true;
+            StyleEngine.CaptureWorld(_current);
+            QueueSave();
+            SaveOptions();
+        }
+
+        internal static void QueueSave()
+        {
+            _dirty = true;
+            CheckPendingSave();
+        }
+
+        internal static void CheckPendingSave()
+        {
+            if (_dirty && Time.realtimeSinceStartup - _lastStateSave >= 1f) Flush();
+            OptionsStore.CheckPendingSave();
+        }
+
+        internal static void Flush()
+        {
+            _lastStateSave = Time.realtimeSinceStartup;
+            _dirty = !StyleStore.SaveState(_current);
+            OptionsStore.Flush();
         }
 
         internal static void RestoreGame()
         {
             StyleEngine.RestoreGame();
+            WorldController.Restore();
+            TimeController.Restore();
+            Active = false;
         }
 
         internal static void SaveOptions()
         {
-            OptionsStore.Save(new OptionsDocument
-            {
-                ApplyOnLoad = ApplyOnLoad,
-                Borderless = Borderless,
-                VanillaMode = VanillaMode,
-                WindowX = WindowX,
-                WindowY = WindowY
-            });
+            OptionsStore.Save(new OptionsDocument { ApplyOnLoad = ApplyOnLoad,
+                Borderless = Borderless, VanillaMode = VanillaMode, WindowX = WindowX, WindowY = WindowY });
         }
     }
 
@@ -109,6 +157,9 @@ namespace SceneFX.Core
 
     internal static class OptionsStore
     {
+        private static OptionsDocument _pending;
+        private static OptionsDocument _written;
+        private static float _lastSave = -10f;
                 /// <remarks>
         /// <b>Ruta completa, no relativa.</b> Un nombre suelto lo resuelve .NET contra el
         /// directorio de trabajo del proceso, que en Cities: Skylines es la carpeta de
@@ -153,10 +204,7 @@ namespace SceneFX.Core
                     return null;
                 }
 
-                using (var reader = new System.IO.StreamReader(OptionsPathToRead))
-                {
-                    return new XmlSerializer(typeof(OptionsDocument)).Deserialize(reader) as OptionsDocument;
-                }
+                return Infrastructure.FxStorage.ReadXml<OptionsDocument>(OptionsPathToRead);
             }
             catch (Exception e)
             {
@@ -167,12 +215,28 @@ namespace SceneFX.Core
 
         internal static void Save(OptionsDocument document)
         {
+            _pending = document;
+            CheckPendingSave();
+        }
+
+        internal static void CheckPendingSave()
+        {
+            if (_pending != null && Time.realtimeSinceStartup - _lastSave >= 1f) Flush();
+        }
+
+        internal static void Flush()
+        {
+            if (_pending == null) return;
+            if (_written != null && _pending.ApplyOnLoad == _written.ApplyOnLoad
+                && _pending.Borderless == _written.Borderless && _pending.VanillaMode == _written.VanillaMode
+                && _pending.WindowX == _written.WindowX && _pending.WindowY == _written.WindowY)
+            { _pending = null; return; }
+            _lastSave = Time.realtimeSinceStartup;
             try
             {
-                using (var writer = new System.IO.StreamWriter(OptionsPath))
-                {
-                    new XmlSerializer(typeof(OptionsDocument)).Serialize(writer, document);
-                }
+                Infrastructure.FxStorage.WriteXml(OptionsPath, _pending);
+                _written = _pending;
+                _pending = null;
             }
             catch (Exception e)
             {

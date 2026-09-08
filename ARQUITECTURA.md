@@ -1,157 +1,58 @@
-# SceneFX — arquitectura y cambios
+# Arquitectura actual de SceneFX
 
-Documento ejecutivo. Estado a día de hoy, no historia. `DESIGN.md` es la
-especificación funcional original del formato de estilos; este documento
-describe cómo está construido el mod hoy y qué cambió en el último ciclo.
+Revisión 2026-09-08. El historial conserva la descripción anterior de ventanas y presets.
 
-## Qué manda este mod
+## Recorrido
 
-Dentro de la suite FX cada propiedad del juego tiene **un solo dueño**. El de
-SceneFX es el mundo:
+1. Entrada del mod y anfitrión: configuración global y servicios del nivel.
+2. Modelo: `Core/StyleData.cs` y `SceneRuntime.cs`. El XML se lee en un documento temporal validado antes de copiarlo al estado vivo.
+3. Motor: `Core/StyleEngine.cs`, `CameraEffects.cs`, `WorldController.cs` y `TimeController.cs`. Captura antes de escribir; limpia referencias y caches al descargar.
+4. `FxModule` expone estado y panel. `UI/PanelView.cs` contiene disposición vertical, controles nativos y refresco sin escribir.
+5. `Infrastructure/FxStorage.cs` proporciona escritura segura, validación de finitos y reconocimiento de la receta; `FxInterop.cs` consulta reclamaciones sin dependencia obligatoria del compañero.
 
-| Materia | Dueño | Campos del juego |
-|---|---|---|
-| Estilos completos, LUTs, gradación | **SceneFX** | `ColorCorrectionManager`, `ToneMapping` |
-| Hora, latitud, longitud, cielo | **SceneFX** | `DayNightProperties.m_TimeOfDay`, `m_Latitude`, `m_Longitude` |
-| Clima entero | **SceneFX** | `WeatherManager`, `WeatherProperties.m_rainIsSnow`, `NetManager.m_treatWetAsSnow` |
-| Ritmo del juego y del cielo | **SceneFX** | `Time.timeScale`, `DayNightProperties.m_TimeOfDay` |
-| Tono, calidez y curva solar | LumenFX | se le **piden** por `ApplySuiteSection` |
-| Niebla | AtmosphereFX | se le **pide** por `ApplySuiteSection` |
+Se retiran NativeLut, LutCompat, BakeToLut, SkyMood y las variantes Optimized con LUTs procedurales. El selector usa ColorCorrectionManager y assets instalados. Se arreglan la persistencia de mundo/velocidad/hora bloqueada, restauración de LUT/cámara, estilos completos, rutas de selección y escrituras pendientes. Se añaden interruptores nativos de LUT, tono, bloom y motion blur de lluvia.
 
-Las dos últimas filas son la regla de dueño único. `StyleEngine.ApplyTone` y
-`ApplyFog` comprueban con `SuiteManager.ModPresent` si el dueño está cargado: si
-lo está, le mandan un XML por su API pública y no escriben nada; si no lo está,
-escriben ellas. **Ninguna función desaparece porque falte un mod**, y aplicar el
-mismo preset en un orden u otro da la misma imagen.
+## Modos
 
-## Piezas
+VANILLA suspende el módulo y devuelve los campos escritos a su referencia previa cuando le corresponde. No equivale a aplicar constantes supuestamente neutras. Conserva el modo en el archivo global.
 
-```
-Source/
-  SceneFXMod.cs          IUserMod + ciclo de vida + API de suite (36 etiquetas)
-  PanelEngine.cs         MonoBehaviour anfitrión: teclas y el Tick de cada fotograma
-  Core/
-    StyleEngine.cs       aplica un estilo; delega tono y niebla a sus dueños
-    StyleData.cs         el esquema *.scene.xml y su persistencia
-    WorldController.cs   clima, hora y posición solar
-    TimeController.cs    velocidad del juego y del ciclo día/noche
-    SuiteManager.cs      descubre los otros mods y les pide lo que es suyo
-    SkyMood.cs           paletas de cielo procedurales
-    NativeLut.cs         tablas 3D 32³ generadas por el propio mod
-    BakeToLut.cs         hornea el look actual a una tabla + PNG
-    ThemeOwnership.cs    detecta Theme Mixer y le cede sus 6 campos
-    QuickPresets.cs      Vanilla y Optimized de un clic
-  UI/
-    NativePanel.cs       panel nativo del juego, 4 pestañas (F10)
-    UICard.cs            tarjeta plegable reutilizable
-    StylePanel.cs        ventana IMGUI de respaldo (F11)
-  Locale/                en, es, de, fr, ru
+OPTIMIZED lee `BuiltIns/Optimized.xml`, incorporado en el ensamblado. La referencia seleccionada y diferencias están en `SceneFX/docs/Default.reference.xml` y `SceneFX/docs/VALIDACION.md`. No lee RenderIt Plus por frame ni lo integra.
+
+`Mode` compara la receta contra el estado exportado: al editar muestra CUSTOM. Describe la configuración, no acredita disponibilidad del LUT ni ausencia de interferencias externas. `Status` comunica errores detectados.
+
+## Contrato de incrustación
+
+Llamadas de UI y motor en el hilo principal de Unity, con servicios del nivel disponibles:
+
+```csharp
+var panel = SceneFX.FxModule.CreatePanel(parent, 320f, 650f);
+string xml = SceneFX.FxModule.ReadState();
+bool accepted = SceneFX.FxModule.ApplyState(xml);
+panel.Refresh(); // refrescar tras modificaciones externas
+panel.SetSize(320f, 700f);
+panel.Dispose(); // destruir UI no desactiva la configuración
+SceneFX.FxModule.Flush();
 ```
 
-## Interfaz
+- `parent` es un `ColossalFramework.UI.UIComponent` del futuro host. Este conserva la referencia, visibilidad y disposición.
+- `Release()` es una acción separada: libera motor y persiste VANILLA.
+- `ApplyState` recibe la sección XML exportada del mod. Rechaza raíz ajena, texto inválido y números no finitos. No aplica parcialmente una sección con validación fallida.
+- La exportación no incluye la posición de ventana. Los campos de mundo tienen su alcance y modos explícitos.
+- `SceneFXMod.ActiveClaims` informa de campos compartidos; no bloquea físicamente escrituras del motor.
+- Tamaño preferido 360×680 y mínimo 280×260. Reapertura independiente recoloca el panel dentro de la resolución actual.
 
-Cuatro pestañas, cada una un `UIScrollablePanel` recortado a la ventana, con
-tarjetas plegables dentro. Nada puede salirse por abajo: lo que no cabe se
-desplaza.
+Sin SDK global, RPC, plugins ni referencia a Arrebol/RenderIt Plus.
 
-1. **Style & Color** — perfiles, LUTs, hornear a LUT, gradación en vivo, perfil de suite.
-2. **Sun & Light** — latitud, longitud, cielo, ganancia solar, ir a LumenFX.
-3. **Weather & Sky** — los seis canales del clima, temperatura, viento, nieve, ir a AtmosphereFX.
-4. **Time & Rhythm** — velocidad del juego, pausa, hora, ciclo día/noche.
+## Cooperación y guardado
 
-Sobre las pestañas hay una cabecera fija con Vanilla, `Suite: Optimized` y un
-reloj arrastrable, visibles desde cualquier pestaña.
+Lumen tiene prioridad para la luz que reclama; Atmosphere, para la niebla cuando está activo. Scene delega ediciones de look a Lumen activo y aplica localmente cuando está suspendido. Classic consulta reclamaciones antes de escribir/restaurar. La carga automática de Scene no sustituye las preferencias globales guardadas de Lumen.
 
-**Los canales del clima.** Un valor negativo quiere decir «esto lo lleva el
-juego»; de 0 en adelante lo fija el mod fotograma a fotograma. La casilla de
-cada canal es esa distinción, y mover el deslizador la marca sola: quien mueve
-un control espera verlo aplicado, no tener que armarlo antes.
+La coordinación cubre los FX revisados. Otros mods, el orden real de carga y cambios tardíos de tema requieren prueba dentro del juego; no se garantiza restauración universal.
 
-## API de suite
+Estado: SceneFX.xml y SceneFXOptions.xml. Cambios agrupados durante aproximadamente un segundo, escritura temporal, reemplazo con `.bak`, pendiente hasta éxito y flush al cerrar anfitrión. Carga inválida no copia los primeros campos al estado vivo. La recuperación de `.bak` es manual; no se implementa una migración universal de formatos legados.
 
-`ApplySuiteSection(string|XmlElement)` y `ExportSuiteSection()`, ambas públicas
-y estáticas. 36 etiquetas, todas las que se aplican se exportan también —el
-laboratorio comprueba que un ajuste es ejecutable mirando la exportación, así
-que una etiqueta que no se publique se saltaría en silencio.
+## Verificación
 
-```
-lut nativeLut gamma brightness contrast sunIntensity exposure warmth
-fogDensity fogStart skyTonemap skyMood includeWorld vanillaMode
-timeOfDay latitude longitude
-rain fog cloud northernLights rainbow groundWetness
-temperatureLock temperature windLock windDirection
-weatherEnabled rainIsSnow snowyRoads
-gameSpeed cycleSpeedEnabled cycleSpeed nightCycleSpeed separateDayNight cycleWhilePaused
-```
+[Estado de sesión](docs/ESTADO-SESION.md) y [paridad](docs/PARIDAD.md) distinguen controles, comportamiento, formatos y aspecto.
 
-## Dónde guarda las cosas
-
-Todo bajo `%LOCALAPPDATA%\Colossal Order\Cities_Skylines\`:
-
-- `SceneFX.xml` — el último look aplicado.
-- `SceneFXOptions.xml` — las opciones del mod.
-- `ModConfig\SceneFXStyles\*.scene.xml` — los estilos guardados.
-
-Rutas completas, no relativas: un nombre suelto se resuelve contra el directorio
-de trabajo del proceso, que en Cities: Skylines es la carpeta de instalación del
-juego. Ahí acababan estos archivos, dentro de Archivos de Programa. Si queda uno
-en el sitio antiguo y todavía no hay ninguno en el nuevo, se lee el antiguo.
-
-## Qué cambió en este ciclo
-
-**Clima y ritmo.** Los seis canales que el juego expone —lluvia, niebla, nubes,
-auroras boreales, arcoíris y suelo mojado—, más temperatura, dirección del
-viento, clima activo, *la lluvia cae como nieve* y *calles con aspecto nevado al
-mojarse*. Y una pestaña de ritmo con la velocidad del juego (0,1× a 5×) y la del
-ciclo día/noche, con ritmos separados para el día y la noche.
-
-**No hay control de intensidad de nieve porque el juego no lo tiene.** Se volcó
-por reflexión todo `Assembly-CSharp.dll`: no existe ningún `m_targetSnow`. En un
-mapa de invierno la nieve *es* la lluvia, y lo que decide cuál cae es
-`WeatherProperties.m_rainIsSnow`. Ese es el interruptor que se ofrece.
-
-**El ciclo acelerado es visual.** Acelerarlo de verdad significa mover
-`SimulationManager.m_dayTimeOffsetFrames`, que es estado de simulación y viaja
-dentro de la partida guardada. Este mod no deja rastro en una partida por el
-mero hecho de estar activo, así que reescribe `DayNightProperties.m_TimeOfDay`,
-que solo alimenta la imagen. El reloj de la ciudad y las políticas nocturnas
-siguen su curso. El ritmo no se calcula: se observa cuánto movió el juego el
-reloj en el último fotograma y se reescala, así velocidad 1 es exactamente el
-juego sin tocar, y el ritmo aprendido es lo que permite seguir girando en pausa.
-
-**Interfaz.** De seis pestañas planas a cuatro con tarjetas plegables y scroll
-propio, más la cabecera fija. Exportar dejó de pisar la hora guardada: trabaja
-sobre una copia. Un idioma sin traducir cae al inglés en vez de mostrar el
-identificador crudo.
-
-## Correcciones de la revisión
-
-- **Sin emoji en la interfaz.** Se comprobó sobre 12.960 ficheros `.cs` de los
-  mods que ya funcionan: `▼` y `►` aparecen en 79 y 54 —esos sí se dibujan— y
-  ninguno de los 27 emoji propuestos aparece en ninguno. La fuente Arial de
-  Unity 5.6 no lleva pictogramas, y los del plano astral llegan además como
-  pares sustitutos que IMGUI de esa versión no compone.
-- **Los botones de ir al otro panel no hacían nada.** Buscaban un
-  `ToggleWindow` que no existía, en `LumenFX.Runtime.TunerEngine`, que tampoco
-  existe —el tipo real es `LumenFX.Core.TunerEngine`—. Se añadió el método a los
-  dos motores y se corrigió el nombre. El atajo de AtmosphereFX es Ctrl+Alt+A,
-  no «Alt+F» como decía el botón.
-- **El botón de pausa no pausaba.** `ApplyGameSpeed(0)` se recorta a 0,1× y el
-  juego se arrastraba en vez de detenerse. Ahora conmuta la pausa del propio
-  juego, la misma de la barra espaciadora.
-- **La ganancia solar estaba duplicada** en dos pestañas, escribiendo el mismo
-  campo sin enterarse la una de la otra. Se queda en la pestaña del sol.
-- **Los textos de pantalla pasan por el traductor**, no por literales sueltos.
-
-## Atajos
-
-- `F10` — panel nativo.
-- `F11` — ventana IMGUI de respaldo.
-
-## Licencia
-
-MIT-0 © 2026 juanamores98. Sin atribución ni condiciones.
-
-Reconocimiento: las ideas de la pestaña de ritmo vienen de
-[Play It!](https://github.com/keallu/CSL-PlayIt) de keallu (MIT, © 2022 keallu).
-Lo adoptado es el conjunto de funciones; la implementación es propia.
+Sin importador de presets ECX. El ciclo sigue siendo visual, separado del reloj de simulación; no reproduce todos los comportamientos de Play It. No incluye su reloj flotante configurable, reloj del sistema ni todos sus atajos/preferencias. La niebla meteorológica negativa del legado no está representada: -1 significa liberar. La suite puede aplicarse parcialmente si una sección falla; devuelve false y debe revisarse, no es una transacción entre cuatro mods.
