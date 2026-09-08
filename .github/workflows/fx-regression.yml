@@ -14,14 +14,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: juanamores98/LumenFX
+          ref: a786c75c87785e0e79e7880794dc9de2123d66cf
           path: LumenFX
       - uses: actions/checkout@v4
         with:
           repository: juanamores98/AtmosphereFX
+          ref: c04c554f7b01f2ce34d4dd3dc0a941b43a17a1d6
           path: AtmosphereFX
       - uses: actions/checkout@v4
         with:
           repository: juanamores98/ClassicLightFX
+          ref: 6a4b6cc8efafa700c3ca0683b899fcdb47f15196
           path: ClassicLightFX
       - uses: actions/setup-dotnet@v4
         with:

@@ -19,7 +19,7 @@ namespace SceneFX
             {
                 if (!SceneRuntime.Active || SceneRuntime.VanillaMode) return string.Empty;
                 string claims = StyleEngine.ActiveClaims;
-                if (WorldController.PositionSet) claims += "sunPosition";
+                if (WorldController.PositionSet || Infrastructure.FxInterop.ClassicRequest("sunCoords")) claims += "sunPosition";
                 return claims;
             }
         }
@@ -139,7 +139,7 @@ namespace SceneFX
             }
         }
 
-        public static void RefreshDerivedState() {  NotifyStateChanged(); }
+        public static void RefreshDerivedState() { if (SceneRuntime.Active && !SceneRuntime.VanillaMode) WorldController.RefreshPosition(); NotifyStateChanged(); }
         public static bool ReadyForSuite { get { return UnityEngine.Object.FindObjectOfType<DayNightProperties>() != null && GameObject.Find("Main Camera") != null; } }
         public static string LastApplyError { get; private set; }
         public static string ApplicationStatus { get; private set; }

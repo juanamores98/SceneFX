@@ -51,8 +51,8 @@ namespace SceneFX
             var time = view.AddPage("Time");
             view.Number(time, "Hour (0–24)", () => Core.WorldController.ReadTimeHours(), v => WorldEdit(() => Core.WorldController.ApplyTime(v)), 0f, 24f, 0.01f);
             view.Check(time, "Lock hour", () => Core.WorldController.TimeLocked, v => WorldEdit(() => { if (v) Core.WorldController.ApplyTime(Core.WorldController.ReadTimeHours()); Core.WorldController.TimeLocked = v; }));
-            view.Number(time, "Latitude", () => ReadCoordinate(true), v => WorldEdit(() => Core.WorldController.ApplyPosition(v, ReadCoordinate(false))), -90f, 90f, 0.1f);
-            view.Number(time, "Longitude", () => ReadCoordinate(false), v => WorldEdit(() => Core.WorldController.ApplyPosition(ReadCoordinate(true), v)), -180f, 180f, 0.1f);
+            view.Number(time, "Latitude", () => ReadCoordinate(true), v => WorldEdit(() => Core.WorldController.ApplyPosition(v, ReadCoordinate(false))), -90f, 90f, 0.1f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("sunCoords"));
+            view.Number(time, "Longitude", () => ReadCoordinate(false), v => WorldEdit(() => Core.WorldController.ApplyPosition(ReadCoordinate(true), v)), -180f, 180f, 0.1f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("sunCoords"));
             view.Number(time, "Game speed", () => Core.TimeController.GameSpeed, v => WorldEdit(() => Core.TimeController.ApplyGameSpeed(v)), 0.01f, 5f, 0.01f);
             view.Check(time, "Control visual day/night speed", () => Core.TimeController.CycleSpeedEnabled, v => WorldEdit(() => Core.TimeController.CycleSpeedEnabled = v));
             view.Number(time, "Day speed (1 = game)", () => Core.TimeController.CycleSpeed, v => WorldEdit(() => { Core.TimeController.CycleSpeed = v; Core.TimeController.CycleSpeedEnabled = true; }), 0f, 128f, 0.01f);
@@ -72,7 +72,7 @@ namespace SceneFX
             view.Action(files, "Refresh presets", () => paths = Core.StyleStore.ListStyleFiles());
             string[] suites = Core.SuiteManager.ListSuiteFiles(); int suiteIndex = 0;
             view.Choice(files, "Saved suite", () => FileNames(suites, ".suite.xml"), () => suiteIndex, v => suiteIndex = v);
-            view.Action(files, "Apply selected suite", () => { if (suiteIndex >= 0 && suiteIndex < suites.Length && !Core.SuiteManager.ApplySuiteProfile(suites[suiteIndex])) throw new InvalidOperationException("The suite could not be applied."); });
+            view.Action(files, "Apply selected suite", () => { if (suiteIndex >= 0 && suiteIndex < suites.Length && !Core.SuiteManager.ApplySuiteProfile(suites[suiteIndex])) throw new InvalidOperationException(Core.SuiteManager.LastResult); });
             view.Action(files, "Save all four FX as suite", () => { Core.SuiteManager.SaveSuiteProfile(name); suites = Core.SuiteManager.ListSuiteFiles(); });
             view.Check(files, "Apply settings when a city loads", () => Core.SceneRuntime.ApplyOnLoad, v => { Core.SceneRuntime.ApplyOnLoad = v; Core.SceneRuntime.SaveOptions(); });
 

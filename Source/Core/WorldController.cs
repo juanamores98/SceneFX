@@ -65,6 +65,7 @@ namespace SceneFX.Core
         internal static bool TimeLocked;
         internal static bool TimeSet;
         internal static bool PositionSet;
+        internal static float RequestedLatitude, RequestedLongitude;
         internal static float TimeOfDayHours = 12f;   // 0..24
 
         // Canales del clima: -1 = lo lleva el juego.
@@ -114,7 +115,7 @@ namespace SceneFX.Core
 
             if (TimeLocked)
             {
-                dayNight.m_TimeOfDay = Mathf.Repeat(TimeOfDayHours, 24f);
+                Infrastructure.PropertyLedger.Write(dayNight, "m_TimeOfDay", Mathf.Repeat(TimeOfDayHours, 24f));
             }
 
             ApplyWeather();
@@ -128,7 +129,7 @@ namespace SceneFX.Core
             var dayNight = DayNight;
             if (dayNight != null)
             {
-                dayNight.m_TimeOfDay = TimeOfDayHours;
+                Infrastructure.PropertyLedger.Write(dayNight, "m_TimeOfDay", TimeOfDayHours);
             }
         }
 
@@ -148,10 +149,26 @@ namespace SceneFX.Core
             Snapshot();
             PositionSet = true;
             var dayNight = DayNight;
-            if (dayNight != null)
+            RequestedLatitude = Mathf.Clamp(latitude, -90f, 90f);
+            RequestedLongitude = Mathf.Clamp(longitude, -180f, 180f);
+            RefreshPosition();
+        }
+
+        internal static void RefreshPosition()
+        {
+            var dayNight = DayNight;
+            if (dayNight == null) return;
+            var classic = AppDomain.CurrentDomain.GetData("FX.ClassicCoordinates.v1") as float[];
+            bool useClassic = Infrastructure.FxInterop.ClassicRequest("sunCoords") && classic != null;
+            if (useClassic || PositionSet)
             {
-                dayNight.m_Latitude = Mathf.Clamp(latitude, -90f, 90f);
-                dayNight.m_Longitude = Mathf.Clamp(longitude, -180f, 180f);
+                Infrastructure.PropertyLedger.Write(dayNight, "m_Latitude", useClassic ? classic[0] : RequestedLatitude);
+                Infrastructure.PropertyLedger.Write(dayNight, "m_Longitude", useClassic ? classic[1] : RequestedLongitude);
+            }
+            else
+            {
+                Infrastructure.PropertyLedger.Release(dayNight, "m_Latitude");
+                Infrastructure.PropertyLedger.Release(dayNight, "m_Longitude");
             }
         }
 
@@ -270,11 +287,11 @@ namespace SceneFX.Core
             {
                 if (!_weatherWritten) _vanillaWeatherEnabled = weather.m_enableWeather;
                 _weatherWritten = true;
-                weather.m_enableWeather = WeatherEnabled == 1;
+                Infrastructure.PropertyLedger.Write(weather, "m_enableWeather", WeatherEnabled == 1);
             }
             else if (_weatherWritten)
             {
-                weather.m_enableWeather = _vanillaWeatherEnabled;
+                Infrastructure.PropertyLedger.Release(weather, "m_enableWeather");
                 _weatherWritten = false;
             }
 
@@ -282,11 +299,11 @@ namespace SceneFX.Core
             {
                 if (!_snowWritten) _vanillaRainIsSnow = weather.m_properties.m_rainIsSnow;
                 _snowWritten = true;
-                weather.m_properties.m_rainIsSnow = RainIsSnow == 1;
+                Infrastructure.PropertyLedger.Write(weather.m_properties, "m_rainIsSnow", RainIsSnow == 1);
             }
             else if (_snowWritten && weather.m_properties != null)
             {
-                weather.m_properties.m_rainIsSnow = _vanillaRainIsSnow;
+                Infrastructure.PropertyLedger.Release(weather.m_properties, "m_rainIsSnow");
                 _snowWritten = false;
             }
 
@@ -299,12 +316,12 @@ namespace SceneFX.Core
                 {
                     if (!_roadsWritten) _vanillaSnowyRoads = net.m_treatWetAsSnow;
                     _roadsWritten = true;
-                    net.m_treatWetAsSnow = SnowyRoads == 1;
+                    Infrastructure.PropertyLedger.Write(net, "m_treatWetAsSnow", SnowyRoads == 1);
                 }
             }
             else if (_roadsWritten && NetManager.instance != null)
             {
-                NetManager.instance.m_treatWetAsSnow = _vanillaSnowyRoads;
+                Infrastructure.PropertyLedger.Release(NetManager.instance, "m_treatWetAsSnow");
                 _roadsWritten = false;
             }
         }
@@ -318,8 +335,8 @@ namespace SceneFX.Core
                 var dayNight = DayNight;
                 if (dayNight != null && !ThemeOwnership.AtmosphereIsManaged)
                 {
-                    if (PositionSet) { dayNight.m_Latitude = _vanillaLatitude; dayNight.m_Longitude = _vanillaLongitude; }
-                    if (TimeSet) dayNight.m_TimeOfDay = _vanillaTime;
+                    Infrastructure.PropertyLedger.Release(dayNight, "m_Latitude"); Infrastructure.PropertyLedger.Release(dayNight, "m_Longitude");
+                    Infrastructure.PropertyLedger.Release(dayNight, "m_TimeOfDay");
                 }
             }
 
@@ -352,17 +369,17 @@ namespace SceneFX.Core
                 var weather = WeatherManager.instance;
                 if (weather != null)
                 {
-                    if (_weatherWritten) weather.m_enableWeather = _vanillaWeatherEnabled;
+                    if (_weatherWritten) Infrastructure.PropertyLedger.Release(weather, "m_enableWeather");
                     if (_snowWritten && weather.m_properties != null)
                     {
-                        weather.m_properties.m_rainIsSnow = _vanillaRainIsSnow;
+                        Infrastructure.PropertyLedger.Release(weather.m_properties, "m_rainIsSnow");
                     }
                 }
 
                 var net = NetManager.instance;
                 if (_roadsWritten && net != null)
                 {
-                    net.m_treatWetAsSnow = _vanillaSnowyRoads;
+                    Infrastructure.PropertyLedger.Release(net, "m_treatWetAsSnow");
                 }
             }
             catch (Exception e)
