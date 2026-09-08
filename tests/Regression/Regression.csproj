@@ -7,7 +7,11 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Stubs.cs;Program.cs;ConsolidationChecks.cs" />
+    <Compile Include="../../../SceneFX/Source/FxModule.cs;../../../SceneFX/Source/UI/PanelView.cs;../../../SceneFX/Source/UI/UiText.cs" />
+    <Compile Include="../../../LumenFX/Source/FxModule.cs;../../../LumenFX/Source/UI/PanelView.cs;../../../LumenFX/Source/UI/UiText.cs" />
+    <Compile Include="../../../AtmosphereFX/Source/FxModule.cs;../../../AtmosphereFX/Source/UI/PanelView.cs;../../../AtmosphereFX/Source/UI/UiText.cs" />
+    <Compile Include="../../../ClassicLightFX/Source/FxModule.cs;../../../ClassicLightFX/Source/UI/PanelView.cs;../../../ClassicLightFX/Source/UI/UiText.cs" />
+    <Compile Include="Stubs.cs;UiStubs.cs;Program.cs;ConsolidationChecks.cs;UiChecks.cs" />
     <Compile Include="../../../AtmosphereFX/Source/AtmosphereFXMod.cs" />
     <Compile Include="../../../AtmosphereFX/Source/Config/*.cs" />
     <Compile Include="../../../AtmosphereFX/Source/Runtime/SettingsApplier.cs;../../../AtmosphereFX/Source/Runtime/VanillaSnapshot.cs;../../../AtmosphereFX/Source/Runtime/PerFrameWatcher.cs" />

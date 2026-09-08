@@ -37,7 +37,7 @@ namespace UnityEngine {
   public static implicit operator Color(Color32 c){return new Color(c.r/255f,c.g/255f,c.b/255f,c.a/255f);}
  }
  public struct Vector3 {
-  public float x,y,z; public Vector3(float a,float b,float c){x=a;y=b;z=c;}
+  public float x,y,z; public Vector3(float a,float b,float c=0){x=a;y=b;z=c;}
   public static Vector3 zero=>new Vector3();
   public static Vector3 Lerp(Vector3 a,Vector3 b,float t){return new Vector3(Mathf.Lerp(a.x,b.x,t),Mathf.Lerp(a.y,b.y,t),Mathf.Lerp(a.z,b.z,t));}
   public static bool operator ==(Vector3 a,Vector3 b){return a.Equals(b);}
@@ -64,6 +64,7 @@ namespace UnityEngine {
   public static float Lerp(float a,float b,float t){return a+(b-a)*Clamp01(t);}
   public static float Abs(float v){return Math.Abs(v);}
   public static float Min(float a,float b){return Math.Min(a,b);}
+  public static int Max(int a,int b){return Math.Max(a,b);}
   public static int Min(int a,int b){return Math.Min(a,b);}
   public static float Max(float a,float b){return Math.Max(a,b);}
   public static bool Approximately(float a,float b){return Math.Abs(a-b)<.000001f;}
@@ -148,10 +149,6 @@ namespace ClassicLightFX.Options {internal static class OptionsPanel {internal s
 namespace ClassicLightFX.Core {public class ClassicEngine:UnityEngine.MonoBehaviour {public static void OpenWindow(){}}}
 namespace ClassicLightFX.UI {public static class UuiButton {public static void Register(string n,string d,UnityEngine.Texture2D t,Action<bool>a){} public static void Unregister(){} } public static class TrayIcon{public static UnityEngine.Texture2D Make(){return null;}} }
 
-namespace AtmosphereFX { public static class FxModule {internal static void OpenStandalone(bool toggle=false){} internal static void CloseStandalone(){} public static void Release(){} public static void ApplyOptimized(){} } }
 
-namespace LumenFX { public static class FxModule {internal static void OpenStandalone(bool toggle=false){} internal static void CloseStandalone(){} public static void Release(){} public static void ApplyOptimized(){} } }
 
-namespace ClassicLightFX { public static class FxModule {internal static void OpenStandalone(bool toggle=false){} internal static void CloseStandalone(){} public static void Release(){} public static void ApplyOptimized(){} } }
 
-namespace SceneFX { public static class FxModule {internal static void OpenStandalone(bool toggle=false){} internal static void CloseStandalone(){} public static void Release(){} public static void ApplyOptimized(){} } }

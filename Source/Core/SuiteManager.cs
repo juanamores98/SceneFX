@@ -21,9 +21,8 @@ namespace SceneFX.Core
         {
             get
             {
-                return Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    Path.Combine("Colossal Order", Path.Combine("Cities_Skylines", "ModConfig\\SceneFX")));
+                return Path.Combine(ColossalFramework.IO.DataLocation.localApplicationData,
+                    Path.Combine("ModConfig", "SceneFX"));
             }
         }
 

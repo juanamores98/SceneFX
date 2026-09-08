@@ -128,6 +128,7 @@ partial class Program {
   LumenFX.IO.StateStore.Load();TunerRuntime.ApplyAll();
   Check("L06 lighting rebuilt in second city without editing",!ReferenceEquals(secondCityGradient,DayNightProperties.instance.m_LightColor),"persisted warmth="+state.Warmth+" LightingDirty="+state.LightingDirty+" gradient reference unchanged="+ReferenceEquals(secondCityGradient,DayNightProperties.instance.m_LightColor));
   ConsolidationChecks();
+  UiChecks();
   ExtraChecks();
   TransitionChecks();
   Console.WriteLine("SUMMARY PASS="+pass+" FAIL="+fail+". FAIL denotes a regression requirement that remains unmet.");
@@ -252,7 +253,9 @@ partial class Program {
   WorldController.SetChannel("rain",.8f);WorldController.TimeLocked=true;SceneRuntime.WorldChanged();
   accepted=SceneFX.Core.QuickPresets.ApplyOptimized();
   Check("S08 optimized releases temporary locks",accepted&&!WorldController.TimeLocked&&WorldController.RainIntensity<0f,"DEFAULT keeps the world game-owned");
-  Check("S09 missing LUT is explicit",StyleEngine.LastLutError.Contains("1539181199.Relight2Average")&&ColorCorrectionManager.instance.lastSelection==0,"no procedural or loosely matched replacement");
+  ColorCorrectionManager.instance.items = new[] { "Original", "Other" }; ColorCorrectionManager.instance.currentSelection = 0;
+  accepted = SceneFX.Core.QuickPresets.ApplyOptimized();
+  Check("S09 missing LUT is explicit",!accepted && StyleEngine.LastLutError.Contains("1539181199.Relight2Average")&&ColorCorrectionManager.instance.lastSelection==0,"no procedural or loosely matched replacement");
   FreshWorld();
   var lut=new ColossalFramework.ColorCorrectionLut();var bloom=new UnityStandardAssets.ImageEffects.Bloom();var rain=new RainParticleProperties();
   var style=new StyleData {LutEnabled=0,ToneEnabled=0,BloomEnabled=0,RainMotionBlur=1};
