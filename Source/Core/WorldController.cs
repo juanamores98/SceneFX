@@ -154,6 +154,16 @@ namespace SceneFX.Core
             RefreshPosition();
         }
 
+        internal static void ReleasePosition()
+        {
+            PositionSet = false; RefreshPosition();
+        }
+        internal static void ReleaseTime()
+        {
+            TimeSet = false;
+            if (DayNight != null) Infrastructure.PropertyLedger.Release(DayNight, "m_TimeOfDay");
+        }
+
         internal static void RefreshPosition()
         {
             var dayNight = DayNight;

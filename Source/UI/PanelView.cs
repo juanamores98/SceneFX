@@ -232,6 +232,9 @@ namespace SceneFX.UI
             _resize.Add(w =>
             {
                 title.width = w - 112f;
+                title.height = Mathf.Max(30f, (float)Math.Ceiling(title.text.Length / Math.Max(1f, title.width / 8f)) * 18f);
+                slider.relativePosition = new Vector3(4f, title.height + 2f);
+                row.height = title.height + 24f;
                 field.relativePosition = new Vector3(w - 108f, 0f);
                 resetButton.relativePosition = new Vector3(w - 24f, 0f);
                 slider.width = w - 8f;
@@ -311,6 +314,7 @@ namespace SceneFX.UI
             {
                 foreach (var refresh in _refresh) refresh();
                 _status.text = string.IsNullOrEmpty(_error) ? _statusText() : _error;
+                _status.tooltip = _status.text;
                 SetSize(Root.width, Root.height);
             }
             finally { _refreshing = false; }

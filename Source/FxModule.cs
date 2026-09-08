@@ -17,7 +17,7 @@ namespace SceneFX
         public static void Release() { if (!Core.QuickPresets.ApplyVanilla()) throw new InvalidOperationException("VANILLA could not be applied."); Flush(); }
         public static void ApplyOptimized() { if (!Core.QuickPresets.ApplyOptimized()) throw new InvalidOperationException(SceneFXMod.LastApplyError ?? "Default could not be applied."); Flush(); }
         public static void Flush() { Core.SceneRuntime.SaveOptions(); Core.SceneRuntime.Flush(); }
-        public static string Status { get { return !string.IsNullOrEmpty(Infrastructure.FxStorage.LastError) ? Infrastructure.FxStorage.LastError : !string.IsNullOrEmpty(Core.StyleEngine.LastLutError) ? Core.StyleEngine.LastLutError : Mode; } }
+        public static string Status { get { return !string.IsNullOrEmpty(Infrastructure.FxStorage.LastError) ? Infrastructure.FxStorage.LastError : !string.IsNullOrEmpty(Infrastructure.PropertyLedger.LastWarning) ? Infrastructure.PropertyLedger.LastWarning : !string.IsNullOrEmpty(Core.StyleEngine.LastLutError) ? Core.StyleEngine.LastLutError : Mode; } }
 
         public static PanelView CreatePanel(UIComponent parent, float width = PreferredWidth, float height = 680f)
         {

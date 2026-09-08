@@ -58,7 +58,9 @@ namespace SceneFX.Core
         {
             WorldController.TimeLocked = style.TimeLocked;
             if (style.TimeSet || style.IncludeWorld) WorldController.ApplyTime(style.TimeOfDay);
+            else WorldController.ReleaseTime();
             if (style.PositionSet || style.IncludeWorld) WorldController.ApplyPosition(style.Latitude, style.Longitude);
+            else WorldController.ReleasePosition();
 
             WorldController.RainIntensity = style.Rain < 0f ? -1f : Mathf.Clamp(style.Rain, 0f, 2.5f);
             WorldController.FogIntensity = Clamped(style.Fog);

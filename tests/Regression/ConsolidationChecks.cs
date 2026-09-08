@@ -88,6 +88,10 @@ partial class Program
         ClassicLightFX.Core.ClassicLook.Release();
         Check("FX08 coordinate release reveals saved Scene position", Equal(DayNightProperties.instance.m_Latitude,10f) && Equal(DayNightProperties.instance.m_Longitude,20f), "position ownership released without old capture");
         FreshWorld();
+        WorldController.ApplyPosition(10f,20f); WorldController.ApplyTime(5f); SceneRuntime.WorldChanged();
+        bool defaultAccepted=QuickPresets.ApplyOptimized();
+        Check("FX06 Default releases explicit coordinates and time", defaultAccepted && !WorldController.PositionSet && !WorldController.TimeSet && Equal(DayNightProperties.instance.m_Latitude,36f), "recipe's Game axes restore the acquired reference");
+        FreshWorld();
         state.ToneEnabled=0; state.LegacySceneLighting=true; state.LegacySceneSunMultiplier=1.5f; state.LegacySceneWarmth=0.3f;
         var savedPreset=LumenFX.Presets.PresetLibrary.Capture("complete-v3");
         state.ResetToNeutral(); LumenFX.Presets.PresetLibrary.Apply(savedPreset);
