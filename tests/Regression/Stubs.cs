@@ -45,6 +45,9 @@ namespace UnityEngine {
   public override bool Equals(object o){return o is Vector3 v&&x==v.x&&y==v.y&&z==v.z;}
   public override int GetHashCode(){return x.GetHashCode();}
  }
+ public struct Vector4 {
+  public float x,y,z,w; public Vector4(float a,float b,float c=0,float d=0){x=a;y=b;z=c;w=d;}
+ }
  public struct GradientColorKey { public Color color; public float time; public GradientColorKey(Color c,float t){color=c;time=t;} }
  public struct GradientAlphaKey { public float alpha,time; public GradientAlphaKey(float a,float t){alpha=a;time=t;} }
  public class Gradient {
@@ -74,6 +77,7 @@ namespace UnityEngine {
  public static class Application { public static void OpenURL(string url) {throw new Exception("External access blocked in audit");} }
  public enum KeyCode { F10,F11,LeftControl,LeftAlt,L }
  public static class Input { public static bool GetKeyDown(KeyCode k){return false;} public static bool GetKey(KeyCode k){return false;} }
+ public static class Shader { public static void SetGlobalVector(string name, Vector4 value) {} public static void SetGlobalVector(int name, Vector4 value) {} }
 }
 namespace ColossalFramework {
  public class ColorCorrectionLut:UnityEngine.Behaviour {}
@@ -112,13 +116,14 @@ public class DayNightProperties:UnityEngine.Object {
  public UnityEngine.Vector3 m_WaveLengths=new UnityEngine.Vector3(680,550,440);
  public float normalizedTimeOfDay=>m_TimeOfDay / 24f;
  public UnityEngine.Color currentLightColor=>new UnityEngine.Color(1,1,1);
+ public void Refresh() {}
  public class AmbientColor {private UnityEngine.Gradient m_SkyColor=new UnityEngine.Gradient(),m_EquatorColor=new UnityEngine.Gradient(),m_GroundColor=new UnityEngine.Gradient();}
 }
 public class FogProperties:UnityEngine.Object {public float m_ColorDecay=.2f,m_FogDensity=.00223f,m_NoiseContribution=1,m_WindSpeed=.001f,m_FogHeight=1000,m_HorizonHeight=800,m_FogStart=194;public bool m_edgeFog=true;}
 public class FogEffect:UnityEngine.Object {public bool enabled,m_edgeFog=true,m_UseVolumeFog;public float m_FogHeight=5000,m_3DFogStart,m_3DFogDistance=10,m_edgeFogDistance;}
 public class DayNightFogEffect:UnityEngine.Object {public bool enabled=true;}
 public class RenderProperties:UnityEngine.Object {public bool m_useVolumeFog=true; public float m_fogHeight=5000,m_volumeFogDensity,m_volumeFogDistance=4800,m_edgeFogDistance; public float m_inscatteringExponent=1.7f,m_inscatteringIntensity=1.72f,m_volumeFogStart;public UnityEngine.Color m_inscatteringColor,m_volumeFogColor;public ColossalFramework.Texture3DWrapper m_ColorCorrectionLUT;}
-public class SimulationManager {public static SimulationManager instance=ColossalFramework.Singleton<SimulationManager>.instance; public bool m_isNightTime,m_enableDayNight=true,SimulationPaused; public const float SUNRISE_HOUR=5, SUNSET_HOUR=20; public const uint DAYTIME_FRAMES=65536; public int SelectedSimulationSpeed=1; public float m_currentDayTimeHour=12;}
+public class SimulationManager {public static SimulationManager instance=ColossalFramework.Singleton<SimulationManager>.instance; public bool m_isNightTime,m_enableDayNight=true,SimulationPaused; public const float SUNRISE_HOUR=5, SUNSET_HOUR=20; public const uint DAYTIME_FRAMES=65536; public int SelectedSimulationSpeed=1; public float m_currentDayTimeHour=12; public uint m_dayTimeOffsetFrames, m_referenceFrameIndex, m_currentFrameIndex;}
 public class WeatherProperties {public bool m_rainIsSnow;}
 public class WeatherManager {public static WeatherManager instance=new WeatherManager();public bool m_enableWeather=true;public WeatherProperties m_properties=new WeatherProperties();public float m_currentRain,m_targetRain,m_currentFog,m_targetFog,m_currentCloud,m_targetCloud,m_currentNorthernLights,m_targetNorthernLights,m_currentRainbow,m_targetRainbow,m_groundWetness,m_targetTemperature,m_currentTemperature,m_targetDirection,m_windDirection;}
 public class NetManager {public static NetManager instance=new NetManager();public bool m_treatWetAsSnow;}

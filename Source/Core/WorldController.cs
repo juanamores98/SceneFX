@@ -25,6 +25,8 @@ namespace SceneFX.Core
         private static float _vanillaLatitude;
         private static float _vanillaTime;
         private static float _vanillaLongitude;
+        private static bool _vanillaDayNightEnabled;
+        private static uint _vanillaDayTimeOffsetFrames;
         private static bool _vanillaWeatherEnabled;
         private static bool _vanillaRainIsSnow;
         private static bool _vanillaSnowyRoads;
@@ -102,20 +104,43 @@ namespace SceneFX.Core
                 _vanillaLongitude = dayNight.m_Longitude;
             }
 
-            _snapshotTaken = dayNight != null;
+            var sim = SimulationManager.instance;
+            if (sim != null)
+            {
+                _vanillaDayNightEnabled = sim.m_enableDayNight;
+                _vanillaDayTimeOffsetFrames = sim.m_dayTimeOffsetFrames;
+            }
+
+            _snapshotTaken = dayNight != null || sim != null;
         }
 
         internal static void Tick()
         {
             var dayNight = DayNight;
-            if (dayNight == null)
-            {
-                return;
-            }
+            var sim = SimulationManager.instance;
 
             if (TimeLocked)
             {
-                Infrastructure.PropertyLedger.Write(dayNight, "m_TimeOfDay", Mathf.Repeat(TimeOfDayHours, 24f));
+                if (sim != null)
+                {
+                    sim.m_enableDayNight = true;
+                    uint newFrameIndex = (uint)(TimeOfDayHours / 24f * SimulationManager.DAYTIME_FRAMES);
+                    uint currentFrame = sim.m_referenceFrameIndex;
+                    sim.m_dayTimeOffsetFrames = (newFrameIndex - currentFrame) & (SimulationManager.DAYTIME_FRAMES - 1);
+                    sim.m_currentDayTimeHour = TimeOfDayHours;
+                    sim.m_isNightTime = TimeOfDayHours < SimulationManager.SUNRISE_HOUR || TimeOfDayHours > SimulationManager.SUNSET_HOUR;
+                    Shader.SetGlobalVector("_DayNightTime", new Vector4(TimeOfDayHours, TimeOfDayHours / 24f, 0f, 0f));
+                }
+
+                if (dayNight != null)
+                {
+                    Infrastructure.PropertyLedger.Write(dayNight, "m_TimeOfDay", Mathf.Repeat(TimeOfDayHours, 24f));
+                    dayNight.Refresh();
+                }
+            }
+            else if (TimeSet && sim != null)
+            {
+                TimeOfDayHours = sim.m_currentDayTimeHour;
             }
 
             ApplyWeather();
@@ -126,19 +151,44 @@ namespace SceneFX.Core
             Snapshot();
             TimeSet = true;
             TimeOfDayHours = Mathf.Repeat(Infrastructure.FxStorage.Clamp(hours, 0f, 24f), 24f);
+
+            var sim = SimulationManager.instance;
+            if (sim != null)
+            {
+                sim.m_enableDayNight = true;
+                uint newFrameIndex = (uint)(TimeOfDayHours / 24f * SimulationManager.DAYTIME_FRAMES);
+                uint currentFrame = sim.m_referenceFrameIndex;
+                sim.m_dayTimeOffsetFrames = (newFrameIndex - currentFrame) & (SimulationManager.DAYTIME_FRAMES - 1);
+                sim.m_currentDayTimeHour = TimeOfDayHours;
+                sim.m_isNightTime = TimeOfDayHours < SimulationManager.SUNRISE_HOUR || TimeOfDayHours > SimulationManager.SUNSET_HOUR;
+                Shader.SetGlobalVector("_DayNightTime", new Vector4(TimeOfDayHours, TimeOfDayHours / 24f, 0f, 0f));
+            }
+
             var dayNight = DayNight;
             if (dayNight != null)
             {
                 Infrastructure.PropertyLedger.Write(dayNight, "m_TimeOfDay", TimeOfDayHours);
+                dayNight.Refresh();
             }
         }
 
         internal static float ReadTimeHours()
         {
+            if (TimeLocked)
+            {
+                return TimeOfDayHours;
+            }
+
             var dayNight = DayNight;
             if (dayNight != null)
             {
                 return dayNight.m_TimeOfDay;
+            }
+
+            var sim = SimulationManager.instance;
+            if (sim != null)
+            {
+                return sim.m_currentDayTimeHour;
             }
 
             return TimeOfDayHours;
@@ -161,7 +211,14 @@ namespace SceneFX.Core
         internal static void ReleaseTime()
         {
             TimeSet = false;
+            TimeLocked = false;
             if (DayNight != null) Infrastructure.PropertyLedger.Release(DayNight, "m_TimeOfDay");
+            var sim = SimulationManager.instance;
+            if (sim != null && _snapshotTaken)
+            {
+                sim.m_enableDayNight = _vanillaDayNightEnabled;
+                sim.m_dayTimeOffsetFrames = _vanillaDayTimeOffsetFrames;
+            }
         }
 
         internal static void RefreshPosition()
@@ -347,6 +404,13 @@ namespace SceneFX.Core
                 {
                     Infrastructure.PropertyLedger.Release(dayNight, "m_Latitude"); Infrastructure.PropertyLedger.Release(dayNight, "m_Longitude");
                     Infrastructure.PropertyLedger.Release(dayNight, "m_TimeOfDay");
+                }
+
+                var sim = SimulationManager.instance;
+                if (sim != null)
+                {
+                    sim.m_enableDayNight = _vanillaDayNightEnabled;
+                    sim.m_dayTimeOffsetFrames = _vanillaDayTimeOffsetFrames;
                 }
             }
 

@@ -184,6 +184,7 @@ namespace SceneFX.Core
 
             _ownTod = Mathf.Repeat(_ownTod + step, 1f);
             dayNight.m_TimeOfDay = _ownTod * 24f;
+            dayNight.Refresh();
         }
 
         private static float SpeedFor(float normalizedTimeOfDay)

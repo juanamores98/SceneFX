@@ -222,6 +222,9 @@ partial class Program {
   WorldController.TimeLocked=true;WorldController.ApplyTime(18f);WorldController.Tick();
   Check("S07 locked hour uses engine hours",Equal(DayNightProperties.instance.m_TimeOfDay,18f),"18 hours remains 18");
   FreshWorld();
+  WorldController.ApplyTime(23f);
+  Check("S22 night hour activates night flag and simulation frames",SimulationManager.instance.m_isNightTime&&Equal(SimulationManager.instance.m_currentDayTimeHour,23f)&&SimulationManager.instance.m_enableDayNight,"night simulation time and cycle enabled");
+  FreshWorld();
   float oldDensity=AC.Density;
   bool accepted=AtmosphereFX.AtmosphereFXMod.ApplySuiteSection("<atmospherefx><density>0.001</density><noise>NaN</noise></atmospherefx>");
   Check("A05 rejected API section is atomic",!accepted&&Equal(AC.Density,oldDensity),"valid first field not committed before invalid second field");
