@@ -1,4 +1,4 @@
-// Test-only event/focus doubles; not a simulation of native rendering or layout.
+﻿// Test-only event/focus doubles; not a simulation of native rendering or layout.
 using System;
 using System.Collections.Generic;
 namespace UnityEngine
@@ -8,7 +8,15 @@ namespace UnityEngine
 }
 namespace ColossalFramework.Globalization
 {
-    public class LocaleManager { public static bool exists=true; public static LocaleManager instance=new LocaleManager(); public string language="en"; }
+    public class Locale {
+     public struct Key { public string m_Identifier, m_Key; public int m_Index; }
+     readonly System.Collections.Generic.Dictionary<string,string> _s = new System.Collections.Generic.Dictionary<string,string>();
+     static string Id(Key k) { return k.m_Identifier+"["+k.m_Key+"]:"+k.m_Index; }
+     public bool Exists(Key k) { return _s.ContainsKey(Id(k)); }
+     public void AddLocalizedString(Key k, string v) { _s[Id(k)] = v; }
+     public int Count { get { return _s.Count; } }
+    }
+    public class LocaleManager { public static bool exists=true; public static LocaleManager instance=new LocaleManager(); public string language="en"; private Locale m_Locale=new Locale(); }
 }
 namespace ColossalFramework.UI
 {

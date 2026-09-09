@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using SceneFX.Infrastructure;
 using System.Reflection;
 using UnityEngine;
@@ -63,7 +63,7 @@ namespace SceneFX.Core
             else WorldController.ReleasePosition();
 
             WorldController.RainIntensity = style.Rain < 0f ? -1f : Mathf.Clamp(style.Rain, 0f, 2.5f);
-            WorldController.FogIntensity = Clamped(style.Fog);
+            WorldController.FogIntensity = Clamped(style.Fog, WorldController.FogFloor);
             WorldController.CloudIntensity = Clamped(style.Cloud);
             WorldController.NorthernLights = Clamped(style.NorthernLights);
             WorldController.Rainbow = Clamped(style.Rainbow);
@@ -133,7 +133,21 @@ namespace SceneFX.Core
 
         private static float Clamped(float value)
         {
-            return value < 0f ? -1f : Mathf.Clamp01(value);
+            return Clamped(value, 0f);
+        }
+
+        /// <summary>
+        /// Recorta un canal del clima respetando su suelo, que en la niebla es negativo.
+        /// </summary>
+        /// <remarks>
+        /// Hay dos clases de valor negativo y no se pueden confundir: -1 significa «esto lo
+        /// lleva el juego», y cualquier cosa entre el suelo del canal y 1 es un ajuste. Para
+        /// la niebla el suelo es -0,485, asi que un recorte que mande a -1 todo lo negativo
+        /// convierte un ajuste valido en un canal suelto.
+        /// </remarks>
+        private static float Clamped(float value, float floor)
+        {
+            return value <= -0.9f ? -1f : Mathf.Clamp(value, floor, 1f);
         }
 
         private static int TriState(int value)

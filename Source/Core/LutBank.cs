@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -174,7 +174,43 @@ namespace SceneFX.Core
             grown[grown.Length - 1] = wrapper;
             manager.m_BuiltinLUTs = grown;
             Added.Add(wrapper);
+            Localize(name);
             UpdateItems(manager);
+        }
+
+        /// <summary>Da nombre a la tabla en el idioma del juego.</summary>
+        /// <remarks>
+        /// El juego traduce el nombre de cada tabla incluida buscando la clave
+        /// <c>BUILTIN_COLORCORRECTION</c>. Sin registrarla, cada vez que se dibuja el
+        /// desplegable escribe una linea de error por tabla en el log —dieciocho por apertura
+        /// en la primera medida— y ademas el nombre sale vacio. Se registra el propio nombre
+        /// como su traduccion: no hay nada que traducir, pero la clave tiene que existir.
+        /// </remarks>
+        private static void Localize(string name)
+        {
+            try
+            {
+                if (!ColossalFramework.Globalization.LocaleManager.exists) return;
+                var field = typeof(ColossalFramework.Globalization.LocaleManager).GetField(
+                    "m_Locale", BindingFlags.Instance | BindingFlags.NonPublic);
+                var locale = field == null
+                    ? null
+                    : field.GetValue(ColossalFramework.Globalization.LocaleManager.instance)
+                        as ColossalFramework.Globalization.Locale;
+                if (locale == null) return;
+                var key = new ColossalFramework.Globalization.Locale.Key
+                {
+                    m_Identifier = "BUILTIN_COLORCORRECTION",
+                    m_Key = name,
+                    m_Index = 0
+                };
+                if (!locale.Exists(key)) locale.AddLocalizedString(key, name);
+            }
+            catch (Exception failure)
+            {
+                // Un nombre sin traducir no impide usar la tabla: se anota y se sigue.
+                Debug.Log("[SceneFX] no se pudo nombrar la tabla " + name + ": " + failure.Message);
+            }
         }
 
         private static void UpdateItems(ColorCorrectionManager manager)

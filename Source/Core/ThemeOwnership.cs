@@ -44,7 +44,7 @@ namespace SceneFX.Core
 
                 if (_present)
                 {
-                    Debug.Log("[SceneFX] Theme Mixer administra la atmósfera: se ceden la exposición y la posición solar.");
+                    Debug.Log("[SceneFX] Theme Mixer administra la atmósfera: al descargar no se devuelven la latitud, la longitud ni la hora. Mientras juegas se aplican con normalidad.");
                 }
 
                 return _present;

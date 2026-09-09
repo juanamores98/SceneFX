@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
@@ -8,20 +8,78 @@ namespace SceneFX.Infrastructure
     internal static class FxStorage
     {
         internal static string LastError = string.Empty;
-        private static XmlElement _optimized;
+        private static readonly System.Collections.Generic.Dictionary<Type, XmlElement> Optimized
+            = new System.Collections.Generic.Dictionary<Type, XmlElement>();
+
+        internal static string LastNote = string.Empty;
+
+        /// <summary>
+        /// Que campos del preset no quedaron como pedia, o null si quedaron todos.
+        /// </summary>
+        /// <remarks>
+        /// <b>Para que.</b> Un preset puede aplicarse sin error y aun asi no verse: otro mod
+        /// prioritario administra ese campo, el juego lo reescribe cada fotograma, o el valor
+        /// se recorta al llegar. Sin esto, lo unico que ve quien pulsa es que no pasa nada, y
+        /// lo natural es volver a pulsar. Con esto, el panel dice cual es el campo.
+        ///
+        /// Se compara contra el estado exportado, que es lo que el mod cree tener, no contra
+        /// el juego: si el mod cree tenerlo y no se ve, el problema esta fuera de aqui y el
+        /// dueño real de ese campo es otro.
+        /// </remarks>
+        internal static string OptimizedGap(string xml, Type module)
+        {
+            try
+            {
+                if (!LoadOptimized(module)) return null;
+                var current = new XmlDocument(); current.LoadXml(xml);
+                var differ = new System.Collections.Generic.List<string>();
+                foreach (XmlNode wanted in Optimized[module].ChildNodes)
+                {
+                    if (wanted.NodeType != XmlNodeType.Element) continue;
+                    string value = null;
+                    foreach (XmlNode field in current.DocumentElement.ChildNodes)
+                        if (field.Name.Equals(wanted.Name, StringComparison.OrdinalIgnoreCase)) value = field.InnerText;
+                    if (value == null) { differ.Add(wanted.Name + " (not published)"); continue; }
+                    if (!SameValue(value, wanted.InnerText)) differ.Add(wanted.Name + " = " + value + ", asked " + wanted.InnerText);
+                }
+
+                if (differ.Count == 0) return null;
+                if (differ.Count > 3) return string.Join("; ", differ.GetRange(0, 3).ToArray()) + " and " + (differ.Count - 3) + " more";
+                return string.Join("; ", differ.ToArray());
+            }
+            catch (Exception failure)
+            {
+                return "could not be checked: " + failure.Message;
+            }
+        }
+
+        private static bool LoadOptimized(Type module)
+        {
+            XmlElement cached;
+            if (Optimized.TryGetValue(module, out cached)) return cached != null;
+            using (var stream = module.Assembly.GetManifestResourceStream(module.Namespace + ".BuiltIns.Optimized.xml"))
+            {
+                var preset = stream == null ? null : new XmlDocument();
+                if (preset != null) preset.Load(stream);
+                Optimized[module] = cached = preset == null ? null : preset.DocumentElement;
+                return cached != null;
+            }
+        }
+
+        private static bool SameValue(string a, string b)
+        {
+            float x, y;
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            if (float.TryParse(a, System.Globalization.NumberStyles.Float, culture, out x)
+                && float.TryParse(b, System.Globalization.NumberStyles.Float, culture, out y)) return x == y;
+            return a.Equals(b, StringComparison.OrdinalIgnoreCase);
+        }
 
         internal static bool MatchesOptimized(string xml, Type module)
         {
-            if (_optimized == null)
-            {
-                using (var stream = module.Assembly.GetManifestResourceStream(module.Namespace + ".BuiltIns.Optimized.xml"))
-                {
-                    if (stream == null) return false;
-                    var preset = new XmlDocument(); preset.Load(stream); _optimized = preset.DocumentElement;
-                }
-            }
+            if (!LoadOptimized(module)) return false;
             var current = new XmlDocument(); current.LoadXml(xml);
-            foreach (XmlNode wanted in _optimized.ChildNodes)
+            foreach (XmlNode wanted in Optimized[module].ChildNodes)
             {
                 if (wanted.NodeType != XmlNodeType.Element) continue;
                 string value = null;

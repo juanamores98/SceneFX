@@ -126,10 +126,110 @@ partial class Program
             Array.IndexOf(StyleEngine.ListLuts(), baked) >= 0,
             "baked as '" + baked + "'");
 
+        // El juego traduce el nombre de cada tabla incluida. Sin la clave, escribia una
+        // linea de error por tabla cada vez que se dibujaba el desplegable: dieciocho por
+        // apertura en la primera medida en partida.
+        Check("R17b every own table gets its localized name",
+            LocaleEntries() >= 6,
+            "entries registered under BUILTIN_COLORCORRECTION = " + LocaleEntries());
+
         LutBank.Unregister();
         Check("R17 unregistering leaves the list exactly as it was",
             manager.m_BuiltinLUTs.Length == builtInsBefore
             && string.Join("|", manager.items) == string.Join("|", before),
             "entries=" + manager.m_BuiltinLUTs.Length + " expected=" + builtInsBefore);
+
+        // ---- Un clic en Optimized tiene que bastar --------------------------------
+        // El usuario reporta que a veces hay que pulsarlo varias veces. Si el primer
+        // clic dejara algo sin aplicar, el segundo daria un estado distinto: aplicar
+        // dos veces seguidas es la forma de verlo sin mirar la pantalla.
+        FreshWorld();
+        TunerRuntime.CurrentState.Gamma = 1.9f;
+        TunerRuntime.CurrentState.SunPower = 1f;
+        TunerRuntime.CurrentState.VanillaMode = false;
+        TunerRuntime.ApplyAll();
+
+        LumenFX.FxModule.ApplyOptimized();
+        string lumenOnce = LumenFX.LumenFXMod.ExportSuiteSection();
+        float toneOnce = ObjectTone().m_ToneMappingGamma;
+        float sunOnce = DayNightProperties.instance.m_SunIntensity;
+        string modeOnce = LumenFX.FxModule.Mode;
+
+        LumenFX.FxModule.ApplyOptimized();
+        Check("R18 one click on Optimized is enough for LumenFX",
+            lumenOnce == LumenFX.LumenFXMod.ExportSuiteSection(),
+            "settings after the second click " + (lumenOnce == LumenFX.LumenFXMod.ExportSuiteSection() ? "identical" : "DIFFERENT"));
+        Check("R19 and the engine already had the values after the first",
+            Equal(toneOnce, ObjectTone().m_ToneMappingGamma)
+            && Equal(sunOnce, DayNightProperties.instance.m_SunIntensity),
+            "gamma " + toneOnce + " -> " + ObjectTone().m_ToneMappingGamma
+            + ", sun " + sunOnce + " -> " + DayNightProperties.instance.m_SunIntensity);
+        Check("R19b nothing is reported as left over when it all took",
+            LumenFX.Infrastructure.FxStorage.OptimizedGap(
+                LumenFX.LumenFXMod.ExportSuiteSection(), typeof(LumenFX.LumenFXMod)) == null,
+            "gap after a clean apply = "
+            + (LumenFX.Infrastructure.FxStorage.OptimizedGap(
+                LumenFX.LumenFXMod.ExportSuiteSection(), typeof(LumenFX.LumenFXMod)) ?? "none"));
+
+        Check("R20 the button reports OPTIMIZED after one click",
+            modeOnce == "OPTIMIZED",
+            "mode after the first click = " + modeOnce);
+
+        FreshWorld();
+        AtmosphereFX.Config.ModConfig.Density = 0.0009f;
+        AtmosphereFX.Config.ModConfig.VanillaMode = false;
+        AtmosphereFX.Runtime.SettingsApplier.ApplyAll();
+        AtmosphereFX.FxModule.ApplyOptimized();
+        string atmoOnce = AtmosphereFX.AtmosphereFXMod.ExportSuiteSection();
+        string atmoModeOnce = AtmosphereFX.FxModule.Mode;
+        AtmosphereFX.FxModule.ApplyOptimized();
+        Check("R21 one click on Optimized is enough for AtmosphereFX",
+            atmoOnce == AtmosphereFX.AtmosphereFXMod.ExportSuiteSection()
+            && atmoModeOnce == "OPTIMIZED",
+            "mode after the first click = " + atmoModeOnce);
+
+        FreshWorld();
+        ClassicLightFX.FxModule.ApplyOptimized();
+        string classicOnce = ClassicLightFX.ClassicLightFXMod.ExportSuiteSection();
+        string classicModeOnce = ClassicLightFX.FxModule.Mode;
+        ClassicLightFX.FxModule.ApplyOptimized();
+        Check("R22 one click on Optimized is enough for ClassicLightFX",
+            classicOnce == ClassicLightFX.ClassicLightFXMod.ExportSuiteSection()
+            && classicModeOnce == "OPTIMIZED",
+            "mode after the first click = " + classicModeOnce);
+
+        FreshWorld();
+        SceneFX.FxModule.ApplyOptimized();
+        string sceneOnce = SceneFX.SceneFXMod.ExportSuiteSection();
+        string sceneModeOnce = SceneFX.FxModule.Mode;
+        SceneFX.FxModule.ApplyOptimized();
+        Check("R23 one click on Optimized is enough for SceneFX",
+            sceneOnce == SceneFX.SceneFXMod.ExportSuiteSection()
+            && sceneModeOnce == "OPTIMIZED",
+            "mode after the first click = " + sceneModeOnce);
+
+        // ---- Y el camino de los presets respeta el suelo de la niebla -------------
+        // Medido en partida: por aqui, -0,485 se convertia en -1 y el canal quedaba
+        // suelto. La interfaz pasaba por SetChannel y si lo respetaba.
+        FreshWorld();
+        StyleEngine.ApplyWorld(new StyleData { Fog = -0.485f, IncludeWorld = true });
+        Check("R24 a preset can ask for negative fog",
+            Equal(WorldController.FogIntensity, -0.485f),
+            "asked -0.485 through ApplyWorld, got " + WorldController.FogIntensity);
+
+        StyleEngine.ApplyWorld(new StyleData { Fog = -1f, IncludeWorld = true });
+        Check("R25 and minus one through the same path still releases",
+            !WorldController.ChannelLocked("fog"),
+            "released=" + !WorldController.ChannelLocked("fog"));
+    }
+
+    static int LocaleEntries()
+    {
+        var field = typeof(ColossalFramework.Globalization.LocaleManager).GetField(
+            "m_Locale", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var locale = field == null ? null
+            : field.GetValue(ColossalFramework.Globalization.LocaleManager.instance)
+                as ColossalFramework.Globalization.Locale;
+        return locale == null ? 0 : locale.Count;
     }
 }
