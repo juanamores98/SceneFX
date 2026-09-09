@@ -9,7 +9,8 @@ namespace SceneFX
     /// <summary>Small public boundary for a standalone or embedded native panel.</summary>
     public static class FxModule
     {
-        public const float PreferredWidth = 360f;
+        public const float PreferredWidth = 380f;
+        public const float PreferredHeight = 540f;
         private static PanelView _standalone;
         public static string Mode { get { return Core.SceneRuntime.VanillaMode ? "GAME" : (Infrastructure.FxStorage.MatchesOptimized(ReadState(), typeof(SceneFXMod)) ? "DEFAULT v3" : "CUSTOM"); } }
         public static string ReadState() { return SceneFXMod.ExportSuiteSection(); }
@@ -19,14 +20,17 @@ namespace SceneFX
         public static void Flush() { Core.SceneRuntime.SaveOptions(); Core.SceneRuntime.Flush(); }
         public static string Status { get { return !string.IsNullOrEmpty(Infrastructure.FxStorage.LastError) ? Infrastructure.FxStorage.LastError : !string.IsNullOrEmpty(Infrastructure.PropertyLedger.LastWarning) ? Infrastructure.PropertyLedger.LastWarning : !string.IsNullOrEmpty(Core.StyleEngine.LastLutError) ? Core.StyleEngine.LastLutError : Mode; } }
 
-        public static PanelView CreatePanel(UIComponent parent, float width = PreferredWidth, float height = 680f)
+        public static PanelView CreatePanel(UIComponent parent, float width = PreferredWidth, float height = PreferredHeight)
         {
             var view = new PanelView("SceneFX", parent, width, height, Release, ApplyOptimized, () => Status);
-            var look = view.AddPage("Camera");
+            var look = view.AddPage("Look");
             view.Choice(look, "Colour correction LUT", LutNames, LutIndex, index => Edit(() => Core.SceneRuntime.Current.Lut = index <= 0 ? string.Empty : LutNames()[index]));
             view.Choice(look, "LUT correction", () => SwitchChoices, () => Core.SceneRuntime.Current.LutEnabled + 1, v => Edit(() => Core.SceneRuntime.Current.LutEnabled = v - 1));
             view.Choice(look, "Game bloom", () => SwitchChoices, () => Core.SceneRuntime.Current.BloomEnabled + 1, v => Edit(() => Core.SceneRuntime.Current.BloomEnabled = v - 1));
+            view.Action(look, "Apply recommended suite", ApplyOptimized);
+            view.Action(look, "Save all four FX as suite", () => Core.SuiteManager.SaveSuiteProfile("Quick suite"));
             view.Info(look, () => "Light and camera tone: LumenFX. Render fog: AtmosphereFX.");
+            view.Info(look, () => SceneFXMod.ApplicationStatus ?? "Settings ready; appearance not yet verified in game");
             var world = view.AddPage("Weather");
             view.Check(world, "Lock rain / snow intensity", () => Core.WorldController.RainIntensity >= 0f, v => WorldEdit(() => Core.WorldController.RainIntensity = v ? 0f : -1f));
             view.Number(world, "Rain / snow intensity", () => Mathf.Max(0f, Core.WorldController.RainIntensity), v => WorldEdit(() => Core.WorldController.RainIntensity = v), 0f, 2.5f, 0.01f, enabled: () => Core.WorldController.RainIntensity >= 0f);
@@ -85,13 +89,13 @@ namespace SceneFX
         {
             if (_standalone == null || _standalone.Root == null)
             {
-                _standalone = CreatePanel(null, PreferredWidth, Mathf.Min(680f, UIView.GetAView().fixedHeight - 24f));
+                _standalone = CreatePanel(null, PreferredWidth, Mathf.Min(PreferredHeight, UIView.GetAView().fixedHeight - 24f));
                 _standalone.Root.relativePosition = new Vector3(Mathf.Clamp(WindowX, 0f, Mathf.Max(0f, UIView.GetAView().fixedWidth - PreferredWidth)), Mathf.Clamp(WindowY, 0f, Mathf.Max(0f, UIView.GetAView().fixedHeight - _standalone.Root.height)));
                 _standalone.Root.eventPositionChanged += (c, value) => { WindowX = value.x; WindowY = value.y; SavePosition(); };
             }
             else _standalone.Root.isVisible = toggle ? !_standalone.Root.isVisible : true;
             var screen = UIView.GetAView();
-            _standalone.SetSize(PreferredWidth, Mathf.Min(680f, screen.fixedHeight - 24f));
+            _standalone.SetSize(PreferredWidth, Mathf.Min(PreferredHeight, screen.fixedHeight - 24f));
             var pos = _standalone.Root.relativePosition;
             _standalone.Root.relativePosition = new Vector3(Mathf.Clamp(pos.x, 0f, Mathf.Max(0f, screen.fixedWidth - _standalone.Root.width)), Mathf.Clamp(pos.y, 0f, Mathf.Max(0f, screen.fixedHeight - _standalone.Root.height)));
             _standalone.Refresh();

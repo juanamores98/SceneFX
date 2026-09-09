@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace SceneFX.UI
 {
-    /// <summary>A narrow native panel that can also be mounted inside another mod's UI.</summary>
+    /// <summary>A compact native panel inspired by Relight row layout and Arrebol flat styling.</summary>
     public sealed class PanelView : IDisposable
     {
         public UIPanel Root { get; private set; }
@@ -27,6 +27,10 @@ namespace SceneFX.UI
         private int _selected;
         private string _error = string.Empty;
 
+        private static readonly Color32 TitleColor = new Color32(230, 237, 239, 255);
+        private static readonly Color32 AccentColor = new Color32(31, 168, 224, 255);
+        private static readonly Color32 DimTextColor = new Color32(156, 175, 182, 255);
+
         public PanelView(string title, UIComponent parent, float width, float height,
             Action vanilla, Action optimized, Func<string> status)
         {
@@ -39,35 +43,41 @@ namespace SceneFX.UI
             _statusText = status;
             _title = Root.AddUIComponent<UILabel>();
             _title.text = title;
-            _title.textScale = 1.05f;
-            _title.relativePosition = new Vector3(10f, 8f);
+            _title.textScale = 1.0f;
+            _title.textColor = TitleColor;
+            _title.relativePosition = new Vector3(12f, 8f);
             _title.autoSize = false;
             _title.height = 24f;
-            _close = Button(Root, "X", () => Root.isVisible = false);
+            _close = Button(Root, "✕", () => Root.isVisible = false);
             _close.isVisible = !embedded;
-            _close.size = new Vector2(26f, 24f);
+            _close.size = new Vector2(24f, 22f);
+            _close.textScale = 0.85f;
             if (!embedded)
             {
                 var drag = Root.AddUIComponent<UIDragHandle>();
                 drag.target = Root;
                 drag.relativePosition = Vector3.zero;
-                _resize.Add(w => drag.size = new Vector2(w - 44f, 32f));
+                _resize.Add(w => drag.size = new Vector2(w - 30f, 32f));
             }
-            _vanilla = Button(Root, "Game", vanilla);
-            _optimized = Button(Root, "Default v3", optimized);
-            _vanilla.tooltip = "Release this mod's changes and keep that mode across cities.";
-            _optimized.tooltip = "Apply this mod's part of Render It Plus / Default.";
+            _vanilla = Button(Root, "⚡ Vanilla", vanilla);
+            _optimized = Button(Root, "🚀 Optimized", optimized);
+            _vanilla.tooltip = UiText.Get("Revert to base game visual settings (no mod alterations)");
+            _optimized.tooltip = UiText.Get("Apply the author's recommended visual preset");
             var ownType = typeof(PanelView).Assembly.GetType("SceneFX.SceneFXMod");
             var readMethod = ownType.GetMethod("ExportSuiteSection");
             var applyMethod = ownType.GetMethod("ApplySuiteSection", new[] { typeof(string) });
             _capture = () => (string)readMethod.Invoke(null, null);
             _apply = xml => (bool)applyMethod.Invoke(null, new object[] { xml });
-            _undoButton = Button(Root, "Undo", () => { if (_undo != null && !_apply(_undo)) throw new InvalidOperationException("Could not restore previous settings"); });
+            _undoButton = Button(Root, "↩ Undo", () => {
+                if (_undo != null && !_apply(_undo)) throw new InvalidOperationException("Could not restore previous settings");
+                _undo = null;
+            });
+            _undoButton.tooltip = UiText.Get("Undo the last change made during this session");
             _status = Root.AddUIComponent<UILabel>();
-            _status.textScale = 0.75f;
+            _status.textScale = 0.76f;
+            _status.textColor = DimTextColor;
             _status.autoSize = false;
-            _status.wordWrap = true;
-            // Subscribe to each loaded module once; preserve focused edits on notifications.
+            _status.wordWrap = false;
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
                 foreach (string module in new[] { "SceneFX", "LumenFX", "AtmosphereFX", "ClassicLightFX" })
                 {
@@ -88,11 +98,11 @@ namespace SceneFX.UI
             page.clipChildren = true;
             page.autoLayout = true;
             page.autoLayoutDirection = LayoutDirection.Vertical;
-            page.autoLayoutPadding = new RectOffset(0, 0, 0, 6);
+            page.autoLayoutPadding = new RectOffset(0, 0, 0, 4);
             page.scrollWheelDirection = UIOrientation.Vertical;
             page.builtinKeyNavigation = true;
             _pages.Add(page);
-            _tabs.Add(Button(Root, label, () => Select(index)));
+            _tabs.Add(Button(Root, UiText.Get(label), () => Select(index)));
             SetSize(Root.width, Root.height);
             Select(_selected);
             return page;
@@ -110,27 +120,31 @@ namespace SceneFX.UI
 
         public void SetSize(float width, float height)
         {
-            width = Mathf.Max(280f, width);
-            height = Mathf.Max(260f, height);
+            width = Mathf.Max(320f, width);
+            height = Mathf.Max(300f, height);
             Root.size = new Vector2(width, height);
-            _title.width = width - 50f;
-            _close.relativePosition = new Vector3(width - 34f, 6f);
-            float half = (width - 32f) / 3f;
-            _vanilla.size = _optimized.size = _undoButton.size = new Vector2(half, 28f);
-            _vanilla.relativePosition = new Vector3(8f, 36f);
-            _optimized.relativePosition = new Vector3(16f + half, 36f);
-            _undoButton.relativePosition = new Vector3(24f + 2f * half, 36f);
+            _title.width = width - 40f;
+            _close.relativePosition = new Vector3(width - 28f, 6f);
+
+            float btnW = (width - 24f) / 3f;
+            _vanilla.size = _optimized.size = _undoButton.size = new Vector2(btnW, 26f);
+            _vanilla.relativePosition = new Vector3(8f, 34f);
+            _optimized.relativePosition = new Vector3(10f + btnW, 34f);
+            _undoButton.relativePosition = new Vector3(12f + 2f * btnW, 34f);
             _undoButton.isEnabled = _undo != null;
+
             float tabWidth = _pages.Count == 0 ? 0f : (width - 16f) / _pages.Count;
             for (int i = 0; i < _pages.Count; i++)
             {
-                _tabs[i].size = new Vector2(tabWidth - 3f, 26f);
-                _tabs[i].relativePosition = new Vector3(8f + i * tabWidth, 70f);
-                _pages[i].size = new Vector2(width - 16f, height - 150f);
-                _pages[i].relativePosition = new Vector3(8f, 102f);
+                _tabs[i].size = new Vector2(tabWidth - 2f, 26f);
+                _tabs[i].relativePosition = new Vector3(8f + i * tabWidth, 64f);
+                _pages[i].size = new Vector2(width - 16f, height - 94f - 28f);
+                _pages[i].relativePosition = new Vector3(8f, 94f);
             }
-            _status.size = new Vector2(width - 20f, 40f);
-            _status.relativePosition = new Vector3(10f, height - 42f);
+
+            _status.size = new Vector2(width - 20f, 22f);
+            _status.relativePosition = new Vector3(10f, height - 25f);
+
             foreach (var resize in _resize) resize(width - 26f);
         }
 
@@ -145,28 +159,33 @@ namespace SceneFX.UI
 
         public void Heading(UIComponent page, string text)
         {
-            var row = Row(page, 24f);
+            var row = Row(page, 22f);
             var label = row.AddUIComponent<UILabel>();
             label.text = UiText.Get(text);
-            label.textScale = 0.86f;
-            label.textColor = new Color32(79, 195, 247, 255);
-            label.relativePosition = new Vector3(0f, 4f);
+            label.textScale = 0.84f;
+            label.textColor = AccentColor;
+            label.relativePosition = new Vector3(4f, 3f);
+            label.autoSize = true;
         }
 
         public void Action(UIComponent page, string text, Action action)
         {
             var row = Row(page, 28f);
             var button = Button(row, text, action);
-            button.height = 28f;
-            _resize.Add(w => button.width = w);
-            button.width = row.width;
+            button.height = 26f;
+            button.relativePosition = new Vector3(4f, 1f);
+            button.width = row.width - 8f;
+            _resize.Add(w => {
+                button.width = w - 8f;
+                button.relativePosition = new Vector3(4f, 1f);
+            });
         }
 
         private UIButton Button(UIComponent parent, string text, Action action)
         {
             var button = parent.AddUIComponent<UIButton>();
             button.text = UiText.Get(text);
-            button.textScale = 0.85f;
+            button.textScale = 0.82f;
             button.normalBgSprite = "ButtonMenu";
             button.hoveredBgSprite = "ButtonMenuHovered";
             button.focusedBgSprite = "ButtonMenuFocused";
@@ -176,40 +195,55 @@ namespace SceneFX.UI
 
         public void Check(UIComponent page, string label, Func<bool> read, Action<bool> write)
         {
-            var row = Row(page, 34f);
+            var row = Row(page, 24f);
             var box = (UICheckBox)new UIHelper(row).AddCheckbox(UiText.Get(label), read(), value =>
             {
                 if (!_refreshing) Run(() => write(value));
             });
-            box.relativePosition = Vector3.zero;
+            box.relativePosition = new Vector3(4f, 1f);
+            box.height = 22f;
             box.label.autoSize = false;
-            box.label.wordWrap = true;
-            box.label.height = 32f;
-            box.label.textScale = 0.84f;
-            _resize.Add(w => { box.width = w; box.label.width = w - 28f; });
+            box.label.wordWrap = false;
+            box.label.height = 22f;
+            box.label.textScale = 0.82f;
+            _resize.Add(w => {
+                box.width = w - 8f;
+                box.label.width = w - 36f;
+            });
             _refresh.Add(() => box.isChecked = read());
         }
 
         public void Number(UIComponent page, string label, Func<float> read, Action<float> write,
             float min, float max, float step, bool log = false, Func<bool> enabled = null, float? reset = null)
         {
-            var row = Row(page, 54f);
+            var row = Row(page, 26f);
             float initial = reset ?? read();
+
             var title = row.AddUIComponent<UILabel>();
             title.text = UiText.Get(label);
-            title.textScale = 0.84f;
+            title.tooltip = UiText.Get(label);
+            title.textScale = 0.80f;
             title.autoSize = false;
-            title.height = 30f;
-            title.wordWrap = true;
-            var field = row.AddUIComponent<UITextField>();
-            field.normalBgSprite = "TextFieldPanel";
-            field.focusedBgSprite = "TextFieldPanelHovered";
-            field.textScale = 0.85f;
-            field.height = 24f;
-            field.width = 80f;
-            field.padding = new RectOffset(4, 4, 3, 2);
-            field.builtinKeyNavigation = true;
+            title.wordWrap = false;
+            title.height = 22f;
+            title.width = 125f;
+            title.relativePosition = new Vector3(2f, 2f);
+
             var slider = row.AddUIComponent<UISlider>();
+            slider.height = 16f;
+            slider.relativePosition = new Vector3(130f, 5f);
+            slider.builtinKeyNavigation = true;
+
+            var track = slider.AddUIComponent<UISlicedSprite>();
+            track.spriteName = "ScrollbarTrack";
+            track.height = 8f;
+            track.relativePosition = new Vector3(0f, 4f);
+
+            var thumb = slider.AddUIComponent<UISlicedSprite>();
+            thumb.spriteName = "ScrollbarThumb";
+            thumb.size = new Vector2(10f, 16f);
+            slider.thumbObject = thumb;
+
             double scale = Math.Max(step, 0.0000001f);
             double span = Math.Log(1d + (max - min) / scale);
             Func<float, float> toValue = t => log ? (float)(min + scale * (Math.Exp(t * span) - 1d)) : t;
@@ -217,29 +251,30 @@ namespace SceneFX.UI
             slider.minValue = log ? 0f : min;
             slider.maxValue = log ? 1f : max;
             slider.stepSize = log ? 0.001f : step;
-            slider.height = 18f;
-            slider.relativePosition = new Vector3(4f, 34f);
-            var track = slider.AddUIComponent<UISlicedSprite>();
-            track.spriteName = "ScrollbarTrack";
-            track.height = 12f;
-            var thumb = slider.AddUIComponent<UISlicedSprite>();
-            thumb.spriteName = "ScrollbarThumb";
-            thumb.size = new Vector2(12f, 18f);
-            slider.thumbObject = thumb;
+
+            var field = row.AddUIComponent<UITextField>();
+            field.normalBgSprite = "TextFieldPanel";
+            field.focusedBgSprite = "TextFieldPanelHovered";
+            field.textScale = 0.80f;
+            field.height = 22f;
+            field.width = 54f;
+            field.padding = new RectOffset(2, 2, 4, 2);
+            field.builtinKeyNavigation = true;
+
             var resetButton = Button(row, "↶", () => write(initial));
-            resetButton.tooltip = reset.HasValue ? "Reset this setting" : "Restore value at panel opening";
-            resetButton.size = new Vector2(24f, 24f);
+            resetButton.tooltip = reset.HasValue ? UiText.Get("Reset this setting") : UiText.Get("Restore value at panel opening");
+            resetButton.size = new Vector2(20f, 22f);
+            resetButton.textScale = 0.75f;
+
             _resize.Add(w =>
             {
-                title.width = w - 112f;
-                title.height = Mathf.Max(30f, (float)Math.Ceiling(title.text.Length / Math.Max(1f, title.width / 8f)) * 18f);
-                slider.relativePosition = new Vector3(4f, title.height + 2f);
-                row.height = title.height + 24f;
-                field.relativePosition = new Vector3(w - 108f, 0f);
-                resetButton.relativePosition = new Vector3(w - 24f, 0f);
-                slider.width = w - 8f;
-                track.width = slider.width;
+                float sliderWidth = Mathf.Max(50f, w - 130f - 82f);
+                slider.width = sliderWidth;
+                track.width = sliderWidth;
+                field.relativePosition = new Vector3(w - 78f, 2f);
+                resetButton.relativePosition = new Vector3(w - 22f, 2f);
             });
+
             slider.eventValueChanged += (c, value) => { if (!_refreshing) Run(() => write(Mathf.Clamp(toValue(value), min, max))); };
             field.eventTextSubmitted += (c, text) =>
             {
@@ -253,13 +288,25 @@ namespace SceneFX.UI
                     write(value);
                 });
             };
-            _refresh.Add(() => {
+
+            _refresh.Add(() =>
+            {
                 bool active = enabled == null || enabled();
                 field.isEnabled = slider.isEnabled = resetButton.isEnabled = active;
-                row.tooltip = active ? string.Empty : "Controlled by the selected mode; switch to Manual to edit";
-                float value = read(); slider.value = toSlider(value);
-                if (!field.containsFocus) field.text = value.ToString("0.######", CultureInfo.CurrentCulture);
+                row.tooltip = active ? string.Empty : UiText.Get("Controlled by the selected mode; switch to Manual to edit");
+                float value = read();
+                slider.value = toSlider(value);
+                if (!field.containsFocus) field.text = FormatNumber(value, step);
             });
+        }
+
+        private static string FormatNumber(float value, float step)
+        {
+            if (step >= 1f) return value.ToString("0", CultureInfo.InvariantCulture);
+            if (step >= 0.1f) return value.ToString("0.#", CultureInfo.InvariantCulture);
+            if (step >= 0.01f) return value.ToString("0.##", CultureInfo.InvariantCulture);
+            if (step >= 0.001f) return value.ToString("0.###", CultureInfo.InvariantCulture);
+            return value.ToString("0.######", CultureInfo.InvariantCulture);
         }
 
         public void OptionalNumber(UIComponent page, string label, Func<float> read, Action<float> write,
@@ -271,38 +318,72 @@ namespace SceneFX.UI
             Number(page, label, () => read() < 0f ? manual : read(), v => { manual = v; write(v); }, min, max, step,
                 log, () => read() >= 0f, min);
         }
+
         public void Info(UIComponent page, Func<string> text)
         {
-            var row = Row(page, 42f);
-            var label = row.AddUIComponent<UILabel>(); label.autoSize = false;
-            label.wordWrap = true; label.textScale = 0.78f; label.height = 40f;
-            _resize.Add(w => label.width = w);
+            var row = Row(page, 28f);
+            var label = row.AddUIComponent<UILabel>();
+            label.autoSize = false;
+            label.wordWrap = true;
+            label.textScale = 0.75f;
+            label.textColor = DimTextColor;
+            label.relativePosition = new Vector3(4f, 2f);
+            label.height = 24f;
+            _resize.Add(w => label.width = w - 8f);
             _refresh.Add(() => label.text = UiText.Get(text()));
         }
 
         public void Choice(UIComponent page, string label, Func<string[]> items, Func<int> selected, Action<int> write)
         {
-            var row = Row(page, 60f);
+            var row = Row(page, 50f);
             var dropdown = (UIDropDown)new UIHelper(row).AddDropdown(UiText.Get(label), UiText.Items(items()), selected(), value =>
             {
                 if (!_refreshing) Run(() => write(value));
             });
-            _resize.Add(w => { dropdown.width = w; dropdown.listWidth = (int)w; if (dropdown.parent != null) dropdown.parent.width = w; });
-            _refresh.Add(() => { dropdown.items = UiText.Items(items()); dropdown.selectedIndex = selected(); });
+            dropdown.size = new Vector2(row.width - 8f, 24f);
+            dropdown.relativePosition = new Vector3(4f, 20f);
+            _resize.Add(w => {
+                dropdown.width = w - 8f;
+                dropdown.listWidth = (int)(w - 8f);
+                if (dropdown.parent != null) dropdown.parent.width = w;
+            });
+            _refresh.Add(() => {
+                dropdown.items = UiText.Items(items());
+                dropdown.selectedIndex = selected();
+            });
         }
 
         public void Text(UIComponent page, string label, Func<string> read, Action<string> write)
         {
-            var row = Row(page, 60f);
+            var row = Row(page, 50f);
             var field = (UITextField)new UIHelper(row).AddTextfield(UiText.Get(label), read(), value => { if (!_refreshing) write(value); }, null);
-            _resize.Add(w => { field.width = w; if (field.parent != null) field.parent.width = w; });
+            field.size = new Vector2(row.width - 8f, 24f);
+            field.relativePosition = new Vector3(4f, 20f);
+            _resize.Add(w => {
+                field.width = w - 8f;
+                if (field.parent != null) field.parent.width = w;
+            });
             _refresh.Add(() => { if (!field.containsFocus) field.text = read(); });
         }
 
         private void Run(Action action)
         {
-            try { string before = _capture == null ? null : _capture(); action(); if (_capture != null && before != _capture()) _undo = before; _error = string.Empty; }
-            catch (Exception e) { _error = e.Message; Debug.LogException(e); }
+            try
+            {
+                string before = _capture == null ? null : _capture();
+                action();
+                if (_capture != null && before != _capture())
+                {
+                    _undo = before;
+                    _undoButton.isEnabled = true;
+                }
+                _error = string.Empty;
+            }
+            catch (Exception e)
+            {
+                _error = e.Message;
+                Debug.LogException(e);
+            }
             Refresh();
         }
 
@@ -313,8 +394,9 @@ namespace SceneFX.UI
             try
             {
                 foreach (var refresh in _refresh) refresh();
-                _status.text = string.IsNullOrEmpty(_error) ? _statusText() : _error;
+                _status.text = string.IsNullOrEmpty(_error) ? _statusText() : ("Error: " + _error);
                 _status.tooltip = _status.text;
+                _undoButton.isEnabled = _undo != null;
                 SetSize(Root.width, Root.height);
             }
             finally { _refreshing = false; }

@@ -24,7 +24,7 @@ partial class Program
             Check("UI03 external notification preserves focused text",field.text=="2,","in-progress editing is not destroyed");
             field.containsFocus=false;LumenFX.LumenFXMod.NotifyStateChanged();
             Check("UI04 unfocused field reflects external update",field.text.StartsWith("3"),"panel shows current state");
-            foreach(var c in Descendants(lumen.Root)) if(c is UIButton button && button.text=="Undo")button.Click();
+            foreach(var c in Descendants(lumen.Root)) if(c is UIButton button && (button.text=="Undo" || button.text.Contains("Undo") || button.text.Contains("Deshacer")))button.Click();
             Check("UI05 Undo restores prior module snapshot",Equal(LumenFX.Runtime.TunerRuntime.CurrentState.Gamma,2.2f),"undo the last local edit, not merely the label");
             ColossalFramework.Globalization.LocaleManager.instance.language="es";
             Check("UI06 Spanish labels resolve",AtmosphereFX.UI.UiText.Get("Volume Density")=="Densidad volumétrica","native UI labels use game language");
