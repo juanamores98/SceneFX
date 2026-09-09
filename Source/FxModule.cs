@@ -27,6 +27,12 @@ namespace SceneFX
             view.Choice(look, "Colour correction LUT", LutNames, LutIndex, index => Edit(() => Core.SceneRuntime.Current.Lut = index <= 0 ? string.Empty : LutNames()[index]));
             view.Choice(look, "LUT correction", () => SwitchChoices, () => Core.SceneRuntime.Current.LutEnabled + 1, v => Edit(() => Core.SceneRuntime.Current.LutEnabled = v - 1));
             view.Choice(look, "Game bloom", () => SwitchChoices, () => Core.SceneRuntime.Current.BloomEnabled + 1, v => Edit(() => Core.SceneRuntime.Current.BloomEnabled = v - 1));
+            view.Action(look, "Bake the current look into a LUT", () =>
+            {
+                string png;
+                string baked = Core.LutBank.BakeCurrentLook(null, out png);
+                Edit(() => Core.SceneRuntime.Current.Lut = baked);
+            });
             view.Action(look, "Apply recommended suite", ApplyOptimized);
             view.Action(look, "Save all four FX as suite", () => Core.SuiteManager.SaveSuiteProfile("Quick suite"));
             view.Check(look, "Apply settings when a city loads", () => Core.SceneRuntime.ApplyOnLoad, v => { Core.SceneRuntime.ApplyOnLoad = v; Core.SceneRuntime.SaveOptions(); });

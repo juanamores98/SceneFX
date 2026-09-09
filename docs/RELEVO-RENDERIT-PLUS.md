@@ -1,4 +1,4 @@
-# Relevo de Render It! Plus — cobertura de lo que tiene licencia restrictiva
+﻿# Relevo de Render It! Plus — cobertura de lo que tiene licencia restrictiva
 
 Revisión: 2026-09-09. Auditoría de la suite FX contra el inventario real de
 Render It! Plus.
@@ -122,6 +122,41 @@ sobre la hora que no admite otra forma, y quien lo pide manda. Para que eso
 funcione, ClassicLightFX ahora **anuncia `fogTint`** entre sus peticiones; antes
 escribía `m_SkyTint` y `m_WaveLengths` sin que ningún otro FX pudiera saberlo.
 
+## Las tablas de color propias, recuperadas
+
+El refactor de septiembre borró las tablas procedurales del mod, el horneado y la
+lectura de tablas sueltas. Vuelven las dos que importan, y mejor enganchadas.
+
+**Las seis tablas incluidas** —Ordinary, Nocturne, Sepia, Cine, Frost, Ember— se
+calculan aquí, cubo 32³, con las mismas recetas de gradación de siempre. Es lo
+que hace que el mod sirva de algo en una instalación sin ninguna tabla de otro
+autor, que es justo la situación de quien quiera publicar esto.
+
+**El horneado** vuelve, pero leyendo el componente de tono vivo en vez de los
+campos del estilo. El tono lo escribe LumenFX desde que hay un dueño por
+propiedad; hornear los campos de SceneFX congelaría unos números que ya no son
+los que se ven. Lo que la cámara hace es la única fuente honesta, la escriba
+quien la escriba. Se escribe además la tira PNG 1024×32 que otras herramientas
+saben leer.
+
+**No vuelve la lectura de `.crp` sueltos.** La versión anterior la necesitaba
+porque tenía su propio carril de tablas; ahora las tablas se registran en
+`ColorCorrectionManager`, y ese gestor ya escanea por su cuenta los assets del
+usuario. Restaurarla sería duplicar lo que el juego ya hace.
+
+**No vuelven las paletas de cielo.** Los cubemaps son competencia de Theme
+Mixer+, que es el mod prioritario y una fusión terminada. La regla de un dueño
+por propiedad vale también hacia fuera de la suite.
+
+Lo que cambia respecto al diseño anterior es dónde viven: en vez de un
+diccionario aparte con su propio campo en el estilo y su propia ruta de
+aplicación —dos listas, dos formas de elegir, dos sitios donde romperse— se
+añaden a `ColorCorrectionManager.m_BuiltinLUTs` y se llama a su `UpdateItems`.
+Aparecen en la misma lista que las demás, se eligen por nombre como las demás,
+viajan en los perfiles de suite como las demás, y las valida el mismo código.
+Una tabla horneada queda además disponible para cualquier otro mod que lea esa
+lista. Al descargar se repone el array original.
+
 ## Veredicto
 
 **Las cuatro fuentes restrictivas están cubiertas: 34/34 deslizadores y 7/7
@@ -138,10 +173,31 @@ Lo que **no** se declara:
 - **El post-procesado** (SSAO, TAA, bloom, color grading de la pila de Unity) es
   competencia de Render It!, no de la suite.
 
+## Lo que ya está medido
+
+**109 comprobaciones de regresión en verde** contra el código real de los cuatro
+mods. Diecisiete son nuevas y miden exactamente lo de esta revisión:
+
+| | Qué demuestra |
+|---|---|
+| R01–R02 | La latitud llega a −118 y sigue parándose en 120 |
+| R03–R05 | La niebla guarda −0,4; el suelo corta en −0,485; −1 sigue significando «lo lleva el juego» |
+| R06–R07 | El documento guardado conserva ambos, y un valor intermedio no queda ambiguo |
+| R08 | Pedir solo el rojo mueve el rojo: verde y azul se quedan en el valor del mapa |
+| R09–R10 | LumenFX anuncia lo que escribe, y al soltarlo el mapa recupera el suyo |
+| R11–R12 | Con el tinte clásico pedido no se toca el campo ni se reclama |
+| R13–R15 | Las seis tablas llegan a la lista del juego, registrar dos veces no duplica, y un estilo puede nombrarlas |
+| R16–R17 | Hornear produce una tabla seleccionable, y al descargar la lista queda exactamente como estaba |
+
+Dos de esas comprobaciones nacieron en rojo y sirvieron: una destapó que el
+doble del gestor de color no reconstruía su lista —así que la prueba anterior no
+medía nada— y otra que mi propia expectativa sobre el suelo de la niebla estaba
+mal puesta.
+
 ## Qué falta comprobar en partida
 
-Estas 92 comprobaciones de regresión pasan contra el código real de los cuatro
-mods, con dobles del juego; no sustituyen a Unity:
+Los dobles no son Unity. Lo que sigue solo se ve en el juego, y el laboratorio
+ya trae los pasos para medirlo (bloque *4c* de `LabPlan`):
 
 1. Latitud por encima de 90° y por debajo de −90°: el sol debe pasar sobre el
    polo sin artefactos.

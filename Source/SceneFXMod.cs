@@ -1,4 +1,4 @@
-using ICities;
+﻿using ICities;
 using UnityEngine;
 using SceneFX.Core;
 
@@ -73,6 +73,11 @@ namespace SceneFX
             StyleEngine.CaptureBaseline();
 
             SuiteManager.EnsureBuiltInSuites();
+
+            // Las tablas propias entran en la lista del juego antes de que nadie elija una:
+            // un estilo guardado puede nombrar «SceneFX Cine», y si todavia no esta registrada
+            // la validacion lo rechazaria por tabla ausente.
+            Core.LutBank.RegisterBuiltIns();
             CreateHost();
 
             UI.UuiButton.Register(
@@ -90,6 +95,7 @@ namespace SceneFX
             SceneRuntime.Flush();
             DestroyHosts();
             SceneRuntime.RestoreGame();
+            Core.LutBank.Unregister();
             StyleEngine.ClearCache();
             WorldController.ClearCache();
             TimeController.ClearCache();

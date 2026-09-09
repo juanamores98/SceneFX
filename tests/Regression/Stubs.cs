@@ -1,4 +1,4 @@
-// Offline doubles: storage, component lookup and scalar state only. No Unity rendering,
+﻿// Offline doubles: storage, component lookup and scalar state only. No Unity rendering,
 // game scheduler, real UI, Harmony patching, Steam access or native texture generation.
 using System;
 using System.Collections.Generic;
@@ -20,8 +20,28 @@ namespace UnityEngine {
   public T AddComponent<T>() where T:new() { return new T(); }
   public T GetComponent<T>() where T:Object { return FindObjectOfType<T>(); }
  }
- public class Texture3D: Object { public string name; }
- public class Texture2D: Object { }
+ public class ScriptableObject: Object { public static T CreateInstance<T>() where T:ScriptableObject,new() { return new T(); } }
+ public enum TextureWrapMode { Repeat, Clamp }
+ public enum FilterMode { Point, Bilinear, Trilinear }
+ public enum TextureFormat { RGBA32 }
+ public class Texture3D: Object {
+  public string name; public int width,height,depth;
+  public TextureWrapMode wrapMode; public FilterMode filterMode;
+  public Color[] Pixels=new Color[0];
+  public Texture3D() {}
+  public Texture3D(int w,int h,int d,TextureFormat f,bool mip) { width=w;height=h;depth=d; }
+  public void SetPixels(Color[] p) { Pixels=p; }
+  public Color[] GetPixels() { return Pixels; }
+  public void Apply(bool mip,bool noLongerReadable) {}
+ }
+ public class Texture2D: Object {
+  public int width,height; public Color[] Pixels=new Color[0];
+  public Texture2D() {}
+  public Texture2D(int w,int h,TextureFormat f,bool mip) { width=w;height=h; }
+  public void SetPixels(Color[] p) { Pixels=p; }
+  public void Apply(bool mip,bool noLongerReadable) {}
+  public byte[] EncodeToPNG() { return new byte[] {0x89,0x50,0x4e,0x47}; }
+ }
  public struct Color {
   public float r,g,b,a; public Color(float x,float y,float z,float w=1) { r=x;g=y;b=z;a=w; }
   public static Color white => new Color(1,1,1,1);
@@ -60,6 +80,7 @@ namespace UnityEngine {
  public enum ShadowQuality { Disable,HardOnly,All }
  public static class QualitySettings { public static ShadowQuality shadows=ShadowQuality.All; }
  public static class Mathf {
+  public static float Pow(float x,float y) { return (float)System.Math.Pow(x,y); }
   public static float Clamp(float v,float a,float b){return v<a?a:v>b?b:v;}
   public static int Clamp(int v,int a,int b){return v<a?a:v>b?b:v;}
   public static float Clamp01(float v){return Clamp(v,0,1);}
@@ -86,7 +107,7 @@ namespace ColossalFramework {
   public Filmic m_ToneMappingParamsFilmic=new Filmic();
   public class Filmic {public float A=.5f,B=.25f,C=.1f,D=.7f,E=.01f,F=.25f,W=11.2f;}
  }
- public class Texture3DWrapper {public string name;}
+ public class Texture3DWrapper: UnityEngine.ScriptableObject {public string name; public UnityEngine.Texture3D texture;}
  public static class Singleton<T> where T:new(){public static T instance=new T();}
 }
 namespace ColossalFramework.IO { public static class DataLocation { public static string localApplicationData=System.IO.Path.Combine(AppContext.BaseDirectory,"isolated-settings-"+Guid.NewGuid().ToString("N")); } }
@@ -127,7 +148,7 @@ public class SimulationManager {public static SimulationManager instance=Colossa
 public class WeatherProperties {public bool m_rainIsSnow;}
 public class WeatherManager {public static WeatherManager instance=new WeatherManager();public bool m_enableWeather=true;public WeatherProperties m_properties=new WeatherProperties();public float m_currentRain,m_targetRain,m_currentFog,m_targetFog,m_currentCloud,m_targetCloud,m_currentNorthernLights,m_targetNorthernLights,m_currentRainbow,m_targetRainbow,m_groundWetness,m_targetTemperature,m_currentTemperature,m_targetDirection,m_windDirection;}
 public class NetManager {public static NetManager instance=new NetManager();public bool m_treatWetAsSnow;}
-public class ColorCorrectionManager {public static ColorCorrectionManager instance=new ColorCorrectionManager();public string[] items={"Original","Other","1539181199.Relight2Average"};public int lastSelection; public int currentSelection {set {lastSelection=value;}}public ColossalFramework.Texture3DWrapper[] m_BuiltinLUTs=new ColossalFramework.Texture3DWrapper[0];public void SetLUT(UnityEngine.Texture3D t){} }
+public class ColorCorrectionManager {static readonly string[] Stock={"Original","Other","1539181199.Relight2Average"};public static ColorCorrectionManager instance=new ColorCorrectionManager();public string[] items=(string[])Stock.Clone();public int lastSelection; public int currentSelection {set {lastSelection=value;}}public ColossalFramework.Texture3DWrapper[] m_BuiltinLUTs=new ColossalFramework.Texture3DWrapper[0];void UpdateItems(){var l=new System.Collections.Generic.List<string>(Stock);foreach(var w in m_BuiltinLUTs) if(w!=null) l.Add(w.name); items=l.ToArray();}public void SetLUT(UnityEngine.Texture3D t){} }
 namespace AtmosphereFX.Runtime {public class AtmosphereEngine:UnityEngine.MonoBehaviour {public static void OpenWindow(){} } }
 namespace AtmosphereFX.Options {internal static class OptionsPanel {internal static void Build(ICities.UIHelperBase h){} } }
 namespace AtmosphereFX.UI {public static class UuiButton {public static void Register(string n,string d,UnityEngine.Texture2D t,Action<bool>a){} public static void Unregister(){} } public static class TrayIcon{public static UnityEngine.Texture2D Make(){return null;}} }
@@ -137,8 +158,6 @@ namespace LumenFX.UI {public static class UuiButton {public static void Register
 namespace ClassicLightFX.Core {public static class LutLibrary {public static string GetEnvironment(){return "Europe";} public static ColossalFramework.Texture3DWrapper Synthesize(string n){return new ColossalFramework.Texture3DWrapper{name=n};}} }
 namespace SceneFX.Core {
  internal static class SkyMood {internal static void Apply(int i){} internal static void Restore(){} }
- internal static class NativeLut {internal static bool TryGet(string n,out UnityEngine.Texture3D t){t=null;return false;}internal static void ClearRuntimeTextures(){} }
- internal static class LutCompat {internal static bool TryGet(string n,out UnityEngine.Texture3D t){t=null;return false;} }
  internal static class BorderlessMode {internal static void Apply(){} internal static void Restore(){} }
 }
 namespace SceneFX.UI {

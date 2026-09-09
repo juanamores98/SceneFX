@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -12,7 +12,7 @@
     <Compile Include="../../../LumenFX/Source/FxModule.cs;../../../LumenFX/Source/UI/PanelView.cs;../../../LumenFX/Source/UI/UiText.cs" />
     <Compile Include="../../../AtmosphereFX/Source/FxModule.cs;../../../AtmosphereFX/Source/UI/PanelView.cs;../../../AtmosphereFX/Source/UI/UiText.cs" />
     <Compile Include="../../../ClassicLightFX/Source/FxModule.cs;../../../ClassicLightFX/Source/UI/PanelView.cs;../../../ClassicLightFX/Source/UI/UiText.cs" />
-    <Compile Include="Stubs.cs;UiStubs.cs;Program.cs;ConsolidationChecks.cs;UiChecks.cs" />
+    <Compile Include="Stubs.cs;UiStubs.cs;Program.cs;ConsolidationChecks.cs;UiChecks.cs;RelevoChecks.cs" />
     <Compile Include="../../../AtmosphereFX/Source/AtmosphereFXMod.cs" />
     <Compile Include="../../../AtmosphereFX/Source/Config/*.cs" />
     <Compile Include="../../../AtmosphereFX/Source/Runtime/SettingsApplier.cs;../../../AtmosphereFX/Source/Runtime/VanillaSnapshot.cs;../../../AtmosphereFX/Source/Runtime/PerFrameWatcher.cs" />
@@ -21,7 +21,7 @@
     <Compile Include="../../../LumenFX/Source/Core/TunerEngine.cs" />
     <Compile Include="../../../ClassicLightFX/Source/Options/ModOptions.cs;../../../ClassicLightFX/Source/Core/ClassicLook.cs;../../../ClassicLightFX/Source/Core/ClassicFogDriver.cs;../../../ClassicLightFX/Source/Core/ThemeOwnership.cs" />
     <Compile Include="../../../SceneFX/Source/SceneFXMod.cs;../../../SceneFX/Source/PanelEngine.cs" />
-    <Compile Include="../../../SceneFX/Source/Core/LegacyMigration.cs;../../../SceneFX/Source/Core/StyleData.cs;../../../SceneFX/Source/Core/SceneRuntime.cs;../../../SceneFX/Source/Core/StyleEngine.cs;../../../SceneFX/Source/Core/WorldController.cs;../../../SceneFX/Source/Core/TimeController.cs;../../../SceneFX/Source/Core/SuiteManager.cs;../../../SceneFX/Source/Core/ThemeOwnership.cs;../../../SceneFX/Source/Core/QuickPresets.cs" />
+    <Compile Include="../../../SceneFX/Source/Core/LegacyMigration.cs;../../../SceneFX/Source/Core/StyleData.cs;../../../SceneFX/Source/Core/SceneRuntime.cs;../../../SceneFX/Source/Core/StyleEngine.cs;../../../SceneFX/Source/Core/WorldController.cs;../../../SceneFX/Source/Core/TimeController.cs;../../../SceneFX/Source/Core/SuiteManager.cs;../../../SceneFX/Source/Core/ThemeOwnership.cs;../../../SceneFX/Source/Core/QuickPresets.cs;../../../SceneFX/Source/Core/LutBank.cs" />
     <Compile Include="../../../AtmosphereFX/Source/Infrastructure/*.cs" />
     <EmbeddedResource Include="../../../AtmosphereFX/BuiltIns/Optimized.xml" LogicalName="AtmosphereFX.BuiltIns.Optimized.xml" />
     <Compile Include="../../../LumenFX/Source/Infrastructure/*.cs" />

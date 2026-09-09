@@ -36,6 +36,7 @@ namespace SceneFX.UI
             { "Sky red wavelength (0 = map)", "Longitud de onda roja del cielo (0 = mapa)" },
             { "Sky green wavelength (0 = map)", "Longitud de onda verde del cielo (0 = mapa)" },
             { "Sky blue wavelength (0 = map)", "Longitud de onda azul del cielo (0 = mapa)" },
+            { "Bake the current look into a LUT", "Hornear el aspecto actual en un LUT" },
             { "Anti-Blue Haze", "Sin neblina azul" },
             { "Remove atmospheric blue scattering haze", "Eliminar la dispersión atmosférica azulada" },
             { "Apply recommended suite", "Aplicar suite recomendada" },

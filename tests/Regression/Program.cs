@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
 using System.Xml.Serialization;
@@ -131,6 +131,7 @@ partial class Program {
   UiChecks();
   ExtraChecks();
   TransitionChecks();
+  RelevoChecks();
   Console.WriteLine("SUMMARY PASS="+pass+" FAIL="+fail+". FAIL denotes a regression requirement that remains unmet.");
   Environment.ExitCode=fail==0?0:1;
  }
