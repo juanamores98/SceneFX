@@ -8,6 +8,12 @@ namespace SceneFX.UI
     {
         private static readonly Dictionary<string, string> Spanish = new Dictionary<string, string> {
             { "Game", "Juego" },
+            { "VANILLA", "Vanilla" },
+            { "OPTIMIZED", "Optimizado" },
+            { "CUSTOM", "Personalizado" },
+            { "Vanilla", "Vanilla" },
+            { "Optimized", "Optimizado" },
+            { "Custom", "Personalizado" },
             { "Manual", "Manual" },
             { "Off", "Desactivado" },
             { "On", "Activado" },

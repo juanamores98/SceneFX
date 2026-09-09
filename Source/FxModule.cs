@@ -12,23 +12,24 @@ namespace SceneFX
         public const float PreferredWidth = 380f;
         public const float PreferredHeight = 540f;
         private static PanelView _standalone;
-        public static string Mode { get { return Core.SceneRuntime.VanillaMode ? "GAME" : (Infrastructure.FxStorage.MatchesOptimized(ReadState(), typeof(SceneFXMod)) ? "DEFAULT v3" : "CUSTOM"); } }
+        public static string Mode { get { return Core.SceneRuntime.VanillaMode ? "VANILLA" : (Infrastructure.FxStorage.MatchesOptimized(ReadState(), typeof(SceneFXMod)) ? "OPTIMIZED" : "CUSTOM"); } }
         public static string ReadState() { return SceneFXMod.ExportSuiteSection(); }
         public static bool ApplyState(string xml) { return SceneFXMod.ApplySuiteSection(xml); }
         public static void Release() { if (!Core.QuickPresets.ApplyVanilla()) throw new InvalidOperationException("VANILLA could not be applied."); Flush(); }
         public static void ApplyOptimized() { if (!Core.QuickPresets.ApplyOptimized()) throw new InvalidOperationException(SceneFXMod.LastApplyError ?? "Default could not be applied."); Flush(); }
         public static void Flush() { Core.SceneRuntime.SaveOptions(); Core.SceneRuntime.Flush(); }
-        public static string Status { get { return !string.IsNullOrEmpty(Infrastructure.FxStorage.LastError) ? Infrastructure.FxStorage.LastError : !string.IsNullOrEmpty(Infrastructure.PropertyLedger.LastWarning) ? Infrastructure.PropertyLedger.LastWarning : !string.IsNullOrEmpty(Core.StyleEngine.LastLutError) ? Core.StyleEngine.LastLutError : Mode; } }
+        public static string Status { get { return !string.IsNullOrEmpty(Infrastructure.FxStorage.LastError) ? Infrastructure.FxStorage.LastError : !string.IsNullOrEmpty(Infrastructure.PropertyLedger.LastWarning) ? Infrastructure.PropertyLedger.LastWarning : !string.IsNullOrEmpty(Core.StyleEngine.LastLutError) ? Core.StyleEngine.LastLutError : "Config: " + UiText.Get(Mode) + (SceneFXMod.ApplicationStatus != null ? " | " + SceneFXMod.ApplicationStatus : ""); } }
 
         public static PanelView CreatePanel(UIComponent parent, float width = PreferredWidth, float height = PreferredHeight)
         {
-            var view = new PanelView("SceneFX", parent, width, height, Release, ApplyOptimized, () => Status);
+            var view = new PanelView("SceneFX", parent, width, height, Release, ApplyOptimized, () => Status, () => Mode);
             var look = view.AddPage("Look");
             view.Choice(look, "Colour correction LUT", LutNames, LutIndex, index => Edit(() => Core.SceneRuntime.Current.Lut = index <= 0 ? string.Empty : LutNames()[index]));
             view.Choice(look, "LUT correction", () => SwitchChoices, () => Core.SceneRuntime.Current.LutEnabled + 1, v => Edit(() => Core.SceneRuntime.Current.LutEnabled = v - 1));
             view.Choice(look, "Game bloom", () => SwitchChoices, () => Core.SceneRuntime.Current.BloomEnabled + 1, v => Edit(() => Core.SceneRuntime.Current.BloomEnabled = v - 1));
             view.Action(look, "Apply recommended suite", ApplyOptimized);
             view.Action(look, "Save all four FX as suite", () => Core.SuiteManager.SaveSuiteProfile("Quick suite"));
+            view.Check(look, "Apply settings when a city loads", () => Core.SceneRuntime.ApplyOnLoad, v => { Core.SceneRuntime.ApplyOnLoad = v; Core.SceneRuntime.SaveOptions(); });
             view.Info(look, () => "Light and camera tone: LumenFX. Render fog: AtmosphereFX.");
             view.Info(look, () => SceneFXMod.ApplicationStatus ?? "Settings ready; appearance not yet verified in game");
             var world = view.AddPage("Weather");
@@ -64,23 +65,6 @@ namespace SceneFX
             view.Number(time, "Night speed", () => Core.TimeController.NightCycleSpeed, v => WorldEdit(() => Core.TimeController.NightCycleSpeed = v), 0f, 128f, 0.01f);
             view.Check(time, "Continue visual cycle while paused", () => Core.TimeController.CycleWhilePaused, v => WorldEdit(() => Core.TimeController.CycleWhilePaused = v));
             view.Action(time, "Pause / resume simulation", () => { var sim = SimulationManager.instance; if (sim != null) sim.SimulationPaused = !sim.SimulationPaused; });
-            var files = view.AddPage("Presets");
-            string[] paths = Core.StyleStore.ListStyleFiles(); int selected = 0; string name = "My scene"; bool includeWorld = false;
-            view.Choice(files, "Saved preset", () => FileNames(paths, ".scene.xml"), () => selected, v => selected = v);
-            view.Action(files, "Apply selected preset", () => { if (selected >= 0 && selected < paths.Length) { var style = Core.StyleStore.LoadStyle(paths[selected]); if (style != null) Core.SceneRuntime.LoadStyle(style); } });
-            view.Text(files, "Name", () => name, v => name = v);
-            view.Check(files, "Include world in this preset", () => includeWorld, v => includeWorld = v);
-            view.Action(files, "Save preset", () => { var copy = Core.SceneRuntime.Current.Clone(); copy.Name = name; copy.IncludeWorld = includeWorld; if (includeWorld) Core.StyleEngine.CaptureWorld(copy, true); Core.StyleStore.SaveStyle(copy); paths = Core.StyleStore.ListStyleFiles(); });
-            view.Action(files, "Migrate legacy preset to suite", () => { if (selected >= 0 && selected < paths.Length) Core.LegacyMigration.SaveSuite(paths[selected]); });
-            view.Info(files, () => "Old lighting/fog fields are retained. Migrate legacy presets to apply them through Lumen/Atmosphere.");
-            view.Action(files, "Refresh presets", () => paths = Core.StyleStore.ListStyleFiles());
-            string[] suites = Core.SuiteManager.ListSuiteFiles(); int suiteIndex = 0;
-            view.Choice(files, "Saved suite", () => FileNames(suites, ".suite.xml"), () => suiteIndex, v => suiteIndex = v);
-            view.Action(files, "Apply selected suite", () => { if (suiteIndex >= 0 && suiteIndex < suites.Length && !Core.SuiteManager.ApplySuiteProfile(suites[suiteIndex])) throw new InvalidOperationException(Core.SuiteManager.LastResult); });
-            view.Action(files, "Save all four FX as suite", () => { Core.SuiteManager.SaveSuiteProfile(name); suites = Core.SuiteManager.ListSuiteFiles(); });
-            view.Check(files, "Apply settings when a city loads", () => Core.SceneRuntime.ApplyOnLoad, v => { Core.SceneRuntime.ApplyOnLoad = v; Core.SceneRuntime.SaveOptions(); });
-
-            view.Info(files, () => SceneFXMod.ApplicationStatus ?? "Settings ready; appearance not yet verified in game");
             view.Refresh();
             return view;
         }
@@ -111,8 +95,8 @@ namespace SceneFX
         private static int LutIndex() { return string.IsNullOrEmpty(Core.SceneRuntime.Current.Lut) ? 0 : Array.IndexOf(LutNames(), Core.SceneRuntime.Current.Lut); }
         private static string[] FileNames(string[] paths, string suffix) { return paths.Length == 0 ? new[] { "No saved presets" } : Array.ConvertAll(paths, p => Path.GetFileName(p).Substring(0, Path.GetFileName(p).Length - suffix.Length)); }
         private static float ReadCoordinate(bool latitude) { var dn = UnityEngine.Object.FindObjectOfType<DayNightProperties>(); return dn == null ? 0f : (latitude ? dn.m_Latitude : dn.m_Longitude); }
-        private static void Edit(Action edit) { edit(); Core.SceneRuntime.VanillaMode = false; Core.SceneRuntime.ApplyCurrent(); Core.SceneRuntime.SaveOptions(); SceneFXMod.NotifyStateChanged(); }
-        private static void WorldEdit(Action edit) { edit(); Core.WorldController.Tick(); Core.SceneRuntime.WorldChanged(); }
+        private static void Edit(Action edit) { edit(); Core.SceneRuntime.VanillaMode = false; Core.SceneRuntime.ApplyCurrent(); Core.SceneRuntime.SaveOptions(); Core.SceneRuntime.Flush(); SceneFXMod.NotifyStateChanged(); }
+        private static void WorldEdit(Action edit) { edit(); Core.WorldController.Tick(); Core.SceneRuntime.WorldChanged(); Core.SceneRuntime.Flush(); }
         private static float WindowX { get { return Core.SceneRuntime.WindowX; } set { Core.SceneRuntime.WindowX = value; } }
         private static float WindowY { get { return Core.SceneRuntime.WindowY; } set { Core.SceneRuntime.WindowY = value; } }
         private static void SavePosition() { Core.SceneRuntime.SaveOptions(); SceneFXMod.NotifyStateChanged(); }

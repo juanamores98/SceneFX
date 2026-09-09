@@ -28,7 +28,7 @@ namespace ColossalFramework.UI
     public class UIPanel:UIComponent {public string backgroundSprite;}
     public class UIScrollablePanel:UIPanel {public bool autoLayout;public LayoutDirection autoLayoutDirection;public RectOffset autoLayoutPadding;public UIOrientation scrollWheelDirection;}
     public class UILabel:UIComponent {public string text;public float textScale;public bool autoSize,wordWrap;public Color32 textColor;}
-    public class UIButton:UIComponent {public string text,normalBgSprite,hoveredBgSprite,focusedBgSprite;public float textScale;public event Action<UIComponent,object> eventClicked; public void Click(){if(isEnabled)eventClicked?.Invoke(this,null);}}
+    public class UIButton:UIComponent {public string text,normalBgSprite,hoveredBgSprite,focusedBgSprite;public float textScale;public Color32 textColor;public event Action<UIComponent,object> eventClicked; public void Click(){if(isEnabled)eventClicked?.Invoke(this,null);}}
     public class UIDragHandle:UIComponent {public UIComponent target;}
     public class UITextField:UIComponent
     {

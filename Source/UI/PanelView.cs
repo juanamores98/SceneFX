@@ -16,6 +16,7 @@ namespace SceneFX.UI
         private readonly List<Action> _refresh = new List<Action>();
         private readonly List<Action<float>> _resize = new List<Action<float>>();
         private readonly Func<string> _statusText;
+        private readonly Func<string> _modeText;
         private readonly UILabel _status;
         private readonly UILabel _title;
         private readonly UIButton _vanilla, _optimized, _undoButton, _close;
@@ -32,7 +33,7 @@ namespace SceneFX.UI
         private static readonly Color32 DimTextColor = new Color32(156, 175, 182, 255);
 
         public PanelView(string title, UIComponent parent, float width, float height,
-            Action vanilla, Action optimized, Func<string> status)
+            Action vanilla, Action optimized, Func<string> status, Func<string> mode = null)
         {
             bool embedded = parent != null;
             Root = parent != null ? parent.AddUIComponent<UIPanel>()
@@ -41,6 +42,7 @@ namespace SceneFX.UI
             Root.backgroundSprite = "MenuPanel";
             Root.clipChildren = true;
             _statusText = status;
+            _modeText = mode;
             _title = Root.AddUIComponent<UILabel>();
             _title.text = title;
             _title.textScale = 1.0f;
@@ -394,6 +396,22 @@ namespace SceneFX.UI
             try
             {
                 foreach (var refresh in _refresh) refresh();
+
+                if (_modeText != null)
+                {
+                    string m = _modeText();
+                    bool isVanilla = string.Equals(m, "VANILLA", StringComparison.OrdinalIgnoreCase);
+                    bool isOptimized = string.Equals(m, "OPTIMIZED", StringComparison.OrdinalIgnoreCase);
+
+                    _vanilla.normalBgSprite = isVanilla ? "ButtonMenuFocused" : "ButtonMenu";
+                    _vanilla.textColor = isVanilla ? AccentColor : TitleColor;
+                    _vanilla.text = isVanilla ? "⚡ Vanilla  ✓" : "⚡ Vanilla";
+
+                    _optimized.normalBgSprite = isOptimized ? "ButtonMenuFocused" : "ButtonMenu";
+                    _optimized.textColor = isOptimized ? AccentColor : TitleColor;
+                    _optimized.text = isOptimized ? "🚀 Optimized  ✓" : "🚀 Optimized";
+                }
+
                 _status.text = string.IsNullOrEmpty(_error) ? _statusText() : ("Error: " + _error);
                 _status.tooltip = _status.text;
                 _undoButton.isEnabled = _undo != null;

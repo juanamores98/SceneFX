@@ -30,6 +30,25 @@ partial class Program
             Check("UI06 Spanish labels resolve",AtmosphereFX.UI.UiText.Get("Volume Density")=="Densidad volumétrica","native UI labels use game language");
             ColossalFramework.Globalization.LocaleManager.instance.language="en";
         }
+        using(var scene=SceneFX.FxModule.CreatePanel(null))
+        {
+            SceneFX.FxModule.Release();
+            scene.Refresh();
+            UIButton vanillaBtn=null, optBtn=null;
+            foreach(var c in scene.Root.children)
+            {
+                if(c is UIButton b)
+                {
+                    if(b.text.Contains("Vanilla")) vanillaBtn=b;
+                    if(b.text.Contains("Optimized")) optBtn=b;
+                }
+            }
+            bool vCheck = vanillaBtn!=null && vanillaBtn.text.Contains("✓") && vanillaBtn.normalBgSprite=="ButtonMenuFocused";
+            SceneFX.FxModule.ApplyOptimized();
+            scene.Refresh();
+            bool oCheck = optBtn!=null && optBtn.text.Contains("✓") && optBtn.normalBgSprite=="ButtonMenuFocused" && !vanillaBtn.text.Contains("✓");
+            Check("UI07 active mode button highlighted with checkmark", vCheck && oCheck, "Vanilla and Optimized buttons reflect active configuration");
+        }
         LumenFX.LumenFXMod.NotifyStateChanged();
     }
 }

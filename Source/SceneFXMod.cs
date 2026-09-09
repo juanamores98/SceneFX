@@ -45,6 +45,8 @@ namespace SceneFX
         public void OnDisabled()
         {
             UI.UuiButton.Unregister();
+            SceneRuntime.SaveOptions();
+            SceneRuntime.Flush();
             DestroyHosts();
             SceneRuntime.RestoreGame();
         }
@@ -84,6 +86,8 @@ namespace SceneFX
         {
             base.OnLevelUnloading();
             UI.UuiButton.Unregister();
+            SceneRuntime.SaveOptions();
+            SceneRuntime.Flush();
             DestroyHosts();
             SceneRuntime.RestoreGame();
             StyleEngine.ClearCache();
