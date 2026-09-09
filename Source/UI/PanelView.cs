@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using ColossalFramework.UI;
@@ -61,8 +61,8 @@ namespace SceneFX.UI
                 drag.relativePosition = Vector3.zero;
                 _resize.Add(w => drag.size = new Vector2(w - 30f, 32f));
             }
-            _vanilla = Button(Root, "⚡ Vanilla", vanilla);
-            _optimized = Button(Root, "🚀 Optimized", optimized);
+            _vanilla = Button(Root, "Vanilla", vanilla);
+            _optimized = Button(Root, "Optimized", optimized);
             _vanilla.tooltip = UiText.Get("Revert to base game visual settings (no mod alterations)");
             _optimized.tooltip = UiText.Get("Apply the author's recommended visual preset");
             var ownType = typeof(PanelView).Assembly.GetType("SceneFX.SceneFXMod");
@@ -70,7 +70,7 @@ namespace SceneFX.UI
             var applyMethod = ownType.GetMethod("ApplySuiteSection", new[] { typeof(string) });
             _capture = () => (string)readMethod.Invoke(null, null);
             _apply = xml => (bool)applyMethod.Invoke(null, new object[] { xml });
-            _undoButton = Button(Root, "↩ Undo", () => {
+            _undoButton = Button(Root, "Undo", () => {
                 if (_undo != null && !_apply(_undo)) throw new InvalidOperationException("Could not restore previous settings");
                 _undo = null;
             });
@@ -263,7 +263,7 @@ namespace SceneFX.UI
             field.padding = new RectOffset(2, 2, 4, 2);
             field.builtinKeyNavigation = true;
 
-            var resetButton = Button(row, "↶", () => write(initial));
+            var resetButton = Button(row, "R", () => write(initial));
             resetButton.tooltip = reset.HasValue ? UiText.Get("Reset this setting") : UiText.Get("Restore value at panel opening");
             resetButton.size = new Vector2(20f, 22f);
             resetButton.textScale = 0.75f;
@@ -405,11 +405,11 @@ namespace SceneFX.UI
 
                     _vanilla.normalBgSprite = isVanilla ? "ButtonMenuFocused" : "ButtonMenu";
                     _vanilla.textColor = isVanilla ? AccentColor : TitleColor;
-                    _vanilla.text = isVanilla ? "⚡ Vanilla  ✓" : "⚡ Vanilla";
+                    _vanilla.text = isVanilla ? "Vanilla ✓" : "Vanilla";
 
                     _optimized.normalBgSprite = isOptimized ? "ButtonMenuFocused" : "ButtonMenu";
                     _optimized.textColor = isOptimized ? AccentColor : TitleColor;
-                    _optimized.text = isOptimized ? "🚀 Optimized  ✓" : "🚀 Optimized";
+                    _optimized.text = isOptimized ? "Optimized ✓" : "Optimized";
                 }
 
                 _status.text = string.IsNullOrEmpty(_error) ? _statusText() : ("Error: " + _error);

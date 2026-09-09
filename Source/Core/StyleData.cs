@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ColossalFramework.IO;
 using System.IO;
 using System.Xml.Serialization;
@@ -115,10 +115,12 @@ namespace SceneFX.Core
             FogDensity = Infrastructure.FxStorage.Clamp(FogDensity, 0f, 0.005f);
             FogStart = Infrastructure.FxStorage.Clamp(FogStart, 0f, 10000f);
             TimeOfDay = Infrastructure.FxStorage.Clamp(TimeOfDay, 0f, 24f);
-            Latitude = Infrastructure.FxStorage.Clamp(Latitude, -90f, 90f);
+            Latitude = Infrastructure.FxStorage.Clamp(Latitude, -120f, 120f);
             Longitude = Infrastructure.FxStorage.Clamp(Longitude, -180f, 180f);
             Rain = Infrastructure.FxStorage.Clamp(Rain, -1f, 2.5f);
-            Fog = Infrastructure.FxStorage.Clamp(Fog, -1f, 1f);
+            // -1 significa «lo lleva el juego»; cualquier otro valor se recorta al rango
+            // util, cuyo suelo es negativo. Un valor intermedio como -0,7 no significa nada.
+            Fog = Fog <= -0.9f ? -1f : Infrastructure.FxStorage.Clamp(Fog, -0.485f, 1f);
             Cloud = Infrastructure.FxStorage.Clamp(Cloud, -1f, 1f);
             NorthernLights = Infrastructure.FxStorage.Clamp(NorthernLights, -1f, 1f);
             Rainbow = Infrastructure.FxStorage.Clamp(Rainbow, -1f, 1f);

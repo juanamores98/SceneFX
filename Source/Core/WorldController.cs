@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace SceneFX.Core
@@ -62,6 +62,47 @@ namespace SceneFX.Core
 
                 return _dayNight;
             }
+        }
+
+        /// <summary>
+        /// Hasta donde llega la latitud del sol.
+        /// </summary>
+        /// <remarks>
+        /// Mas alla de los 90 grados el sol pasa por encima del polo. No es una posicion
+        /// geografica real, pero es un efecto que Eyecandy X ofrecia y la norma de la suite es
+        /// conservar el rango mas ancho de los mods que se sustituyen, no el mas estrecho.
+        /// Solo alimenta la imagen: <c>m_Latitude</c> no toca la simulacion.
+        /// </remarks>
+        internal const float LatitudeFloor = -120f;
+        internal const float LatitudeCeiling = 120f;
+
+        /// <summary>
+        /// El suelo de la niebla del clima, que es negativo.
+        /// </summary>
+        /// <remarks>
+        /// Por debajo de cero <c>m_currentFog</c> resta, y eso limpia la calima que el juego
+        /// pone de base. Eyecandy X lo ofrecia hasta -0,485 y aqui se quedaba en cero, asi que
+        /// media capacidad del control no existia. El valor de soltar el canal sigue siendo -1,
+        /// que queda por debajo de este suelo y por tanto no se confunde con un ajuste.
+        /// </remarks>
+        internal const float FogFloor = -0.485f;
+
+        private const float ReleasedMark = -0.9f;
+
+        /// <summary>Cierto si el canal lo lleva este mod, falso si lo lleva el juego.</summary>
+        private static bool IsSet(float value)
+        {
+            return value > ReleasedMark;
+        }
+
+        private static float FloorFor(string channel)
+        {
+            return channel == "fog" ? FogFloor : 0f;
+        }
+
+        private static float CeilingFor(string channel)
+        {
+            return channel == "rain" ? 2.5f : 1f;
         }
 
         internal static bool TimeLocked;
@@ -199,7 +240,7 @@ namespace SceneFX.Core
             Snapshot();
             PositionSet = true;
             var dayNight = DayNight;
-            RequestedLatitude = Mathf.Clamp(latitude, -90f, 90f);
+            RequestedLatitude = Mathf.Clamp(latitude, LatitudeFloor, LatitudeCeiling);
             RequestedLongitude = Mathf.Clamp(longitude, -180f, 180f);
             RefreshPosition();
         }
@@ -241,16 +282,18 @@ namespace SceneFX.Core
 
         internal static void ApplyWeather(float rain, float fog, float cloud)
         {
-            RainIntensity = rain < 0f ? -1f : Mathf.Clamp(rain, 0f, 2.5f);
-            FogIntensity = fog < 0f ? -1f : Mathf.Clamp01(fog);
-            CloudIntensity = cloud < 0f ? -1f : Mathf.Clamp01(cloud);
+            RainIntensity = IsSet(rain) ? Mathf.Clamp(rain, 0f, 2.5f) : -1f;
+            FogIntensity = IsSet(fog) ? Mathf.Clamp(fog, FogFloor, 1f) : -1f;
+            CloudIntensity = IsSet(cloud) ? Mathf.Clamp01(cloud) : -1f;
             ApplyWeather();
         }
 
         /// <summary>Fija o suelta un canal del clima por nombre. Un valor negativo lo suelta.</summary>
         internal static void SetChannel(string channel, float value)
         {
-            float v = value < 0f ? -1f : Infrastructure.FxStorage.Clamp(value, 0f, channel == "rain" ? 2.5f : 1f);
+            float v = IsSet(value)
+                ? Infrastructure.FxStorage.Clamp(value, FloorFor(channel), CeilingFor(channel))
+                : -1f;
             switch (channel)
             {
                 case "rain": RainIntensity = v; break;
@@ -288,12 +331,12 @@ namespace SceneFX.Core
         {
             switch (channel)
             {
-                case "rain": return RainIntensity >= 0f;
-                case "fog": return FogIntensity >= 0f;
-                case "cloud": return CloudIntensity >= 0f;
-                case "northernLights": return NorthernLights >= 0f;
-                case "rainbow": return Rainbow >= 0f;
-                case "wetness": return GroundWetness >= 0f;
+                case "rain": return IsSet(RainIntensity);
+                case "fog": return IsSet(FogIntensity);
+                case "cloud": return IsSet(CloudIntensity);
+                case "northernLights": return IsSet(NorthernLights);
+                case "rainbow": return IsSet(Rainbow);
+                case "wetness": return IsSet(GroundWetness);
                 default: return false;
             }
         }
@@ -312,7 +355,7 @@ namespace SceneFX.Core
             Drive(ref weather.m_currentNorthernLights, ref weather.m_targetNorthernLights, NorthernLights);
             Drive(ref weather.m_currentRainbow, ref weather.m_targetRainbow, Rainbow);
 
-            if (GroundWetness >= 0f)
+            if (IsSet(GroundWetness))
             {
                 // La humedad del suelo no tiene objetivo al que tender: es un valor directo.
                 weather.m_groundWetness = GroundWetness;
@@ -336,7 +379,7 @@ namespace SceneFX.Core
 
         private static void Drive(ref float current, ref float target, float wanted)
         {
-            if (wanted < 0f)
+            if (!IsSet(wanted))
             {
                 return;
             }

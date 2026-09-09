@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using ColossalFramework.UI;
 using UnityEngine;
@@ -35,8 +35,8 @@ namespace SceneFX
             var world = view.AddPage("Weather");
             view.Check(world, "Lock rain / snow intensity", () => Core.WorldController.RainIntensity >= 0f, v => WorldEdit(() => Core.WorldController.RainIntensity = v ? 0f : -1f));
             view.Number(world, "Rain / snow intensity", () => Mathf.Max(0f, Core.WorldController.RainIntensity), v => WorldEdit(() => Core.WorldController.RainIntensity = v), 0f, 2.5f, 0.01f, enabled: () => Core.WorldController.RainIntensity >= 0f);
-            view.Check(world, "Lock weather fog", () => Core.WorldController.FogIntensity >= 0f, v => WorldEdit(() => Core.WorldController.FogIntensity = v ? 0f : -1f));
-            view.Number(world, "Weather fog", () => Mathf.Max(0f, Core.WorldController.FogIntensity), v => WorldEdit(() => Core.WorldController.FogIntensity = v), 0f, 1f, 0.01f, enabled: () => Core.WorldController.FogIntensity >= 0f);
+            view.Check(world, "Lock weather fog", () => Core.WorldController.ChannelLocked("fog"), v => WorldEdit(() => Core.WorldController.FogIntensity = v ? 0f : -1f));
+            view.Number(world, "Weather fog", () => Mathf.Max(Core.WorldController.FogFloor, Core.WorldController.FogIntensity), v => WorldEdit(() => Core.WorldController.SetChannel("fog", v)), Core.WorldController.FogFloor, 1f, 0.01f, enabled: () => Core.WorldController.ChannelLocked("fog"));
             view.Check(world, "Lock clouds", () => Core.WorldController.CloudIntensity >= 0f, v => WorldEdit(() => Core.WorldController.CloudIntensity = v ? 0f : -1f));
             view.Number(world, "Clouds", () => Mathf.Max(0f, Core.WorldController.CloudIntensity), v => WorldEdit(() => Core.WorldController.CloudIntensity = v), 0f, 1f, 0.01f, enabled: () => Core.WorldController.CloudIntensity >= 0f);
             view.Check(world, "Lock northern lights", () => Core.WorldController.NorthernLights >= 0f, v => WorldEdit(() => Core.WorldController.NorthernLights = v ? 0f : -1f));
@@ -56,7 +56,7 @@ namespace SceneFX
             var time = view.AddPage("Time");
             view.Number(time, "Hour (0–24)", () => Core.WorldController.ReadTimeHours(), v => WorldEdit(() => Core.WorldController.ApplyTime(v)), 0f, 24f, 0.01f);
             view.Check(time, "Lock hour", () => Core.WorldController.TimeLocked, v => WorldEdit(() => { if (v) Core.WorldController.ApplyTime(Core.WorldController.ReadTimeHours()); Core.WorldController.TimeLocked = v; }));
-            view.Number(time, "Latitude", () => ReadCoordinate(true), v => WorldEdit(() => Core.WorldController.ApplyPosition(v, ReadCoordinate(false))), -90f, 90f, 0.1f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("sunCoords"));
+            view.Number(time, "Latitude", () => ReadCoordinate(true), v => WorldEdit(() => Core.WorldController.ApplyPosition(v, ReadCoordinate(false))), Core.WorldController.LatitudeFloor, Core.WorldController.LatitudeCeiling, 0.1f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("sunCoords"));
             view.Number(time, "Longitude", () => ReadCoordinate(false), v => WorldEdit(() => Core.WorldController.ApplyPosition(ReadCoordinate(true), v)), -180f, 180f, 0.1f, enabled: () => !Infrastructure.FxInterop.ClassicRequest("sunCoords"));
             view.Number(time, "Game speed", () => Core.TimeController.GameSpeed, v => WorldEdit(() => Core.TimeController.ApplyGameSpeed(v)), 0.01f, 5f, 0.01f);
             view.Check(time, "Control visual day/night speed", () => Core.TimeController.CycleSpeedEnabled, v => WorldEdit(() => Core.TimeController.CycleSpeedEnabled = v));
