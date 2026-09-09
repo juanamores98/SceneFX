@@ -52,7 +52,21 @@ namespace ColossalFramework.UI
     }
     public class UISlicedSprite:UIComponent {public string spriteName;}
     public class UICheckBox:UIComponent {public bool isChecked;public UILabel label=new UILabel();}
-    public class UIDropDown:UIComponent {public string[] items;public int selectedIndex,listWidth;}
+    public enum UIVerticalAlignment { Top, Middle, Bottom }
+ public enum UIHorizontalAlignment { Left, Center, Right }
+ public class UIDropDown:UIComponent {
+  public string[] items=new string[0];
+  int _selected; public int selectedIndex { get { return _selected; } set { if(_selected==value) return; _selected=value; if(eventSelectedIndexChanged!=null) eventSelectedIndexChanged(this,value); } }
+  public int listWidth,itemHeight,listHeight,zOrder;
+  public string normalBgSprite,hoveredBgSprite,focusedBgSprite,disabledBgSprite,listBackground,itemHover,itemHighlight;
+  public float textScale;
+  public RectOffset itemPadding,textFieldPadding;
+  public Color32 popupColor,popupTextColor;
+  public UIVerticalAlignment verticalAlignment; public UIHorizontalAlignment horizontalAlignment;
+  public UIButton triggerButton;
+  public event Action<UIComponent,int> eventSelectedIndexChanged;
+  public void Pick(int i){ selectedIndex=i; }
+ }
     public class UIView:UIPanel {public float fixedWidth=1920,fixedHeight=1080;private static UIView view=new UIView();public static UIView GetAView(){return view;}}
     public class UIHelper
     {

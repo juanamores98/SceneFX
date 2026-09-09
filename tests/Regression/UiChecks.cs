@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using ColossalFramework.UI;
 partial class Program
@@ -48,6 +48,35 @@ partial class Program
             scene.Refresh();
             bool oCheck = optBtn!=null && optBtn.text.Contains("✓") && optBtn.normalBgSprite=="ButtonMenuFocused" && !vanillaBtn.text.Contains("✓");
             Check("UI07 active mode button highlighted with checkmark", vCheck && oCheck, "Vanilla and Optimized buttons reflect active configuration");
+        }
+
+        // El desplegable se construia con UIHelper y salia en blanco: la fila reservaba el
+        // hueco y no se dibujaba nada. Ahora se arma a mano, asi que hay que comprobar dos
+        // cosas: que existe con geometria util, y que mover la seleccion llega al mod.
+        FreshWorld();
+        using(var atmo=AtmosphereFX.FxModule.CreatePanel(null))
+        {
+            UIDropDown scatter=null;
+            foreach(var c in Descendants(atmo.Root))
+                if(c is UILabel label && label.text=="Scatter colour")
+                    foreach(var sibling in label.parent.children) if(sibling is UIDropDown d) scatter=d;
+
+            Check("UI08 a choice row builds a usable dropdown",
+                scatter!=null && scatter.items.Length==3 && scatter.width>60f && scatter.triggerButton!=null,
+                scatter==null ? "no dropdown next to its label"
+                    : "items="+scatter.items.Length+" width="+scatter.width+" trigger="+(scatter.triggerButton!=null));
+
+            AtmosphereFX.Config.ModConfig.ScatterColorMode = 0;
+            scatter.Pick(2);
+            Check("UI09 changing the selection reaches the mod",
+                AtmosphereFX.Config.ModConfig.ScatterColorMode==2,
+                "picked index 2, mod now has "+AtmosphereFX.Config.ModConfig.ScatterColorMode);
+
+            UILabel first=null;
+            foreach(var c in Descendants(atmo.Root)) if(c is UILabel l && l.text=="Fog start (m)") first=l;
+            Check("UI10 the label column leaves room for long names",
+                first!=null && first.width>=114f,
+                first==null ? "label not found" : "label column = "+first.width+" px (was fixed at 125 minus padding)");
         }
         LumenFX.LumenFXMod.NotifyStateChanged();
     }

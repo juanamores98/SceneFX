@@ -79,7 +79,9 @@ namespace SceneFX.UI
             _status.textScale = 0.76f;
             _status.textColor = DimTextColor;
             _status.autoSize = false;
-            _status.wordWrap = false;
+            // Dos renglones: en uno solo se cortaba a media frase justo cuando mas importa,
+            // que es cuando explica por que un ajuste no ha quedado aplicado.
+            _status.wordWrap = true;
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
                 foreach (string module in new[] { "SceneFX", "LumenFX", "AtmosphereFX", "ClassicLightFX" })
                 {
@@ -140,12 +142,12 @@ namespace SceneFX.UI
             {
                 _tabs[i].size = new Vector2(tabWidth - 2f, 26f);
                 _tabs[i].relativePosition = new Vector3(8f + i * tabWidth, 64f);
-                _pages[i].size = new Vector2(width - 16f, height - 94f - 28f);
+                _pages[i].size = new Vector2(width - 16f, height - 94f - 42f);
                 _pages[i].relativePosition = new Vector3(8f, 94f);
             }
 
-            _status.size = new Vector2(width - 20f, 22f);
-            _status.relativePosition = new Vector3(10f, height - 25f);
+            _status.size = new Vector2(width - 20f, 36f);
+            _status.relativePosition = new Vector3(10f, height - 39f);
 
             foreach (var resize in _resize) resize(width - 26f);
         }
@@ -228,12 +230,12 @@ namespace SceneFX.UI
             title.autoSize = false;
             title.wordWrap = false;
             title.height = 22f;
-            title.width = 125f;
+            title.width = LabelWidth(Root.width - 26f) - 6f;
             title.relativePosition = new Vector3(2f, 2f);
 
             var slider = row.AddUIComponent<UISlider>();
             slider.height = 16f;
-            slider.relativePosition = new Vector3(130f, 5f);
+            slider.relativePosition = new Vector3(LabelWidth(Root.width - 26f), 5f);
             slider.builtinKeyNavigation = true;
 
             var track = slider.AddUIComponent<UISlicedSprite>();
@@ -270,7 +272,10 @@ namespace SceneFX.UI
 
             _resize.Add(w =>
             {
-                float sliderWidth = Mathf.Max(50f, w - 130f - 82f);
+                float labelWidth = LabelWidth(w);
+                title.width = labelWidth - 6f;
+                float sliderWidth = Mathf.Max(50f, w - labelWidth - 82f);
+                slider.relativePosition = new Vector3(labelWidth, 5f);
                 slider.width = sliderWidth;
                 track.width = sliderWidth;
                 field.relativePosition = new Vector3(w - 78f, 2f);
@@ -335,24 +340,85 @@ namespace SceneFX.UI
             _refresh.Add(() => label.text = UiText.Get(text()));
         }
 
+        /// <summary>Una fila con etiqueta y desplegable.</summary>
+        /// <remarks>
+        /// <b>Por que no usa UIHelper.</b> Su AddDropdown clona una plantilla del menu de
+        /// opciones y devuelve el control dentro de un contenedor con su propia disposicion.
+        /// Dentro de estas filas salia en blanco: el hueco se reservaba y no se dibujaba nada.
+        /// Las casillas por UIHelper si funcionan, asi que el problema es esa plantilla y no
+        /// el ayudante. Aqui se arma igual que el deslizador, con las piezas puestas a mano,
+        /// que es el camino que ya se ve funcionando en el resto del panel.
+        /// </remarks>
         public void Choice(UIComponent page, string label, Func<string[]> items, Func<int> selected, Action<int> write)
         {
-            var row = Row(page, 50f);
-            var dropdown = (UIDropDown)new UIHelper(row).AddDropdown(UiText.Get(label), UiText.Items(items()), selected(), value =>
+            var row = Row(page, 26f);
+
+            var title = row.AddUIComponent<UILabel>();
+            title.text = UiText.Get(label);
+            title.tooltip = UiText.Get(label);
+            title.textScale = 0.80f;
+            title.autoSize = false;
+            title.wordWrap = false;
+            title.height = 22f;
+            title.relativePosition = new Vector3(2f, 4f);
+
+            var dropdown = row.AddUIComponent<UIDropDown>();
+            dropdown.height = 22f;
+            dropdown.itemHeight = 20;
+            dropdown.itemPadding = new RectOffset(6, 6, 3, 3);
+            dropdown.textFieldPadding = new RectOffset(8, 6, 4, 0);
+            dropdown.textScale = 0.78f;
+            dropdown.listHeight = 180;
+            dropdown.normalBgSprite = "ButtonMenu";
+            dropdown.hoveredBgSprite = "ButtonMenuHovered";
+            dropdown.focusedBgSprite = "ButtonMenu";
+            dropdown.disabledBgSprite = "ButtonMenuDisabled";
+            dropdown.listBackground = "GenericPanelLight";
+            dropdown.itemHover = "ListItemHover";
+            dropdown.itemHighlight = "ListItemHighlight";
+            dropdown.popupColor = new Color32(45, 52, 61, 255);
+            dropdown.popupTextColor = new Color32(220, 226, 232, 255);
+            dropdown.zOrder = 1;
+            dropdown.verticalAlignment = UIVerticalAlignment.Middle;
+            dropdown.horizontalAlignment = UIHorizontalAlignment.Left;
+            dropdown.items = UiText.Items(items());
+            dropdown.selectedIndex = Mathf.Clamp(selected(), 0, Mathf.Max(0, dropdown.items.Length - 1));
+
+            // Sin boton disparador el desplegable no se abre al pulsarlo.
+            var trigger = dropdown.AddUIComponent<UIButton>();
+            trigger.text = string.Empty;
+            trigger.relativePosition = Vector3.zero;
+            dropdown.triggerButton = trigger;
+
+            _resize.Add(w =>
             {
-                if (!_refreshing) Run(() => write(value));
+                float labelWidth = LabelWidth(w);
+                title.width = labelWidth - 6f;
+                dropdown.relativePosition = new Vector3(labelWidth, 2f);
+                dropdown.width = Mathf.Max(60f, w - labelWidth - 4f);
+                dropdown.listWidth = (int)dropdown.width;
+                trigger.size = dropdown.size;
             });
-            dropdown.size = new Vector2(row.width - 8f, 24f);
-            dropdown.relativePosition = new Vector3(4f, 20f);
-            _resize.Add(w => {
-                dropdown.width = w - 8f;
-                dropdown.listWidth = (int)(w - 8f);
-                if (dropdown.parent != null) dropdown.parent.width = w;
-            });
-            _refresh.Add(() => {
+
+            dropdown.eventSelectedIndexChanged += (c, value) => { if (!_refreshing) Run(() => write(value)); };
+            _refresh.Add(() =>
+            {
                 dropdown.items = UiText.Items(items());
-                dropdown.selectedIndex = selected();
+                dropdown.selectedIndex = Mathf.Clamp(selected(), 0, Mathf.Max(0, dropdown.items.Length - 1));
             });
+        }
+
+        /// <summary>
+        /// Ancho de la columna de etiquetas, proporcional a la ventana.
+        /// </summary>
+        /// <remarks>
+        /// Era fijo en 125 px y los nombres largos —«Sun power (0 = map)», «Sky red
+        /// wavelength (0 = map)»— salian cortados a media palabra. Con la proporcion, una
+        /// ventana mas ancha da mas sitio a la etiqueta en vez de solo al deslizador.
+        /// </remarks>
+        private static float LabelWidth(float rowWidth)
+        {
+            return Mathf.Clamp(rowWidth * 0.44f, 120f, 210f);
         }
 
         public void Text(UIComponent page, string label, Func<string> read, Action<string> write)
@@ -372,6 +438,11 @@ namespace SceneFX.UI
         {
             try
             {
+                // El aviso de cambio externo se quedaba pegado en la barra de estado para
+                // siempre, tapando la confirmacion de lo que acabas de hacer. La barra dice
+                // que ha pasado en esta accion, asi que se limpia al empezarla.
+                Infrastructure.PropertyLedger.LastWarning = string.Empty;
+                Infrastructure.FxStorage.LastNote = string.Empty;
                 string before = _capture == null ? null : _capture();
                 action();
                 if (_capture != null && before != _capture())
