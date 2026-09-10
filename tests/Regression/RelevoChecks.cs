@@ -221,6 +221,71 @@ partial class Program
         Check("R25 and minus one through the same path still releases",
             !WorldController.ChannelLocked("fog"),
             "released=" + !WorldController.ChannelLocked("fog"));
+
+        // ---- Lo que no es suyo, se suelta ------------------------------------------
+        // El preset Default de un anfitrion no pide nada: todas sus compuertas dicen
+        // "esto lo lleva el juego". El motor escribia igualmente su curva neutra, que no
+        // es la del juego, y la imagen salia lavada. Escribir el valor neutro y no
+        // escribir no son lo mismo, y esto lo fija.
+        FreshWorld();
+        var toneMap = UnityEngine.Object.FindObjectOfType<ColossalFramework.ToneMapping>();
+        toneMap.m_ToneMappingGamma = 2.60f;
+        toneMap.m_ToneMappingParamsFilmic.A = 0.22f;
+
+        var quieto = LumenFX.Runtime.TunerRuntime.CurrentState;
+        quieto.VanillaMode = false;
+        quieto.OwnsTonemapping = false;
+        quieto.OwnsDirectLight = false;
+        quieto.OwnsAmbientLight = false;
+        quieto.OwnsShadowQuality = false;
+        quieto.LegacySceneLighting = false;
+        quieto.LightingDirty = true;
+        LumenFX.Runtime.TunerRuntime.ApplyAll();
+
+        Check("R26 a host that keeps the tone curve keeps the game's numbers",
+            Equal(toneMap.m_ToneMappingGamma, 2.60f)
+                && Equal(toneMap.m_ToneMappingParamsFilmic.A, 0.22f),
+            "gamma=" + toneMap.m_ToneMappingGamma + " A=" + toneMap.m_ToneMappingParamsFilmic.A);
+
+        Check("R27 and LumenFX claims neither the tone nor the light curve",
+            !LumenFX.LumenFXMod.ActiveClaims.Contains("tone")
+                && !LumenFX.LumenFXMod.ActiveClaims.Contains("lightColor"),
+            "claims=" + LumenFX.LumenFXMod.ActiveClaims);
+
+        // Y con el mando cedido si escribe, para que la prueba anterior no pase por
+        // tener el camino roto.
+        quieto.OwnsTonemapping = true;
+        quieto.Gamma = 3.10f;
+        LumenFX.Core.TonemapProfile.Apply(quieto);
+        Check("R28 with the tone handed over it does write",
+            Equal(toneMap.m_ToneMappingGamma, 3.10f),
+            "gamma=" + toneMap.m_ToneMappingGamma);
+
+        // ---- La calibracion del anfitrion manda ------------------------------------
+        // Los diez numeros son los del preset «Default» de SuiteFX: brillo 0,7, gamma 0,85
+        // y contraste -0,7. El motor, con esos mismos mandos, daba un realce de 1,42; la
+        // base da 0,329. Si el motor volviera a imponer el suyo, esto se cae.
+        quieto.ToneOverride = new[]
+        {
+            3.1525f, 0.328923f, 0.08726f,
+            0.3726f, 0.3284f, 0.1049f, 0.5726f, 0.01f, 0.3578f, 10.22f
+        };
+        LumenFX.Core.TonemapProfile.Apply(quieto);
+
+        Check("R29 a host calibration reaches the camera untouched",
+            Equal(toneMap.m_ToneMappingGamma, 3.1525f)
+                && Equal(toneMap.m_ToneMappingBoostFactor, 0.328923f)
+                && Equal(toneMap.m_ToneMappingParamsFilmic.W, 10.22f),
+            "gamma=" + toneMap.m_ToneMappingGamma
+                + " boost=" + toneMap.m_ToneMappingBoostFactor
+                + " W=" + toneMap.m_ToneMappingParamsFilmic.W);
+
+        quieto.ToneOverride = null;
+        LumenFX.Core.TonemapProfile.Apply(quieto);
+        Check("R30 and dropping it gives the engine its own curve back",
+            Equal(toneMap.m_ToneMappingBoostFactor,
+                LumenFX.Core.TonemapProfile.BoostFor(quieto.Brightness)),
+            "boost=" + toneMap.m_ToneMappingBoostFactor);
     }
 
     static int LocaleEntries()
