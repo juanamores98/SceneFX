@@ -1,6 +1,6 @@
 ﻿# Relevo de Render It! Plus — cobertura de lo que tiene licencia restrictiva
 
-Revisión: 2026-09-09. Auditoría de la suite FX contra el inventario real de
+Revisión: 2026-09-09. Auditoría de los módulos FX contra el inventario real de
 Render It! Plus.
 
 ## El problema que esto resuelve
@@ -9,7 +9,7 @@ Render It! Plus **no puede publicarse**. Render It! es MIT (© 2022 keallu), per
 el fork absorbió **Daylight Classic, que es GPL-3.0**, y al hacerlo el conjunto
 pasó a ser obra derivada de GPL. Es privado y local, y así debe seguir.
 
-La suite FX es MIT-0. Si cubre lo que aportan las piezas restrictivas, existe un
+Los módulos FX son MIT-0. Si cubre lo que aportan las piezas restrictivas, existe un
 camino publicable: Render It! Plus deja de necesitar ese código.
 
 ## Cómo se midió
@@ -69,7 +69,7 @@ creer que faltaba la mitad negativa, que no existe.
 
 ### Eyecandy X — 9/9 (dos se arreglaron en esta revisión)
 
-| Eyecandy X | Suite FX | Nota |
+| Eyecandy X | Módulos FX | Nota |
 |---|---|---|
 | Time of Day 0–24 paso 1/60 | SceneFX Hour 0–24 paso 0,01 | más fino |
 | Day/night cycle speed | SceneFX Cycle speed 0–128 | más ancho |
